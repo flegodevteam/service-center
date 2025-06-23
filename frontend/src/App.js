@@ -5,6 +5,8 @@ import Layout from "./components/layout/Layout";
 import Dashboard from "./pages/Dashboard";
 import Customers from "./pages/Customers";
 import Vehicles from "./pages/Vehicles";
+import Appointments from "./pages/Appointments";
+import JobCards from "./pages/JobCards";
 
 function App() {
   return (
@@ -14,7 +16,9 @@ function App() {
         <Route element={<Layout />}>
           <Route path="/" element={<Dashboard />} />
           <Route path="/customers" element={<Customers />} />
-          <Route path="/vehicles" element={<Vehicles/>}/>
+          <Route path="/vehicles" element={<Vehicles />} />
+          <Route path="/appointments" element={<Appointments />} />
+          <Route path="/job-cards" element={<JobCards/>} />
         </Route>
       </Routes>
     </Router>
