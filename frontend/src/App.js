@@ -7,6 +7,7 @@ import Customers from "./pages/Customers";
 import Vehicles from "./pages/Vehicles";
 import Appointments from "./pages/Appointments";
 import JobCards from "./pages/JobCards";
+import Inventory from "./pages/Inventory";
 
 function App() {
   return (
@@ -19,6 +20,7 @@ function App() {
           <Route path="/vehicles" element={<Vehicles />} />
           <Route path="/appointments" element={<Appointments />} />
           <Route path="/job-cards" element={<JobCards />} />
+          <Route path="/inventory" element={<Inventory />} />
         </Route>
       </Routes>
     </Router>
