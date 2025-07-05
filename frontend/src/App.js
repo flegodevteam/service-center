@@ -9,6 +9,8 @@ import Appointments from "./pages/Appointments";
 import JobCards from "./pages/JobCards";
 import Inventory from "./pages/Inventory";
 import Billing from "./pages/Billing";
+import Reports from "./pages/Reports";
+import Settings from "./pages/Settings";
 
 function App() {
   return (
@@ -23,6 +25,8 @@ function App() {
           <Route path="/job-cards" element={<JobCards />} />
           <Route path="/inventory" element={<Inventory />} />
           <Route path="/billing" element={<Billing />} />
+          <Route path="/reports" element={<Reports />} />
+          <Route path="/settings" element={<Settings />} />
         </Route>
       </Routes>
     </Router>
