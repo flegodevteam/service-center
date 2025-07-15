@@ -11,65 +11,14 @@ import {
   Mail,
   Car,
 } from "lucide-react";
-
-// Sample data
-const customersData = [
-  {
-    id: 1,
-    name: "Michael Johnson",
-    email: "michael@example.com",
-    phone: "(555) 123-4567",
-    address: "123 Main St, City",
-    vehicles: 2,
-    lastService: "15 May 2024",
-    status: "active",
-  },
-  {
-    id: 2,
-    name: "Sarah Williams",
-    email: "sarah@example.com",
-    phone: "(555) 987-6543",
-    address: "456 Oak Ave, Town",
-    vehicles: 1,
-    lastService: "3 Jun 2024",
-    status: "active",
-  },
-  {
-    id: 3,
-    name: "David Martinez",
-    email: "david@example.com",
-    phone: "(555) 567-8901",
-    address: "789 Pine Rd, Village",
-    vehicles: 3,
-    lastService: "27 Apr 2024",
-    status: "inactive",
-  },
-  {
-    id: 4,
-    name: "Jennifer Taylor",
-    email: "jennifer@example.com",
-    phone: "(555) 234-5678",
-    address: "101 Elm Blvd, County",
-    vehicles: 1,
-    lastService: "9 Jun 2024",
-    status: "active",
-  },
-  {
-    id: 5,
-    name: "Robert Brown",
-    email: "robert@example.com",
-    phone: "(555) 345-6789",
-    address: "202 Maple Dr, District",
-    vehicles: 2,
-    lastService: "22 May 2024",
-    status: "active",
-  },
-];
+import { CustomerContext } from "../context/CustomerContext";
+import { useContext } from "react";
 
 const Customers = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [isAddCustomerModalOpen, setIsAddCustomerModalOpen] = useState(false);
-  const [customers, setCustomers] = useState(customersData);
+  const { customers, setCustomers } = useContext(CustomerContext);
+  const [errors, setErrors] = useState({});
 
   const [newCustomer, setNewCustomer] = useState({
     name: "",
@@ -81,9 +30,38 @@ const Customers = () => {
     status: "active",
   });
 
+  const validate = () => {
+    const newErrors = {};
+
+    if (!newCustomer.name) newErrors.name = "Name is required";
+
+    if (!newCustomer.email.match(/^[\w-.]+@([\w-]+\.)+[\w-]{2,4}$/))
+      newErrors.email = "Valid Email is required";
+
+    if (!newCustomer.phone.match(/^\d{10}$/))
+      newErrors.phone = "10-digit Phone number is required";
+
+    if (!newCustomer.address) newErrors.address = "Address is required";
+
+    if (!newCustomer.vehicles || newCustomer.vehicles < 1)
+      newErrors.vehicles = "Number of vehicles is required";
+
+    if (!newCustomer.lastService)
+      newErrors.lastService = "Last Service Date is required";
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
   const handleAddCustomer = () => {
-    const id = customers.length + 1;
-    setCustomers([...customers, { ...newCustomer, id }]);
+    if (!validate()) return;
+    setCustomers((prev) => [
+      ...prev,
+      {
+        ...newCustomer,
+        id: prev.length ? prev[prev.length - 1].id + 1 : 1,
+      },
+    ]);
     setIsAddCustomerModalOpen(false);
     setNewCustomer({
       name: "",
@@ -96,12 +74,22 @@ const Customers = () => {
     });
   };
 
-  const filteredCustomers = customers.filter(
-    (customer) =>
-      customer.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      customer.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      customer.phone.includes(searchTerm)
-  );
+  const filteredCustomers = customers.filter((customer) => {
+    // Check object and all fields before using toLowerCase
+    if (
+      customer &&
+      typeof customer.name === "string" &&
+      typeof customer.email === "string" &&
+      typeof customer.phone === "string"
+    ) {
+      return (
+        customer.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        customer.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        customer.phone.includes(searchTerm)
+      );
+    }
+    return false;
+  });
 
   return (
     <div className="space-y-6">
@@ -334,66 +322,100 @@ const Customers = () => {
             </div>
 
             <div className="space-y-4">
-              <input
-                type="text"
-                placeholder="Name"
-                className="w-full border rounded px-4 py-2"
-                value={newCustomer.name}
-                onChange={(e) =>
-                  setNewCustomer({ ...newCustomer, name: e.target.value })
-                }
-              />
-              <input
-                type="email"
-                placeholder="Email"
-                className="w-full border rounded px-4 py-2"
-                value={newCustomer.email}
-                onChange={(e) =>
-                  setNewCustomer({ ...newCustomer, email: e.target.value })
-                }
-              />
-              <input
-                type="text"
-                placeholder="Phone"
-                className="w-full border rounded px-4 py-2"
-                value={newCustomer.phone}
-                onChange={(e) =>
-                  setNewCustomer({ ...newCustomer, phone: e.target.value })
-                }
-              />
-              <input
-                type="text"
-                placeholder="Address"
-                className="w-full border rounded px-4 py-2"
-                value={newCustomer.address}
-                onChange={(e) =>
-                  setNewCustomer({ ...newCustomer, address: e.target.value })
-                }
-              />
-              <input
-                type="number"
-                placeholder="Number of Vehicles"
-                className="w-full border rounded px-4 py-2"
-                value={newCustomer.vehicles}
-                onChange={(e) =>
-                  setNewCustomer({
-                    ...newCustomer,
-                    vehicles: parseInt(e.target.value),
-                  })
-                }
-              />
-              <input
-                type="date"
-                placeholder="Last Service Date"
-                className="w-full border rounded px-4 py-2"
-                value={newCustomer.lastService}
-                onChange={(e) =>
-                  setNewCustomer({
-                    ...newCustomer,
-                    lastService: e.target.value,
-                  })
-                }
-              />
+              <div>
+                <input
+                  type="text"
+                  placeholder="Name"
+                  className="w-full border rounded px-4 py-2"
+                  value={newCustomer.name}
+                  onChange={(e) =>
+                    setNewCustomer({ ...newCustomer, name: e.target.value })
+                  }
+                />
+                {errors.name && (
+                  <span className="text-red-500 text-xs">{errors.name}</span>
+                )}
+              </div>
+              <div>
+                <input
+                  type="email"
+                  placeholder="Email"
+                  className="w-full border rounded px-4 py-2"
+                  value={newCustomer.email}
+                  onChange={(e) =>
+                    setNewCustomer({ ...newCustomer, email: e.target.value })
+                  }
+                />
+                {errors.email && (
+                  <span className="text-red-500 text-xs">{errors.email}</span>
+                )}
+              </div>
+              <div>
+                <input
+                  type="text"
+                  placeholder="Phone"
+                  className="w-full border rounded px-4 py-2"
+                  value={newCustomer.phone}
+                  onChange={(e) =>
+                    setNewCustomer({ ...newCustomer, phone: e.target.value })
+                  }
+                />
+                {errors.phone && (
+                  <span className="text-red-500 text-xs">{errors.phone}</span>
+                )}
+              </div>
+              <div>
+                <input
+                  type="text"
+                  placeholder="Address"
+                  className="w-full border rounded px-4 py-2"
+                  value={newCustomer.address}
+                  onChange={(e) =>
+                    setNewCustomer({ ...newCustomer, address: e.target.value })
+                  }
+                />
+                {errors.address && (
+                  <span className="text-red-500 text-xs">{errors.address}</span>
+                )}
+              </div>
+              <div>
+                <input
+                  type="number"
+                  placeholder="Number of Vehicles"
+                  className="w-full border rounded px-4 py-2"
+                  value={newCustomer.vehicles}
+                  onChange={(e) =>
+                    setNewCustomer({
+                      ...newCustomer,
+                      vehicles: parseInt(e.target.value),
+                    })
+                  }
+                />
+                {errors.vehicles && (
+                  <span className="text-red-500 text-xs">
+                    {errors.vehicles}
+                  </span>
+                )}
+              </div>
+              <div>
+                <input
+                  type="date"
+                  placeholder="Last Service Date"
+                  className="w-full border rounded px-4 py-2"
+                  value={newCustomer.lastService}
+                  onChange={(e) =>
+                    setNewCustomer({
+                      ...newCustomer,
+                      lastService: e.target.value,
+                    })
+                  }
+                />
+                {errors.lastService && (
+                  <span className="text-red-500 text-xs">
+                    {errors.lastService}
+                  </span>
+                )}
+              </div>
               <select
                 className="w-full border rounded px-4 py-2"
                 value={newCustomer.status}
