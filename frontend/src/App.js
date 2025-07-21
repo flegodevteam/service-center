@@ -29,117 +29,116 @@ function App() {
           <AppointmentProvider>
             <JobCardsProvider>
               <InventoryProvider>
-              <Router>
-                <Toaster position="top-right" />
-                <Routes>
-                  <Route path="/login" element={<Login />} />
-                  <Route path="/unauthorized" element={<Unauthorized />} />
+                <Router>
+                  <Toaster position="top-right" />
+                  <Routes>
+                    <Route path="/login" element={<Login />} />
+                    <Route path="/unauthorized" element={<Unauthorized />} />
 
-                  <Route
-                    element={
-                      <ProtectedRoute>
-                        <Layout />
-                      </ProtectedRoute>
-                    }
-                  >
-                    {/* Dashboard - accessible to all authenticated users */}
-                    <Route path="/" element={<Dashboard />} />
+                    <Route
+                      element={
+                        <ProtectedRoute>
+                          <Layout />
+                        </ProtectedRoute>
+                      }
+                    >
+                      {/* Dashboard - accessible to all authenticated users */}
+                      <Route path="/" element={<Dashboard />} />
 
-                    {/* Admin only routes */}
-                    <Route
-                      path="/settings"
-                      element={
-                        <ProtectedRoute allowedRoles={["admin"]}>
-                          <Settings />
-                        </ProtectedRoute>
-                      }
-                    />
+                      {/* Admin only routes */}
+                      <Route
+                        path="/settings"
+                        element={
+                          <ProtectedRoute allowedRoles={["admin"]}>
+                            <Settings />
+                          </ProtectedRoute>
+                        }
+                      />
 
-                    {/* Admin & Manager Routes */}
-                    <Route
-                      path="/reports"
-                      element={
-                        <ProtectedRoute allowedRoles={["admin", "manager"]}>
-                          <Reports />
-                        </ProtectedRoute>
-                      }
-                    />
+                      {/* Admin & Manager Routes */}
+                      <Route
+                        path="/reports"
+                        element={
+                          <ProtectedRoute allowedRoles={["admin", "manager"]}>
+                            <Reports />
+                          </ProtectedRoute>
+                        }
+                      />
 
-                    {/* Front Desk Routes */}
-                    <Route
-                      path="/customers"
-                      element={
-                        <ProtectedRoute
-                          allowedRoles={["admin", "manager", "front-desk"]}
-                        >
-                          <Customers />
-                        </ProtectedRoute>
-                      }
-                    />
-                    <Route
-                      path="/appointments"
-                      element={
-                        <ProtectedRoute
-                          allowedRoles={["admin", "manager", "front-desk"]}
-                        >
-                          <Appointments />
-                        </ProtectedRoute>
-                      }
-                    />
-                    <Route
-                      path="/billing"
-                      element={
-                        <ProtectedRoute
-                          allowedRoles={["admin", "manager", "front-desk"]}
-                        >
-                          <Billing />
-                        </ProtectedRoute>
-                      }
-                    />
+                      {/* Front Desk Routes */}
+                      <Route
+                        path="/customers"
+                        element={
+                          <ProtectedRoute
+                            allowedRoles={["admin", "manager", "front-desk"]}
+                          >
+                            <Customers />
+                          </ProtectedRoute>
+                        }
+                      />
+                      <Route
+                        path="/appointments"
+                        element={
+                          <ProtectedRoute
+                            allowedRoles={["admin", "manager", "front-desk"]}
+                          >
+                            <Appointments />
+                          </ProtectedRoute>
+                        }
+                      />
+                      <Route
+                        path="/billing"
+                        element={
+                          <ProtectedRoute
+                            allowedRoles={["admin", "manager", "front-desk"]}
+                          >
+                            <Billing />
+                          </ProtectedRoute>
+                        }
+                      />
 
-                    {/* Technician Routes */}
-                    <Route
-                      path="/job-cards"
-                      element={
-                        <ProtectedRoute
-                          allowedRoles={["admin", "manager", "technician"]}
-                        >
-                          <JobCards />
-                        </ProtectedRoute>
-                      }
-                    />
-                    <Route
-                      path="/inventory"
-                      element={
-                        <ProtectedRoute
-                          allowedRoles={["admin", "manager", "technician"]}
-                        >
-                          <Inventory />
-                        </ProtectedRoute>
-                      }
-                    />
+                      {/* Technician Routes */}
+                      <Route
+                        path="/job-cards"
+                        element={
+                          <ProtectedRoute
+                            allowedRoles={["admin", "manager", "technician"]}
+                          >
+                            <JobCards />
+                          </ProtectedRoute>
+                        }
+                      />
+                      <Route
+                        path="/inventory"
+                        element={
+                          <ProtectedRoute
+                            allowedRoles={["admin", "manager", "technician"]}
+                          >
+                            <Inventory />
+                          </ProtectedRoute>
+                        }
+                      />
 
-                    {/* Shared Routes */}
-                    <Route
-                      path="/vehicles"
-                      element={
-                        <ProtectedRoute
-                          allowedRoles={[
-                            "admin",
-                            "manager",
-                            "technician",
-                            "front-desk",
-                          ]}
-                        >
-                          <Vehicles />
-                        </ProtectedRoute>
-                      }
-                    />
-                  </Route>
-                </Routes>
-          
-              </Router>
-           </InventoryProvider>
+                      {/* Shared Routes */}
+                      <Route
+                        path="/vehicles"
+                        element={
+                          <ProtectedRoute
+                            allowedRoles={[
+                              "admin",
+                              "manager",
+                              "technician",
+                              "front-desk",
+                            ]}
+                          >
+                            <Vehicles />
+                          </ProtectedRoute>
+                        }
+                      />
+                    </Route>
+                  </Routes>
+                </Router>
+              </InventoryProvider>
             </JobCardsProvider>
           </AppointmentProvider>
         </VehicleProvider>

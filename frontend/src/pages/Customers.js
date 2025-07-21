@@ -17,7 +17,7 @@ import { useContext } from "react";
 const Customers = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [isAddCustomerModalOpen, setIsAddCustomerModalOpen] = useState(false);
-  const { customers, setCustomers } = useContext(CustomerContext);
+  const { customers, setCustomers, addCustomer } = useContext(CustomerContext);
   const [errors, setErrors] = useState({});
 
   const [newCustomer, setNewCustomer] = useState({
@@ -53,25 +53,23 @@ const Customers = () => {
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleAddCustomer = () => {
+  const handleAddCustomer = async () => {
     if (!validate()) return;
-    setCustomers((prev) => [
-      ...prev,
-      {
-        ...newCustomer,
-        id: prev.length ? prev[prev.length - 1].id + 1 : 1,
-      },
-    ]);
-    setIsAddCustomerModalOpen(false);
-    setNewCustomer({
-      name: "",
-      email: "",
-      phone: "",
-      address: "",
-      vehicles: 1,
-      lastService: "",
-      status: "active",
-    });
+    try {
+      await addCustomer(newCustomer);
+      setIsAddCustomerModalOpen(false);
+      setNewCustomer({
+        name: "",
+        email: "",
+        phone: "",
+        address: "",
+        vehicles: 1,
+        lastService: "",
+        status: "active",
+      });
+    } catch (err) {
+      setErrors({ api: "Failed to add customer" });
+    }
   };
 
   const filteredCustomers = customers.filter((customer) => {
@@ -207,7 +205,9 @@ const Customers = () => {
                     {customer.vehicles}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                    {customer.lastService}
+                    {customer.lastService
+                      ? customer.lastService.slice(0, 10)
+                      : ""}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
                     <span
@@ -229,9 +229,10 @@ const Customers = () => {
                         <Trash2 size={16} />
                       </button>
                       <div className="relative group">
-                        <button className="text-gray-500 hover:text-gray-700">
+                        {/* <button className="text-gray-500 hover:text-gray-700">
                           <MoreVertical size={16} />
-                        </button>
+                        </button> */}
+
                         <div className="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg py-1 hidden group-hover:block z-10">
                           <a
                             href="#view-profile"
@@ -289,7 +290,7 @@ const Customers = () => {
 
       {/* Add Customer Modal */}
       {isAddCustomerModalOpen && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 z-40 flex items-center justify-center p-4">
+        <div className="fixed inset-0 bg-black bg-opacity-50 z-[1000] flex items-center justify-center p-4">
           <motion.div
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}

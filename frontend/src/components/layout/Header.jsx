@@ -1,11 +1,14 @@
 import React, { useState, useRef, useEffect } from "react";
 import { Bell, Menu, Search } from "lucide-react";
+import { useAuth } from "../../context/AuthContext";
 import { motion } from "framer-motion";
 
 const Header = ({ toggleSidebar }) => {
+  const { user, logout } = useAuth();
   const [showMenu, setShowMenu] = useState(false);
   const menuRef = useRef(null);
 
+  // Dropdown வெளியே கிளிக் செய்தால் மூட
   useEffect(() => {
     const handleClickOutside = (e) => {
       if (menuRef.current && !menuRef.current.contains(e.target)) {
@@ -64,9 +67,13 @@ const Header = ({ toggleSidebar }) => {
               onClick={() => setShowMenu((prev) => !prev)}
             >
               <div className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center">
-                <span className="text-blue-700 font-semibold">Flego</span>
+                <span className="text-blue-700 font-semibold">
+                  {user?.name?.charAt(0) || "U"}
+                </span>
               </div>
-              <span className="text-sm font-medium text-gray-700 hidden md:inline"></span>
+              <span className="text-sm font-medium text-gray-700 hidden md:inline">
+                {user?.name || "User"}
+              </span>
             </button>
 
             <div
@@ -86,7 +93,10 @@ const Header = ({ toggleSidebar }) => {
               >
                 Settings
               </a>
-              <button className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
+              <button
+                onClick={logout}
+                className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+              >
                 Sign out
               </button>
             </div>

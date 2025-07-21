@@ -87,7 +87,7 @@ const Vehicles = () => {
     notes: "",
   });
   const { customers } = useContext(CustomerContext);
-  const { vehicles, setVehicles } = useContext(VehicleContext); // <-- use context
+  const { vehicles, setVehicles, addVehicle } = useContext(VehicleContext);
 
   const validateVehicle = () => {
     const errors = {};
@@ -111,37 +111,51 @@ const Vehicles = () => {
     return Object.keys(errors).length === 0;
   };
 
-  // Handle adding a new vehicle
-  const handleAddVehicle = () => {
+  // Handle adding a new vehicle - API call use pannu
+  const handleAddVehicle = async () => {
     if (!validateVehicle()) return;
-    const id = vehicles.length + 1;
-    setVehicles([...vehicles, { ...newVehicle, id }]);
-    setIsAddVehicleModalOpen(false);
-    setNewVehicle({
-      make: "",
-      model: "",
-      year: "",
-      regNumber: "",
-      vin: "",
-      owner: "",
-      lastService: "",
-      nextService: "",
-      status: "active",
-      notes: "",
-    });
+    try {
+      // Owner name-a customer ID-a convert pannanum
+      const selectedCustomer = customers.find(
+        (c) => c.name === newVehicle.owner
+      );
+      const vehicleData = {
+        ...newVehicle,
+        owner: selectedCustomer?._id || selectedCustomer?.id, // customer ID thevai
+      };
+
+      await addVehicle(vehicleData);
+      setIsAddVehicleModalOpen(false);
+      setNewVehicle({
+        make: "",
+        model: "",
+        year: "",
+        regNumber: "",
+        vin: "",
+        owner: "",
+        lastService: "",
+        nextService: "",
+        status: "active",
+        notes: "",
+      });
+    } catch (err) {
+      setVehicleErrors({ api: "Failed to add vehicle" });
+    }
   };
 
   // Filter vehicles based on search term
   const filteredVehicles = vehicles.filter(
     (vehicle) =>
-      vehicle.make.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      vehicle.model.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      vehicle.regNumber.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      vehicle.owner.toLowerCase().includes(searchTerm.toLowerCase())
+      vehicle.make?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      vehicle.model?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      vehicle.regNumber?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (vehicle.owner?.name || vehicle.owner)
+        ?.toLowerCase()
+        .includes(searchTerm.toLowerCase())
   );
 
   const selectedVehicleData = vehicles.find(
-    (vehicle) => vehicle.id === selectedVehicle
+    (vehicle) => (vehicle._id || vehicle.id) === selectedVehicle
   );
 
   const getStatusColor = (status) => {
@@ -246,7 +260,7 @@ const Vehicles = () => {
                 <tbody className="bg-white divide-y divide-gray-200">
                   {filteredVehicles.map((vehicle) => (
                     <motion.tr
-                      key={vehicle.id}
+                      key={vehicle._id || vehicle.id}
                       initial={{ opacity: 0 }}
                       animate={{ opacity: 1 }}
                       transition={{ duration: 0.3 }}
@@ -273,15 +287,25 @@ const Vehicles = () => {
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="flex items-center text-sm text-gray-900">
                           <User size={16} className="text-gray-400 mr-2" />
-                          <span>{vehicle.owner}</span>
+                          <span>
+                            {vehicle.owner?.name ||
+                              (typeof vehicle.owner === "string"
+                                ? vehicle.owner
+                                : "Unknown Owner")}
+                          </span>
                         </div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="text-sm text-gray-900">
-                          {vehicle.lastService}
+                          {vehicle.lastService
+                            ? vehicle.lastService.slice(0, 10)
+                            : ""}
                         </div>
                         <div className="text-xs text-gray-500">
-                          Next: {vehicle.nextService}
+                          Next:{" "}
+                          {vehicle.nextService
+                            ? vehicle.nextService.slice(0, 10)
+                            : ""}
                         </div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
@@ -302,9 +326,9 @@ const Vehicles = () => {
                             <Trash2 size={16} />
                           </button>
                           <div className="relative group">
-                            <button className="text-gray-500 hover:text-gray-700">
+                            {/* <button className="text-gray-500 hover:text-gray-700">
                               <MoreVertical size={16} />
-                            </button>
+                            </button> */}
                             <div className="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg py-1 hidden group-hover:block z-10">
                               <a
                                 href="#service-history"
@@ -451,7 +475,8 @@ const Vehicles = () => {
                     <User size={20} className="text-gray-400 mr-3" />
                     <div>
                       <p className="text-sm font-medium text-gray-900">
-                        {selectedVehicleData.owner}
+                        {selectedVehicleData.owner?.name ||
+                          selectedVehicleData.owner}
                       </p>
                       <button className="mt-1 text-xs text-blue-600 hover:text-blue-500">
                         View Customer Details
@@ -557,7 +582,7 @@ const Vehicles = () => {
             </div>
 
             <form
-              className="space-y-6 pr-2 overflow-y-auto max-h-[70vh]"
+              className="space-y-6 pl-2 pr-2 overflow-y-auto max-h-[70vh]"
               onSubmit={(e) => {
                 e.preventDefault();
                 handleAddVehicle();
@@ -691,10 +716,10 @@ const Vehicles = () => {
                       <option value="">Select a customer</option>
                       {customers.map((customer) => (
                         <option
-                          key={customer.name || customer}
-                          value={customer.name || customer}
+                          key={customer._id || customer.id}
+                          value={customer.name}
                         >
-                          {customer.name || customer}
+                          {customer.name}
                         </option>
                       ))}
                     </select>
