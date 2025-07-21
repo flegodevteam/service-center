@@ -13,77 +13,126 @@ import {
   Edit,
   Trash2,
 } from "lucide-react";
+import { useContext } from "react";
+import { CustomerContext } from "../context/CustomerContext";
+import { VehicleContext } from "../context/VehicleContext";
 
-// Sample data
-const vehiclesData = [
-  {
-    id: 1,
-    make: "Toyota",
-    model: "Camry",
-    year: 2020,
-    regNumber: "ABC-123",
-    vin: "JT2BF22K1X0123456",
-    owner: "Michael Johnson",
-    lastService: "15 May 2024",
-    nextService: "15 Nov 2024",
-    status: "active",
-  },
-  {
-    id: 2,
-    make: "Honda",
-    model: "Civic",
-    year: 2019,
-    regNumber: "XYZ-789",
-    vin: "2HGFC2F52KH123456",
-    owner: "Sarah Williams",
-    lastService: "3 Jun 2024",
-    nextService: "3 Dec 2024",
-    status: "active",
-  },
-  {
-    id: 3,
-    make: "Ford",
-    model: "F-150",
-    year: 2021,
-    regNumber: "DEF-456",
-    vin: "1FTEW1EP5MFA12345",
-    owner: "David Martinez",
-    lastService: "27 Apr 2024",
-    nextService: "27 Oct 2024",
-    status: "active",
-  },
-  {
-    id: 4,
-    make: "Nissan",
-    model: "Altima",
-    year: 2018,
-    regNumber: "GHI-789",
-    vin: "1N4AL3AP2JC123456",
-    owner: "Jennifer Taylor",
-    lastService: "9 Jun 2024",
-    nextService: "9 Dec 2024",
-    status: "inactive",
-  },
-  {
-    id: 5,
-    make: "BMW",
-    model: "X5",
-    year: 2022,
-    regNumber: "JKL-012",
-    vin: "5UXCR6C54KLL12345",
-    owner: "Robert Brown",
-    lastService: "22 May 2024",
-    nextService: "22 Nov 2024",
-    status: "active",
-  },
-];
+// // Sample data
+// const vehiclesData = [
+//   {
+//     id: 1,
+//     make: "Toyota",
+//     model: "Camry",
+//     year: 2020,
+//     regNumber: "ABC-123",
+//     vin: "JT2BF22K1X0123456",
+//     owner: "Michael Johnson",
+//     lastService: "15 May 2024",
+//     nextService: "15 Nov 2024",
+//     status: "active",
+//   },
+//   {
+//     id: 2,
+//     make: "Honda",
+//     model: "Civic",
+//     year: 2019,
+//     regNumber: "XYZ-789",
+//     vin: "2HGFC2F52KH123456",
+//     owner: "Sarah Williams",
+//     lastService: "3 Jun 2024",
+//     nextService: "3 Dec 2024",
+//     status: "active",
+//   },
+//   {
+//     id: 3,
+//     make: "Ford",
+//     model: "F-150",
+//     year: 2021,
+//     regNumber: "DEF-456",
+//     vin: "1FTEW1EP5MFA12345",
+//     owner: "David Martinez",
+//     lastService: "27 Apr 2024",
+//     nextService: "27 Oct 2024",
+//     status: "active",
+//   },
+//   {
+//     id: 4,
+//     make: "Nissan",
+//     model: "Altima",
+//     year: 2018,
+//     regNumber: "GHI-789",
+//     vin: "1N4AL3AP2JC123456",
+//     owner: "Jennifer Taylor",
+//     lastService: "9 Jun 2024",
+//     nextService: "9 Dec 2024",
+//     status: "inactive",
+//   },
+// ];
 
 const Vehicles = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [isAddVehicleModalOpen, setIsAddVehicleModalOpen] = useState(false);
   const [selectedVehicle, setSelectedVehicle] = useState(null); // Removed type annotation
+  const [vehicleErrors, setVehicleErrors] = useState({});
+  const [newVehicle, setNewVehicle] = useState({
+    make: "",
+    model: "",
+    year: "",
+    regNumber: "",
+    vin: "",
+    owner: "",
+    lastService: "",
+    nextService: "",
+    status: "active",
+    notes: "",
+  });
+  const { customers } = useContext(CustomerContext);
+  const { vehicles, setVehicles } = useContext(VehicleContext); // <-- use context
 
-  const filteredVehicles = vehiclesData.filter(
+  const validateVehicle = () => {
+    const errors = {};
+    if (!newVehicle.make) errors.make = "Make is required";
+    if (!newVehicle.model) errors.model = "Model is required";
+    if (
+      !newVehicle.year ||
+      newVehicle.year < 1900 ||
+      newVehicle.year > new Date().getFullYear() + 1
+    )
+      errors.year = "Valid year is required";
+    if (!newVehicle.regNumber)
+      errors.regNumber = "Registration number is required";
+    if (!newVehicle.vin) errors.vin = "VIN is required";
+    if (!newVehicle.owner) errors.owner = "Owner is required";
+    if (!newVehicle.lastService)
+      errors.lastService = "Last Service Date is required";
+    if (!newVehicle.nextService)
+      errors.nextService = "Next Service Date is required";
+    setVehicleErrors(errors);
+    return Object.keys(errors).length === 0;
+  };
+
+  // Handle adding a new vehicle
+  const handleAddVehicle = () => {
+    if (!validateVehicle()) return;
+    const id = vehicles.length + 1;
+    setVehicles([...vehicles, { ...newVehicle, id }]);
+    setIsAddVehicleModalOpen(false);
+    setNewVehicle({
+      make: "",
+      model: "",
+      year: "",
+      regNumber: "",
+      vin: "",
+      owner: "",
+      lastService: "",
+      nextService: "",
+      status: "active",
+      notes: "",
+    });
+  };
+
+  // Filter vehicles based on search term
+  const filteredVehicles = vehicles.filter(
     (vehicle) =>
       vehicle.make.toLowerCase().includes(searchTerm.toLowerCase()) ||
       vehicle.model.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -91,7 +140,7 @@ const Vehicles = () => {
       vehicle.owner.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  const selectedVehicleData = vehiclesData.find(
+  const selectedVehicleData = vehicles.find(
     (vehicle) => vehicle.id === selectedVehicle
   );
 
@@ -297,7 +346,7 @@ const Vehicles = () => {
               <div className="text-sm text-gray-500">
                 Showing{" "}
                 <span className="font-medium">{filteredVehicles.length}</span>{" "}
-                of <span className="font-medium">{vehiclesData.length}</span>{" "}
+                of <span className="font-medium">{vehicles.length}</span>{" "}
                 vehicles
               </div>
               <div className="flex items-center space-x-2">
@@ -475,12 +524,12 @@ const Vehicles = () => {
 
       {/* Add Vehicle Modal */}
       {isAddVehicleModalOpen && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 z-40 flex items-center justify-center p-4">
+        <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
           <motion.div
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
             transition={{ duration: 0.2 }}
-            className="bg-white rounded-xl shadow-xl p-6 w-full max-w-2xl"
+            className="bg-white rounded-[5%] shadow-xl p-6 w-full max-w-lg max-h-[90vh] "
           >
             <div className="flex justify-between items-center mb-6">
               <h2 className="text-xl font-bold text-gray-800">
@@ -503,11 +552,17 @@ const Vehicles = () => {
                     strokeWidth={2}
                     d="M6 18L18 6M6 6l12 12"
                   />
-                </svg>
+                </svg>{" "}
               </button>
             </div>
 
-            <form className="space-y-6">
+            <form
+              className="space-y-6 pr-2 overflow-y-auto max-h-[70vh]"
+              onSubmit={(e) => {
+                e.preventDefault();
+                handleAddVehicle();
+              }}
+            >
               <div>
                 <h3 className="text-md font-medium text-gray-800 mb-3">
                   Vehicle Information
@@ -521,7 +576,16 @@ const Vehicles = () => {
                       type="text"
                       className="w-full rounded-lg border border-gray-300 py-2 px-3 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                       placeholder="Enter vehicle make"
+                      value={newVehicle.make}
+                      onChange={(e) =>
+                        setNewVehicle({ ...newVehicle, make: e.target.value })
+                      }
                     />
+                    {vehicleErrors.make && (
+                      <span className="text-red-500 text-xs">
+                        {vehicleErrors.make}
+                      </span>
+                    )}
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -531,7 +595,16 @@ const Vehicles = () => {
                       type="text"
                       className="w-full rounded-lg border border-gray-300 py-2 px-3 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                       placeholder="Enter vehicle model"
+                      value={newVehicle.model}
+                      onChange={(e) =>
+                        setNewVehicle({ ...newVehicle, model: e.target.value })
+                      }
                     />
+                    {vehicleErrors.model && (
+                      <span className="text-red-500 text-xs">
+                        {vehicleErrors.model}
+                      </span>
+                    )}
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -541,7 +614,16 @@ const Vehicles = () => {
                       type="number"
                       className="w-full rounded-lg border border-gray-300 py-2 px-3 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                       placeholder="Enter year"
+                      value={newVehicle.year}
+                      onChange={(e) =>
+                        setNewVehicle({ ...newVehicle, year: e.target.value })
+                      }
                     />
+                    {vehicleErrors.year && (
+                      <span className="text-red-500 text-xs">
+                        {vehicleErrors.year}
+                      </span>
+                    )}
                   </div>
                 </div>
               </div>
@@ -555,7 +637,19 @@ const Vehicles = () => {
                     type="text"
                     className="w-full rounded-lg border border-gray-300 py-2 px-3 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                     placeholder="Enter registration number"
+                    value={newVehicle.regNumber}
+                    onChange={(e) =>
+                      setNewVehicle({
+                        ...newVehicle,
+                        regNumber: e.target.value,
+                      })
+                    }
                   />
+                  {vehicleErrors.regNumber && (
+                    <span className="text-red-500 text-xs">
+                      {vehicleErrors.regNumber}
+                    </span>
+                  )}
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -565,7 +659,16 @@ const Vehicles = () => {
                     type="text"
                     className="w-full rounded-lg border border-gray-300 py-2 px-3 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                     placeholder="Enter VIN"
+                    value={newVehicle.vin}
+                    onChange={(e) =>
+                      setNewVehicle({ ...newVehicle, vin: e.target.value })
+                    }
                   />
+                  {vehicleErrors.vin && (
+                    <span className="text-red-500 text-xs">
+                      {vehicleErrors.vin}
+                    </span>
+                  )}
                 </div>
               </div>
 
@@ -578,14 +681,28 @@ const Vehicles = () => {
                     <label className="block text-sm font-medium text-gray-700 mb-1">
                       Select Owner
                     </label>
-                    <select className="w-full rounded-lg border border-gray-300 py-2 px-3 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                    <select
+                      className="w-full rounded-lg border border-gray-300 py-2 px-3 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      value={newVehicle.owner}
+                      onChange={(e) =>
+                        setNewVehicle({ ...newVehicle, owner: e.target.value })
+                      }
+                    >
                       <option value="">Select a customer</option>
-                      <option value="1">Michael Johnson</option>
-                      <option value="2">Sarah Williams</option>
-                      <option value="3">David Martinez</option>
-                      <option value="4">Jennifer Taylor</option>
-                      <option value="5">Robert Brown</option>
+                      {customers.map((customer) => (
+                        <option
+                          key={customer.name || customer}
+                          value={customer.name || customer}
+                        >
+                          {customer.name || customer}
+                        </option>
+                      ))}
                     </select>
+                    {vehicleErrors.owner && (
+                      <span className="text-red-500 text-xs">
+                        {vehicleErrors.owner}
+                      </span>
+                    )}
                     <p className="mt-2 text-sm text-gray-500">
                       Can't find the customer?{" "}
                       <a
@@ -595,6 +712,56 @@ const Vehicles = () => {
                         Add a new customer
                       </a>
                     </p>
+                  </div>
+                </div>
+              </div>
+
+              <div>
+                <h3 className="text-md font-medium text-gray-800 mb-3">
+                  Service Dates
+                </h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Last Service Date
+                    </label>
+                    <input
+                      type="date"
+                      className="w-full rounded-lg border border-gray-300 py-2 px-3 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      value={newVehicle.lastService}
+                      onChange={(e) =>
+                        setNewVehicle({
+                          ...newVehicle,
+                          lastService: e.target.value,
+                        })
+                      }
+                    />
+                    {vehicleErrors.lastService && (
+                      <span className="text-red-500 text-xs">
+                        {vehicleErrors.lastService}
+                      </span>
+                    )}
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Next Service Date
+                    </label>
+                    <input
+                      type="date"
+                      className="w-full rounded-lg border border-gray-300 py-2 px-3 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      value={newVehicle.nextService}
+                      onChange={(e) =>
+                        setNewVehicle({
+                          ...newVehicle,
+                          nextService: e.target.value,
+                        })
+                      }
+                    />
+                    {vehicleErrors.nextService && (
+                      <span className="text-red-500 text-xs">
+                        {vehicleErrors.nextService}
+                      </span>
+                    )}
                   </div>
                 </div>
               </div>
@@ -612,12 +779,16 @@ const Vehicles = () => {
                       className="w-full rounded-lg border border-gray-300 py-2 px-3 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                       rows={3}
                       placeholder="Enter any additional information about the vehicle..."
+                      value={newVehicle.notes}
+                      onChange={(e) =>
+                        setNewVehicle({ ...newVehicle, notes: e.target.value })
+                      }
                     ></textarea>
                   </div>
                 </div>
               </div>
 
-              <div className="flex justify-end space-x-3 pt-4">
+              <div className="flex justify-end space-x-3 pt-4 ">
                 <button
                   type="button"
                   onClick={() => setIsAddVehicleModalOpen(false)}
@@ -626,7 +797,7 @@ const Vehicles = () => {
                   Cancel
                 </button>
                 <button
-                  type="button"
+                  type="submit"
                   className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
                 >
                   Add Vehicle

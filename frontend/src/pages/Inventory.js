@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useContext } from "react";
 import { motion } from "framer-motion";
 import {
   Search,
@@ -6,87 +6,10 @@ import {
   Filter,
   Package,
   AlertTriangle,
-  TrendingDown,
   BarChart2,
-  ArrowUp,
-  ArrowDown,
   Truck,
-  X,
 } from "lucide-react";
-
-// Sample data
-const inventoryData = [
-  {
-    id: "P001",
-    name: "Engine Oil Filter",
-    category: "Filters",
-    stock: 45,
-    minStock: 10,
-    price: 12.99,
-    location: "A-12",
-    status: "in-stock",
-  },
-  {
-    id: "P002",
-    name: "Brake Pads (Front)",
-    category: "Brakes",
-    stock: 8,
-    minStock: 10,
-    price: 35.5,
-    location: "B-05",
-    status: "low-stock",
-  },
-  {
-    id: "P003",
-    name: "Spark Plugs",
-    category: "Ignition",
-    stock: 32,
-    minStock: 15,
-    price: 8.75,
-    location: "C-09",
-    status: "in-stock",
-  },
-  {
-    id: "P004",
-    name: "Air Filter",
-    category: "Filters",
-    stock: 16,
-    minStock: 8,
-    price: 15.25,
-    location: "A-14",
-    status: "in-stock",
-  },
-  {
-    id: "P005",
-    name: "Wiper Blades",
-    category: "Exterior",
-    stock: 0,
-    minStock: 5,
-    price: 22.0,
-    location: "D-03",
-    status: "out-of-stock",
-  },
-  {
-    id: "P006",
-    name: "Coolant 1L",
-    category: "Fluids",
-    stock: 7,
-    minStock: 10,
-    price: 9.99,
-    location: "E-02",
-    status: "low-stock",
-  },
-  {
-    id: "P007",
-    name: "Transmission Fluid",
-    category: "Fluids",
-    stock: 12,
-    minStock: 5,
-    price: 14.5,
-    location: "E-03",
-    status: "in-stock",
-  },
-];
+import InventoryContext from "../context/InventoryContext";
 
 const getStatusColor = (status) => {
   switch (status) {
@@ -104,8 +27,6 @@ const getStatusColor = (status) => {
 const Inventory = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [isAddItemModalOpen, setIsAddItemModalOpen] = useState(false);
-
-  // Form state for Add Item Modal
   const [newItem, setNewItem] = useState({
     id: "",
     name: "",
@@ -116,19 +37,42 @@ const Inventory = () => {
     location: "",
     status: "in-stock",
   });
+  const [errors, setErrors] = useState({});
+  const { inventory, addItem } = useContext(InventoryContext);
 
-  const filteredInventory = inventoryData.filter(
+  const filteredInventory = inventory.filter(
     (item) =>
       item.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
       item.id.toLowerCase().includes(searchTerm.toLowerCase()) ||
       item.category.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  const lowStockItems = inventoryData.filter(
+  const lowStockItems = inventory.filter(
     (item) => item.status === "low-stock" || item.status === "out-of-stock"
   );
 
-  // Handler for form input changes
+  // Validation
+  const validate = () => {
+    let err = {};
+    if (!newItem.id) err.id = "Item ID is required";
+    if (!newItem.name) err.name = "Name is required";
+    if (!newItem.category) err.category = "Category is required";
+    if (newItem.stock === "" || isNaN(newItem.stock) || newItem.stock < 0)
+      err.stock = "Valid stock is required";
+    if (
+      newItem.minStock === "" ||
+      isNaN(newItem.minStock) ||
+      newItem.minStock < 0
+    )
+      err.minStock = "Valid min stock is required";
+    if (newItem.price === "" || isNaN(newItem.price) || newItem.price < 0)
+      err.price = "Valid price is required";
+    if (!newItem.location) err.location = "Location is required";
+    if (!newItem.status) err.status = "Status is required";
+    setErrors(err);
+    return Object.keys(err).length === 0;
+  };
+
   const handleInputChange = (e) => {
     const { name, value } = e.target;
     setNewItem((prev) => ({
@@ -140,10 +84,10 @@ const Inventory = () => {
     }));
   };
 
-  // Handler for submitting new item (just console logs here, replace with your logic)
-  const handleAddItem = () => {
-    console.log("Adding new item:", newItem);
-    // You would add to your inventory here and reset the form & close modal
+  const handleAddItem = (e) => {
+    e.preventDefault();
+    if (!validate()) return;
+    addItem(newItem);
     setIsAddItemModalOpen(false);
     setNewItem({
       id: "",
@@ -155,6 +99,7 @@ const Inventory = () => {
       location: "",
       status: "in-stock",
     });
+    setErrors({});
   };
 
   return (
@@ -184,7 +129,7 @@ const Inventory = () => {
             <div>
               <p className="text-sm font-medium text-gray-600">Total Items</p>
               <p className="text-2xl font-bold text-gray-800">
-                {inventoryData.length}
+                {inventory.length}
               </p>
             </div>
             <div className="rounded-full p-3 bg-blue-100">
@@ -225,7 +170,7 @@ const Inventory = () => {
               <p className="text-sm font-medium text-gray-600">Total Value</p>
               <p className="text-2xl font-bold text-gray-800">
                 $
-                {inventoryData
+                {inventory
                   .reduce((acc, item) => acc + item.price * item.stock, 0)
                   .toFixed(2)}
               </p>
@@ -359,24 +304,36 @@ const Inventory = () => {
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
             exit={{ opacity: 0, scale: 0.95 }}
-            className="bg-white rounded-lg shadow-xl max-w-md w-full p-6 relative"
+            className="bg-white rounded-[5%] shadow-xl p-6 w-full max-w-lg max-h-[90vh] "
           >
-            <button
-              onClick={() => setIsAddItemModalOpen(false)}
-              className="absolute top-4 right-4 text-gray-400 hover:text-gray-600"
-              aria-label="Close modal"
-            >
-              <X size={24} />
-            </button>
-            <h2 className="text-xl font-semibold mb-4">
-              Add New Inventory Item
-            </h2>
+            <div className="flex justify-between items-center mb-6">
+              <h2 className="text-xl font-bold text-gray-800">
+                Add New Inventory Item
+              </h2>
+              <button
+                onClick={() => setIsAddItemModalOpen(false)}
+                className="text-gray-500 hover:text-gray-700"
+              >
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  className="h-6 w-6"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M6 18L18 6M6 6l12 12"
+                  />
+                </svg>
+              </button>
+            </div>
+
             <form
-              onSubmit={(e) => {
-                e.preventDefault();
-                handleAddItem();
-              }}
-              className="space-y-4"
+              onSubmit={handleAddItem}
+              className="space-y-6 pl-2 pr-2 overflow-y-auto max-h-[70vh]"
             >
               <div>
                 <label
@@ -394,6 +351,9 @@ const Inventory = () => {
                   required
                   className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
+                {errors.id && (
+                  <span className="text-red-500 text-xs">{errors.id}</span>
+                )}
               </div>
               <div>
                 <label
@@ -411,6 +371,9 @@ const Inventory = () => {
                   required
                   className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
+                {errors.name && (
+                  <span className="text-red-500 text-xs">{errors.name}</span>
+                )}
               </div>
               <div>
                 <label
@@ -428,6 +391,11 @@ const Inventory = () => {
                   required
                   className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
+                {errors.category && (
+                  <span className="text-red-500 text-xs">
+                    {errors.category}
+                  </span>
+                )}
               </div>
               <div className="flex gap-4">
                 <div className="flex-1">
@@ -447,6 +415,9 @@ const Inventory = () => {
                     required
                     className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
                   />
+                  {errors.stock && (
+                    <span className="text-red-500 text-xs">{errors.stock}</span>
+                  )}
                 </div>
                 <div className="flex-1">
                   <label
@@ -465,6 +436,11 @@ const Inventory = () => {
                     required
                     className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
                   />
+                  {errors.minStock && (
+                    <span className="text-red-500 text-xs">
+                      {errors.minStock}
+                    </span>
+                  )}
                 </div>
               </div>
               <div>
@@ -485,6 +461,9 @@ const Inventory = () => {
                   required
                   className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
+                {errors.price && (
+                  <span className="text-red-500 text-xs">{errors.price}</span>
+                )}
               </div>
               <div>
                 <label
@@ -502,6 +481,11 @@ const Inventory = () => {
                   required
                   className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
+                {errors.location && (
+                  <span className="text-red-500 text-xs">
+                    {errors.location}
+                  </span>
+                )}
               </div>
               <div>
                 <label
@@ -521,6 +505,9 @@ const Inventory = () => {
                   <option value="low-stock">Low Stock</option>
                   <option value="out-of-stock">Out of Stock</option>
                 </select>
+                {errors.status && (
+                  <span className="text-red-500 text-xs">{errors.status}</span>
+                )}
               </div>
               <div className="pt-4 flex justify-end space-x-3">
                 <button
