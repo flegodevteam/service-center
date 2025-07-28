@@ -1,4 +1,4 @@
-import React, { useState, useContext } from "react";
+import React, { useState, useContext, useEffect } from "react";
 import { motion } from "framer-motion";
 import {
   Search,
@@ -16,6 +16,7 @@ import {
 import BillingContext from "../context/BillingContext";
 import { CustomerContext } from "../context/CustomerContext";
 import { VehicleContext } from "../context/VehicleContext";
+import { API_URL } from "../api/api";
 
 const getStatusColor = (status) => {
   switch (status) {
@@ -56,19 +57,35 @@ const Billing = () => {
     paymentMethod: "Pending",
   });
   const [errors, setErrors] = useState({});
-  const { invoices, addInvoice } = useContext(BillingContext);
   const { customers } = useContext(CustomerContext);
   const { vehicles } = useContext(VehicleContext);
+  const { invoices, addInvoice, fetchInvoices, total, totalPages } =
+    useContext(BillingContext);
+  const [currentPage, setCurrentPage] = useState(1);
+  const invoicesPerPage = 5;
 
-  const filteredInvoices = invoices.filter(
-    (invoice) =>
-      invoice.id.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      invoice.customer.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      invoice.vehicle.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  useEffect(() => {
+    fetchInvoices(currentPage, invoicesPerPage);
+  }, [currentPage, invoicesPerPage, fetchInvoices]);
+
+  const filteredInvoices = invoices.filter((invoice) => {
+    const customerName =
+      typeof invoice.customer === "object" && invoice.customer !== null
+        ? invoice.customer.name
+        : invoice.customer || "";
+    const vehicleName =
+      typeof invoice.vehicle === "object" && invoice.vehicle !== null
+        ? `${invoice.vehicle.make} ${invoice.vehicle.model} (${invoice.vehicle.regNumber})`
+        : invoice.vehicle || "";
+    return (
+      (invoice.id || "").toLowerCase().includes(searchTerm.toLowerCase()) ||
+      customerName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      vehicleName.toLowerCase().includes(searchTerm.toLowerCase())
+    );
+  });
 
   const selectedInvoiceData = invoices.find(
-    (invoice) => invoice.id === selectedInvoice
+    (invoice) => (invoice._id || invoice.id) === selectedInvoice
   );
 
   // Summary
@@ -113,6 +130,44 @@ const Billing = () => {
       paymentMethod: "Pending",
     });
     setErrors({});
+  };
+
+  const [downloading, setDownloading] = useState(false);
+
+  const handleDownloadPDF = async (invoiceId) => {
+    setDownloading(true);
+    try {
+      const response = await fetch(`${API_URL}/invoices/${invoiceId}/pdf`, {
+        method: "GET",
+        headers: {
+          Accept: "application/pdf",
+        },
+      });
+
+      console.log("PDF Download response:", response.status, response.ok);
+
+      const blob = await response.blob();
+
+      // ✅ Fallback: Check content type
+      if (blob.type === "application/pdf") {
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = `invoice_${invoiceId}.pdf`;
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        window.URL.revokeObjectURL(url);
+        alert("PDF downloaded successfully!");
+      } else {
+        alert("Download failed: Received non-PDF file.");
+      }
+    } catch (err) {
+      alert("PDF download failed");
+      console.error(err);
+    } finally {
+      setDownloading(false);
+    }
   };
 
   return (
@@ -252,13 +307,17 @@ const Billing = () => {
                 <tbody className="bg-white divide-y divide-gray-200">
                   {filteredInvoices.map((invoice) => (
                     <motion.tr
-                      key={invoice.id}
+                      key={invoice._id || invoice.id}
                       initial={{ opacity: 0 }}
                       animate={{ opacity: 1 }}
                       transition={{ duration: 0.3 }}
-                      onClick={() => setSelectedInvoice(invoice.id)}
+                      onClick={() =>
+                        setSelectedInvoice(invoice._id || invoice.id)
+                      }
                       className={`hover:bg-gray-50 cursor-pointer ${
-                        selectedInvoice === invoice.id ? "bg-blue-50" : ""
+                        selectedInvoice === (invoice._id || invoice.id)
+                          ? "bg-blue-50"
+                          : ""
                       }`}
                     >
                       <td className="px-6 py-4 whitespace-nowrap">
@@ -271,17 +330,23 @@ const Billing = () => {
                               {invoice.id}
                             </div>
                             <div className="text-sm text-gray-500">
-                              {invoice.date}
+                              {invoice.date ? invoice.date.slice(0, 10) : ""}
                             </div>
                           </div>
                         </div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="text-sm font-medium text-gray-900">
-                          {invoice.customer}
+                          {typeof invoice.customer === "object" &&
+                          invoice.customer !== null
+                            ? invoice.customer.name
+                            : invoice.customer}
                         </div>
                         <div className="text-sm text-gray-500">
-                          {invoice.vehicle}
+                          {typeof invoice.vehicle === "object" &&
+                          invoice.vehicle !== null
+                            ? `${invoice.vehicle.make} ${invoice.vehicle.model} (${invoice.vehicle.regNumber})`
+                            : invoice.vehicle}
                         </div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
@@ -339,19 +404,24 @@ const Billing = () => {
 
             <div className="px-6 py-3 flex items-center justify-between border-t border-gray-200">
               <div className="text-sm text-gray-500">
-                Showing{" "}
-                <span className="font-medium">{filteredInvoices.length}</span>{" "}
-                of <span className="font-medium">{invoices.length}</span>{" "}
-                invoices
+                Showing {filteredInvoices.length} of {total} invoices
               </div>
               <div className="flex items-center space-x-2">
                 <button
-                  className="px-3 py-1 border border-gray-300 rounded text-gray-700 hover:bg-gray-50 disabled:opacity-50"
-                  disabled
+                  className="px-3 py-1 border border-gray-300 rounded text-gray-700 hover:bg-gray-50"
+                  disabled={currentPage === 1}
+                  onClick={() => setCurrentPage((prev) => prev - 1)}
                 >
                   Previous
                 </button>
-                <button className="px-3 py-1 border border-gray-300 rounded text-gray-700 hover:bg-gray-50">
+                <span className="text-sm px-2">
+                  Page {currentPage} of {totalPages}
+                </span>
+                <button
+                  className="px-3 py-1 border border-gray-300 rounded text-gray-700 hover:bg-gray-50"
+                  disabled={currentPage === totalPages || totalPages === 0}
+                  onClick={() => setCurrentPage((prev) => prev + 1)}
+                >
                   Next
                 </button>
               </div>
@@ -397,7 +467,9 @@ const Billing = () => {
                   <div className="text-right">
                     <p className="text-sm font-medium text-gray-500">Date</p>
                     <p className="text-base text-gray-900">
-                      {selectedInvoiceData.date}
+                      {selectedInvoiceData.date
+                        ? selectedInvoiceData.date.slice(0, 10)
+                        : ""}
                     </p>
                   </div>
                 </div>
@@ -407,10 +479,16 @@ const Billing = () => {
                     Customer
                   </p>
                   <p className="text-base font-medium text-gray-900">
-                    {selectedInvoiceData.customer}
+                    {typeof selectedInvoiceData.customer === "object" &&
+                    selectedInvoiceData.customer !== null
+                      ? selectedInvoiceData.customer.name
+                      : selectedInvoiceData.customer}
                   </p>
                   <p className="text-sm text-gray-600">
-                    {selectedInvoiceData.vehicle}
+                    {typeof selectedInvoiceData.vehicle === "object" &&
+                    selectedInvoiceData.vehicle !== null
+                      ? `${selectedInvoiceData.vehicle.make} ${selectedInvoiceData.vehicle.model} (${selectedInvoiceData.vehicle.regNumber})`
+                      : selectedInvoiceData.vehicle}
                   </p>
                 </div>
 
@@ -490,7 +568,9 @@ const Billing = () => {
                         <div className="flex justify-between text-sm">
                           <span className="text-gray-600">Payment Date</span>
                           <span className="text-gray-900">
-                            {selectedInvoiceData.date}
+                            {selectedInvoiceData.date
+                              ? selectedInvoiceData.date.slice(0, 10)
+                              : ""}
                           </span>
                         </div>
                       </>
@@ -499,9 +579,19 @@ const Billing = () => {
                 </div>
 
                 <div className="flex justify-between pt-4">
-                  <button className="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 flex items-center">
+                  <button
+                    className="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 flex items-center"
+                    onClick={() =>
+                      handleDownloadPDF(
+                        selectedInvoiceData._id || selectedInvoiceData.id
+                      )
+                    }
+                    disabled={downloading}
+                  >
                     <Download size={16} className="mr-2" />
-                    <span>Download PDF</span>
+                    <span>
+                      {downloading ? "Downloading..." : "Download PDF"}
+                    </span>
                   </button>
                   {selectedInvoiceData.paymentStatus === "pending" && (
                     <button className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 flex items-center">
@@ -571,8 +661,8 @@ const Billing = () => {
                 >
                   <option value="">Select a customer</option>
                   {customers.map((c) => (
-                    <option key={c.name || c} value={c.name || c}>
-                      {c.name || c}
+                    <option key={c._id} value={c._id}>
+                      {c.name}
                     </option>
                   ))}
                 </select>
@@ -595,10 +685,7 @@ const Billing = () => {
                 >
                   <option value="">Select a vehicle</option>
                   {vehicles.map((v) => (
-                    <option
-                      key={v.id || `${v.make}-${v.model}-${v.regNumber}`}
-                      value={`${v.make} ${v.model} (${v.regNumber})`}
-                    >
+                    <option key={v._id} value={v._id}>
                       {v.make} {v.model} ({v.regNumber})
                     </option>
                   ))}

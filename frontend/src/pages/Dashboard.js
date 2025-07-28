@@ -34,44 +34,45 @@ const Dashboard = () => {
   const stats = [
     {
       title: "Today's Appointments",
-      value: "5",
+      value: "12",
       icon: <Clock size={20} className="text-blue-600" />,
     },
     {
       title: "Total Customers",
-      value: "1,000",
+      value: "1,248",
       icon: <Users size={20} className="text-teal-600" />,
     },
     {
       title: "Vehicles Serviced",
-      value: "350",
+      value: "3,427",
       icon: <Car size={20} className="text-purple-600" />,
     },
     {
       title: "Revenue This Month",
-      value: "$74,300",
+      value: "$24,300",
       icon: <DollarSign size={20} className="text-green-600" />,
     },
   ];
+
   const upcomingAppointments = [
     {
       id: 1,
-      customer: "Vijay",
-      vehicle: "Suzuki Alto (WP-1234)",
+      customer: "Michael Johnson",
+      vehicle: "Toyota Camry (ABC-123)",
       time: "09:30 AM",
       service: "Oil Change",
     },
     {
       id: 2,
-      customer: "Suriya",
-      vehicle: "Toyota Prius (CP-5678)",
+      customer: "Sarah Williams",
+      vehicle: "Honda Civic (XYZ-789)",
       time: "10:45 AM",
       service: "Brake Inspection",
     },
     {
       id: 3,
-      customer: "Dhanush",
-      vehicle: "Nissan Leaf (EP-9101)",
+      customer: "David Martinez",
+      vehicle: "Ford F-150 (DEF-456)",
       time: "01:15 PM",
       service: "Tire Rotation",
     },
@@ -251,7 +252,7 @@ const Dashboard = () => {
                 <TrendingUp size={18} className="text-green-500" />
                 <span className="ml-2 text-gray-700">Daily Revenue</span>
               </div>
-              <span className="font-semibold text-gray-900">$5,850</span>
+              <span className="font-semibold text-gray-900">$1,850</span>
             </div>
 
             <div className="h-1 w-full bg-gray-200 rounded-full overflow-hidden">
@@ -266,7 +267,7 @@ const Dashboard = () => {
                 <Zap size={18} className="text-orange-500" />
                 <span className="ml-2 text-gray-700">Active Technicians</span>
               </div>
-              <span className="font-semibold text-gray-900">3/5</span>
+              <span className="font-semibold text-gray-900">4/6</span>
             </div>
 
             <div className="h-1 w-full bg-gray-200 rounded-full overflow-hidden">
@@ -281,7 +282,7 @@ const Dashboard = () => {
                 <AlertCircle size={18} className="text-red-500" />
                 <span className="ml-2 text-gray-700">Low Stock Items</span>
               </div>
-              <span className="font-semibold text-gray-900">11 items</span>
+              <span className="font-semibold text-gray-900">8 items</span>
             </div>
 
             <div className="h-1 w-full bg-gray-200 rounded-full overflow-hidden">

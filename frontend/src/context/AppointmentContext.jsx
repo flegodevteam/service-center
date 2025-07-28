@@ -1,66 +1,52 @@
-import  { createContext, useState } from "react";
+import { createContext, useState, useEffect } from "react";
+import axios from "axios";
+import { API_URL } from "../api/api";
 
 const AppointmentContext = createContext();
 
-const initialAppointments = [
-  {
-    id: 1,
-    customer: "Michael Johnson",
-    vehicle: "Toyota Camry (ABC-123)",
-    service: "Oil Change",
-    date: "2024-06-15",
-    time: "09:30 AM",
-    status: "scheduled",
-    technician: "Robert Smith",
-  },
-  {
-    id: 2,
-    customer: "Sarah Williams",
-    vehicle: "Honda Civic (XYZ-789)",
-    service: "Brake Inspection",
-    date: "2024-06-15",
-    time: "10:45 AM",
-    status: "in-progress",
-    technician: "James Wilson",
-  },
-  {
-    id: 3,
-    customer: "David Martinez",
-    vehicle: "Ford F-150 (DEF-456)",
-    service: "Tire Rotation",
-    date: "2024-06-16",
-    time: "01:15 PM",
-    status: "completed",
-    technician: "Lisa Brown",
-  },
-  {
-    id: 4,
-    customer: "Jennifer Taylor",
-    vehicle: "Nissan Altima (GHI-789)",
-    service: "AC Repair",
-    date: "2024-06-16",
-    time: "03:30 PM",
-    status: "scheduled",
-    technician: "Robert Smith",
-  },
-];
-
 export const AppointmentProvider = ({ children }) => {
-  const [appointments, setAppointments] = useState(initialAppointments);
+  const [appointments, setAppointments] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [total, setTotal] = useState(0);
+  const [totalPages, setTotalPages] = useState(1);
 
-  const addAppointment = (appointment) => {
-    setAppointments((prev) => [
-      ...prev,
-      {
-        ...appointment,
-        id: prev.length + 1,
-        status: "scheduled",
-      },
-    ]);
+  // Fetch appointments from backend
+  const fetchAppointments = async (page = 1, limit = 5) => {
+    try {
+      const res = await axios.get(
+        `${API_URL}/appointments?page=${page}&limit=${limit}`
+      );
+      setAppointments(res.data.appointments);
+      setTotal(res.data.total);
+      setTotalPages(res.data.totalPages);
+    } catch (err) {
+      console.error("Appointment fetch error", err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchAppointments();
+  }, []);
+
+  // Add appointment via API
+  const addAppointment = async (appointmentData) => {
+    const res = await axios.post(`${API_URL}/appointments`, appointmentData);
+    setAppointments((prev) => [...prev, res.data.appointment]);
   };
 
   return (
-    <AppointmentContext.Provider value={{ appointments, addAppointment }}>
+    <AppointmentContext.Provider
+      value={{
+        appointments,
+        addAppointment,
+        loading,
+        fetchAppointments,
+        total,
+        totalPages,
+      }}
+    >
       {children}
     </AppointmentContext.Provider>
   );

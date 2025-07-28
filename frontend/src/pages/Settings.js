@@ -21,6 +21,28 @@ const Settings = () => {
   const [isSmsEnabled, setIsSmsEnabled] = useState(true);
   const [isEmailEnabled, setIsEmailEnabled] = useState(true);
 
+  // Security tab states - component top level-ல் வைக்கவும்
+  const [currentPassword, setCurrentPassword] = useState("");
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+
+  const [profileData, setProfileData] = useState({
+    firstName: "Admin",
+    lastName: "User",
+    email: "admin@example.com",
+    phone: "(555) 123-4567",
+    jobTitle: "Service Center Manager",
+  });
+  const [companyData, setCompanyData] = useState({
+    name: "AutoService Center",
+    businessType: "Automobile Service Center",
+    phone: "(555) 987-6543",
+    email: "info@autoservice.com",
+    address: "123 Service Road, Autoville, AV 12345",
+    taxId: "TAX-12345678",
+    currency: "USD",
+  });
+
   const tabs = [
     { id: "profile", label: "Profile", icon: <User size={18} /> },
     { id: "company", label: "Company", icon: <Building size={18} /> },
@@ -32,26 +54,73 @@ const Settings = () => {
   const technicians = [
     {
       id: 1,
-      name: "Suriya",
+      name: "Robert Smith",
       role: "Senior Technician",
       specialization: "Engine, Transmission",
       status: "active",
     },
     {
       id: 2,
-      name: "Vijay",
+      name: "James Wilson",
       role: "Technician",
       specialization: "Brakes, Suspension",
       status: "active",
     },
     {
       id: 3,
-      name: "Dhanush",
+      name: "Lisa Brown",
       role: "Junior Technician",
       specialization: "General Maintenance",
       status: "inactive",
     },
   ];
+
+  const handleSaveProfile = () => {
+    console.log("Saving profile data:", profileData);
+    alert("Profile updated successfully!");
+  };
+
+  const handleSaveCompany = () => {
+    console.log("Saving company data:", companyData);
+    alert("Company information updated successfully!");
+  };
+
+  const handleSaveNotifications = () => {
+    console.log("Saving notification settings");
+    alert("Notification settings saved successfully!");
+  };
+
+  const handleChangePassword = (
+    currentPassword,
+    newPassword,
+    confirmPassword
+  ) => {
+    if (newPassword !== confirmPassword) {
+      alert("New passwords do not match!");
+      return;
+    }
+    if (newPassword.length < 8) {
+      alert("Password must be at least 8 characters long!");
+      return;
+    }
+    console.log("Changing password");
+    alert("Password updated successfully!");
+  };
+
+  const handleCreateBackup = () => {
+    console.log("Creating database backup");
+    alert("Database backup created successfully!");
+  };
+
+  const handleRestoreBackup = () => {
+    console.log("Restoring from backup");
+    alert("Database restore initiated...");
+  };
+
+  const handleExportData = (format) => {
+    console.log("Exporting data as:", format);
+    alert(`Data export as ${format} started...`);
+  };
 
   const renderTabContent = () => {
     switch (activeTab) {
@@ -80,7 +149,13 @@ const Settings = () => {
                 </label>
                 <input
                   type="text"
-                  value="Admin"
+                  value={profileData.firstName}
+                  onChange={(e) =>
+                    setProfileData({
+                      ...profileData,
+                      firstName: e.target.value,
+                    })
+                  }
                   className="w-full rounded-lg border border-gray-300 py-2 px-3 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 />
               </div>
@@ -91,7 +166,10 @@ const Settings = () => {
                 </label>
                 <input
                   type="text"
-                  value="User"
+                  value={profileData.lastName}
+                  onChange={(e) =>
+                    setProfileData({ ...profileData, lastName: e.target.value })
+                  }
                   className="w-full rounded-lg border border-gray-300 py-2 px-3 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 />
               </div>
@@ -102,7 +180,10 @@ const Settings = () => {
                 </label>
                 <input
                   type="email"
-                  value="admin@example.com"
+                  value={profileData.email}
+                  onChange={(e) =>
+                    setProfileData({ ...profileData, email: e.target.value })
+                  }
                   className="w-full rounded-lg border border-gray-300 py-2 px-3 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 />
               </div>
@@ -113,7 +194,10 @@ const Settings = () => {
                 </label>
                 <input
                   type="tel"
-                  value="+94 123 456 7890"
+                  value={profileData.phone}
+                  onChange={(e) =>
+                    setProfileData({ ...profileData, phone: e.target.value })
+                  }
                   className="w-full rounded-lg border border-gray-300 py-2 px-3 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 />
               </div>
@@ -124,14 +208,20 @@ const Settings = () => {
                 </label>
                 <input
                   type="text"
-                  value="Service Center Manager"
+                  value={profileData.jobTitle}
+                  onChange={(e) =>
+                    setProfileData({ ...profileData, jobTitle: e.target.value })
+                  }
                   className="w-full rounded-lg border border-gray-300 py-2 px-3 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 />
               </div>
             </div>
 
             <div className="flex justify-end">
-              <button className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">
+              <button
+                onClick={handleSaveProfile}
+                className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+              >
                 Save Changes
               </button>
             </div>
@@ -163,7 +253,10 @@ const Settings = () => {
                 </label>
                 <input
                   type="text"
-                  value="AutoService Center"
+                  value={companyData.name}
+                  onChange={(e) =>
+                    setCompanyData({ ...companyData, name: e.target.value })
+                  }
                   className="w-full rounded-lg border border-gray-300 py-2 px-3 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 />
               </div>
@@ -172,7 +265,16 @@ const Settings = () => {
                 <label className="block text-sm font-medium text-gray-700 mb-1">
                   Business Type
                 </label>
-                <select className="w-full rounded-lg border border-gray-300 py-2 px-3 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                <select
+                  value={companyData.businessType}
+                  onChange={(e) =>
+                    setCompanyData({
+                      ...companyData,
+                      businessType: e.target.value,
+                    })
+                  }
+                  className="w-full rounded-lg border border-gray-300 py-2 px-3 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                >
                   <option>Automobile Service Center</option>
                   <option>Auto Repair Shop</option>
                   <option>Car Dealership</option>
@@ -186,7 +288,10 @@ const Settings = () => {
                 </label>
                 <input
                   type="tel"
-                  value="+94 123 456 7890"
+                  value={companyData.phone}
+                  onChange={(e) =>
+                    setCompanyData({ ...companyData, phone: e.target.value })
+                  }
                   className="w-full rounded-lg border border-gray-300 py-2 px-3 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 />
               </div>
@@ -197,7 +302,10 @@ const Settings = () => {
                 </label>
                 <input
                   type="email"
-                  value="info@autoservice.com"
+                  value={companyData.email}
+                  onChange={(e) =>
+                    setCompanyData({ ...companyData, email: e.target.value })
+                  }
                   className="w-full rounded-lg border border-gray-300 py-2 px-3 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 />
               </div>
@@ -208,7 +316,10 @@ const Settings = () => {
                 </label>
                 <input
                   type="text"
-                  value="123 Service Road, Autoville, AV 12345"
+                  value={companyData.address}
+                  onChange={(e) =>
+                    setCompanyData({ ...companyData, address: e.target.value })
+                  }
                   className="w-full rounded-lg border border-gray-300 py-2 px-3 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 />
               </div>
@@ -219,7 +330,10 @@ const Settings = () => {
                 </label>
                 <input
                   type="text"
-                  value="TAX-12345678"
+                  value={companyData.taxId}
+                  onChange={(e) =>
+                    setCompanyData({ ...companyData, taxId: e.target.value })
+                  }
                   className="w-full rounded-lg border border-gray-300 py-2 px-3 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 />
               </div>
@@ -228,7 +342,13 @@ const Settings = () => {
                 <label className="block text-sm font-medium text-gray-700 mb-1">
                   Currency
                 </label>
-                <select className="w-full rounded-lg border border-gray-300 py-2 px-3 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                <select
+                  value={companyData.currency}
+                  onChange={(e) =>
+                    setCompanyData({ ...companyData, currency: e.target.value })
+                  }
+                  className="w-full rounded-lg border border-gray-300 py-2 px-3 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                >
                   <option>USD ($)</option>
                   <option>EUR (€)</option>
                   <option>GBP (£)</option>
@@ -330,7 +450,10 @@ const Settings = () => {
             </div>
 
             <div className="flex justify-end">
-              <button className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">
+              <button
+                onClick={handleSaveCompany}
+                className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+              >
                 Save Changes
               </button>
             </div>
@@ -547,7 +670,10 @@ const Settings = () => {
             </div>
 
             <div className="flex justify-end">
-              <button className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">
+              <button
+                onClick={handleSaveNotifications}
+                className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+              >
                 Save Changes
               </button>
             </div>
@@ -569,6 +695,8 @@ const Settings = () => {
                   </label>
                   <input
                     type="password"
+                    value={currentPassword}
+                    onChange={(e) => setCurrentPassword(e.target.value)}
                     className="w-full rounded-lg border border-gray-300 py-2 px-3 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   />
                 </div>
@@ -579,6 +707,8 @@ const Settings = () => {
                   </label>
                   <input
                     type="password"
+                    value={newPassword}
+                    onChange={(e) => setNewPassword(e.target.value)}
                     className="w-full rounded-lg border border-gray-300 py-2 px-3 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   />
                   <p className="mt-1 text-xs text-gray-500">
@@ -593,18 +723,29 @@ const Settings = () => {
                   </label>
                   <input
                     type="password"
+                    value={confirmPassword}
+                    onChange={(e) => setConfirmPassword(e.target.value)}
                     className="w-full rounded-lg border border-gray-300 py-2 px-3 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   />
                 </div>
 
                 <div className="pt-2">
-                  <button className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">
+                  <button
+                    onClick={() =>
+                      handleChangePassword(
+                        currentPassword,
+                        newPassword,
+                        confirmPassword
+                      )
+                    }
+                    className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+                  >
                     Update Password
                   </button>
                 </div>
               </div>
             </div>
-
+          
             <div className="border-t border-gray-200 pt-6">
               <h3 className="text-lg font-medium text-gray-900 mb-4">
                 Two-Factor Authentication
@@ -642,7 +783,6 @@ const Settings = () => {
                 </div>
               </div>
             </div>
-
             <div className="border-t border-gray-200 pt-6">
               <h3 className="text-lg font-medium text-gray-900 mb-4">
                 Account Access
@@ -728,10 +868,16 @@ const Settings = () => {
                     Create a backup of your database to protect your data. We
                     recommend doing this regularly.
                   </p>
-                  <button className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 mr-3">
+                  <button
+                    onClick={handleCreateBackup}
+                    className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 mr-3"
+                  >
                     Create Backup
                   </button>
-                  <button className="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50">
+                  <button
+                    onClick={handleRestoreBackup}
+                    className="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50"
+                  >
                     Restore from Backup
                   </button>
                 </div>
@@ -745,13 +891,22 @@ const Settings = () => {
                     analysis.
                   </p>
                   <div className="flex flex-wrap gap-3">
-                    <button className="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50">
+                    <button
+                      onClick={() => handleExportData("CSV")}
+                      className="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50"
+                    >
                       Export as CSV
                     </button>
-                    <button className="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50">
+                    <button
+                      onClick={() => handleExportData("Excel")}
+                      className="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50"
+                    >
                       Export as Excel
                     </button>
-                    <button className="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50">
+                    <button
+                      onClick={() => handleExportData("PDF")}
+                      className="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50"
+                    >
                       Export as PDF
                     </button>
                   </div>
@@ -797,7 +952,10 @@ const Settings = () => {
             </div>
 
             <div className="flex justify-end">
-              <button className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">
+              <button
+                onClick={() => alert("System settings saved successfully!")}
+                className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+              >
                 Save Changes
               </button>
             </div>

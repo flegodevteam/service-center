@@ -1,4 +1,4 @@
-import React, { useState, useContext } from "react";
+import React, { useState, useContext, useEffect } from "react";
 import { motion } from "framer-motion";
 import {
   Search,
@@ -33,7 +33,16 @@ const JobCards = () => {
   const [errors, setErrors] = useState({});
   const { customers } = useContext(CustomerContext);
   const { vehicles } = useContext(VehicleContext);
-  const { jobCards, addJobCard } = useContext(JobCardsContext);
+  const { jobCards, addJobCard, fetchJobCards, total, totalPages } =
+    useContext(JobCardsContext);
+  const [currentPage, setCurrentPage] = useState(1);
+  const jobCardsPerPage = 5;
+
+  useEffect(() => {
+    fetchJobCards(currentPage, jobCardsPerPage);
+  }, [currentPage, jobCardsPerPage, fetchJobCards]);
+
+  const [isInvoiceModalOpen, setIsInvoiceModalOpen] = useState(false);
 
   // Validate form
   const validate = () => {
@@ -64,6 +73,7 @@ const JobCards = () => {
       totalAmount: "",
     });
     setErrors({});
+    fetchJobCards(currentPage, jobCardsPerPage);
   };
 
   const getStatusColor = (status) => {
@@ -96,15 +106,25 @@ const JobCards = () => {
     }
   };
 
-  const filteredJobCards = jobCards.filter(
-    (jobCard) =>
-      jobCard.id.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      jobCard.customer.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      jobCard.vehicle.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  // Filter job cards based on search term (without typeof)
+  const filteredJobCards = jobCards.filter((jobCard) => {
+    const customerName = jobCard.customer?.name || jobCard.customer || "";
+    const vehicle = jobCard.vehicle || {};
+    const vehicleMake = vehicle.make || "";
+    const vehicleModel = vehicle.model || "";
+    const vehicleRegNumber = vehicle.regNumber || "";
+    const vehicleText = `${vehicleMake} ${vehicleModel} ${vehicleRegNumber}`;
 
+    return (
+      (jobCard.id || "").toLowerCase().includes(searchTerm.toLowerCase()) ||
+      customerName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      vehicleText.toLowerCase().includes(searchTerm.toLowerCase())
+    );
+  });
+
+  // Find selected job card data
   const selectedJobCardData = jobCards.find(
-    (jobCard) => jobCard.id === selectedJobCard
+    (jobCard) => (jobCard._id || jobCard.id) === selectedJobCard
   );
 
   return (
@@ -147,9 +167,9 @@ const JobCards = () => {
                   }
                 >
                   <option value="">Select</option>
-                  {customers.map((c, i) => (
-                    <option key={i} value={c.name ? c.name : c}>
-                      {c.name ? c.name : c}
+                  {customers.map((c) => (
+                    <option key={c._id} value={c._id}>
+                      {c.name}
                     </option>
                   ))}
                 </select>
@@ -169,11 +189,8 @@ const JobCards = () => {
                   }
                 >
                   <option value="">Select</option>
-                  {vehicles.map((v, i) => (
-                    <option
-                      key={i}
-                      value={`${v.make} ${v.model} (${v.regNumber})`}
-                    >
+                  {vehicles.map((v) => (
+                    <option key={v._id} value={v._id}>
                       {v.make} {v.model} ({v.regNumber})
                     </option>
                   ))}
@@ -350,13 +367,17 @@ const JobCards = () => {
                 <tbody className="bg-white divide-y divide-gray-200">
                   {filteredJobCards.map((jobCard) => (
                     <motion.tr
-                      key={jobCard.id}
+                      key={jobCard._id || jobCard.id}
                       initial={{ opacity: 0 }}
                       animate={{ opacity: 1 }}
                       transition={{ duration: 0.3 }}
-                      onClick={() => setSelectedJobCard(jobCard.id)}
+                      onClick={() =>
+                        setSelectedJobCard(jobCard._id || jobCard.id)
+                      }
                       className={`hover:bg-gray-50 cursor-pointer ${
-                        selectedJobCard === jobCard.id ? "bg-blue-50" : ""
+                        selectedJobCard === (jobCard._id || jobCard.id)
+                          ? "bg-blue-50"
+                          : ""
                       }`}
                     >
                       <td className="px-6 py-4 whitespace-nowrap">
@@ -369,7 +390,7 @@ const JobCards = () => {
                               {jobCard.id}
                             </div>
                             <div className="text-sm text-gray-500">
-                              {jobCard.date}
+                              {jobCard.date ? jobCard.date.slice(0, 10) : ""}
                             </div>
                           </div>
                         </div>
@@ -377,13 +398,20 @@ const JobCards = () => {
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="flex flex-col">
                           <div className="text-sm font-medium text-gray-900">
-                            {jobCard.customer}
+                            {typeof jobCard.customer === "object" &&
+                            jobCard.customer !== null
+                              ? jobCard.customer.name
+                              : jobCard.customer}
                           </div>
                           <div className="text-sm text-gray-500">
-                            {jobCard.vehicle}
+                            {typeof jobCard.vehicle === "object" &&
+                            jobCard.vehicle !== null
+                              ? `${jobCard.vehicle.make} ${jobCard.vehicle.model} (${jobCard.vehicle.regNumber})`
+                              : jobCard.vehicle}
                           </div>
                         </div>
                       </td>
+
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="flex flex-wrap gap-1">
                           {jobCard.services.map((service, index) => (
@@ -428,19 +456,24 @@ const JobCards = () => {
 
             <div className="px-6 py-3 flex items-center justify-between border-t border-gray-200">
               <div className="text-sm text-gray-500">
-                Showing{" "}
-                <span className="font-medium">{filteredJobCards.length}</span>{" "}
-                of <span className="font-medium">{jobCards.length}</span> job
-                cards
+                Showing {filteredJobCards.length} of {total} job cards
               </div>
               <div className="flex items-center space-x-2">
                 <button
-                  className="px-3 py-1 border border-gray-300 rounded text-gray-700 hover:bg-gray-50 disabled:opacity-50"
-                  disabled
+                  className="px-3 py-1 border border-gray-300 rounded text-gray-700 hover:bg-gray-50"
+                  disabled={currentPage === 1}
+                  onClick={() => setCurrentPage((prev) => prev - 1)}
                 >
                   Previous
                 </button>
-                <button className="px-3 py-1 border border-gray-300 rounded text-gray-700 hover:bg-gray-50">
+                <span className="text-sm px-2">
+                  Page {currentPage} of {totalPages}
+                </span>
+                <button
+                  className="px-3 py-1 border border-gray-300 rounded text-gray-700 hover:bg-gray-50"
+                  disabled={currentPage === totalPages || totalPages === 0}
+                  onClick={() => setCurrentPage((prev) => prev + 1)}
+                >
                   Next
                 </button>
               </div>
@@ -485,7 +518,9 @@ const JobCards = () => {
                     <div className="flex items-center">
                       <Calendar size={16} className="text-gray-400 mr-2" />
                       <span className="text-sm text-gray-700">
-                        {selectedJobCardData.date}
+                        {selectedJobCardData.date
+                          ? selectedJobCardData.date.slice(0, 10)
+                          : ""}
                       </span>
                     </div>
                   </div>
@@ -495,17 +530,24 @@ const JobCards = () => {
                   <h3 className="text-sm font-medium text-gray-500 mb-2">
                     Customer & Vehicle
                   </h3>
+
                   <div className="bg-gray-50 rounded-lg p-4">
                     <div className="flex items-center mb-2">
                       <User size={16} className="text-gray-400 mr-2" />
                       <span className="text-sm font-medium text-gray-700">
-                        {selectedJobCardData.customer}
+                        {typeof selectedJobCardData.customer === "object" &&
+                        selectedJobCardData.customer !== null
+                          ? selectedJobCardData.customer.name
+                          : selectedJobCardData.customer}
                       </span>
                     </div>
                     <div className="flex items-center">
                       <Car size={16} className="text-gray-400 mr-2" />
                       <span className="text-sm text-gray-700">
-                        {selectedJobCardData.vehicle}
+                        {typeof selectedJobCardData.vehicle === "object" &&
+                        selectedJobCardData.vehicle !== null
+                          ? `${selectedJobCardData.vehicle.make} ${selectedJobCardData.vehicle.model} (${selectedJobCardData.vehicle.regNumber})`
+                          : selectedJobCardData.vehicle}
                       </span>
                     </div>
                   </div>

@@ -1,8 +1,11 @@
 import React from "react";
 import { NavLink } from "react-router-dom";
 import { LayoutDashboard, Users, Car, Calendar, Menu } from "lucide-react";
+import { useAuth } from "../../context/AuthContext";
 
 const MobileNavigation = () => {
+  const { user } = useAuth();
+
   // Define navigation items with their required roles
   const allNavItems = [
     {
@@ -39,7 +42,7 @@ const MobileNavigation = () => {
 
   // Filter navigation items based on user role
   const navItems = allNavItems.filter(
-    (item) => item.roles.includes("admin") // or "manager", etc.
+    (item) => user && item.roles.includes(user.role)
   );
 
   return (

@@ -1,92 +1,39 @@
-import { createContext, useState } from "react";
+import { createContext, useState, useEffect } from "react";
+import axios from "axios";
+import { API_URL } from "../api/api";
 
 const InventoryContext = createContext();
 
-const initialInventory = [
-  {
-    id: "P001",
-    name: "Engine Oil Filter",
-    category: "Filters",
-    stock: 45,
-    minStock: 10,
-    price: 12.99,
-    location: "A-12",
-    status: "in-stock",
-  },
-  {
-    id: "P002",
-    name: "Brake Pads (Front)",
-    category: "Brakes",
-    stock: 8,
-    minStock: 10,
-    price: 35.5,
-    location: "B-05",
-    status: "low-stock",
-  },
-  {
-    id: "P003",
-    name: "Spark Plugs",
-    category: "Ignition",
-    stock: 32,
-    minStock: 15,
-    price: 8.75,
-    location: "C-09",
-    status: "in-stock",
-  },
-  {
-    id: "P004",
-    name: "Air Filter",
-    category: "Filters",
-    stock: 16,
-    minStock: 8,
-    price: 15.25,
-    location: "A-14",
-    status: "in-stock",
-  },
-  {
-    id: "P005",
-    name: "Wiper Blades",
-    category: "Exterior",
-    stock: 0,
-    minStock: 5,
-    price: 22.0,
-    location: "D-03",
-    status: "out-of-stock",
-  },
-  {
-    id: "P006",
-    name: "Coolant 1L",
-    category: "Fluids",
-    stock: 7,
-    minStock: 10,
-    price: 9.99,
-    location: "E-02",
-    status: "low-stock",
-  },
-  {
-    id: "P007",
-    name: "Transmission Fluid",
-    category: "Fluids",
-    stock: 12,
-    minStock: 5,
-    price: 14.5,
-    location: "E-03",
-    status: "in-stock",
-  },
-];
-
 export const InventoryProvider = ({ children }) => {
-  const [inventory, setInventory] = useState(initialInventory);
+  const [inventory, setInventory] = useState([]);
+  const [loading, setLoading] = useState(true);
 
-  const addItem = (item) => {
-    setInventory((prev) => [
-      { ...item, price: parseFloat(item.price), stock: Number(item.stock), minStock: Number(item.minStock) },
-      ...prev,
-    ]);
+  // Fetch inventory from backend
+  useEffect(() => {
+    const fetchInventory = async () => {
+      try {
+        const res = await axios.get(`${API_URL}/inventory`);
+        setInventory(res.data.items);
+      } catch (err) {
+        console.error("Inventory fetch error", err);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchInventory();
+  }, []);
+
+  // Add inventory item via API
+  const addItem = async (itemData) => {
+    itemData.price = parseFloat(itemData.price);
+    itemData.stock = Number(itemData.stock);
+    itemData.minStock = Number(itemData.minStock);
+    const res = await axios.post(`${API_URL}/inventory`, itemData);
+    setInventory((prev) => [...prev, res.data.item]);
   };
 
   return (
-    <InventoryContext.Provider value={{ inventory, addItem }}>
+    <InventoryContext.Provider value={{ inventory, addItem, loading }}>
       {children}
     </InventoryContext.Provider>
   );

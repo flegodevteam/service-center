@@ -1,4 +1,4 @@
-import React, { useState, useContext } from "react";
+import React, { useState, useContext, useEffect } from "react";
 import { motion } from "framer-motion";
 import {
   Search,
@@ -24,7 +24,14 @@ const Appointments = () => {
     useState(false);
   const { customers } = useContext(CustomerContext);
   const { vehicles } = useContext(VehicleContext);
-  const { appointments, addAppointment } = useContext(AppointmentContext);
+  const { appointments, addAppointment, fetchAppointments, total, totalPages } =
+    useContext(AppointmentContext);
+  const [currentPage, setCurrentPage] = useState(1);
+  const appointmentsPerPage = 5;
+
+  useEffect(() => {
+    fetchAppointments(currentPage, appointmentsPerPage);
+  }, [currentPage, appointmentsPerPage, fetchAppointments]);
 
   const [appointmentForm, setAppointmentForm] = useState({
     customer: "",
@@ -89,13 +96,23 @@ const Appointments = () => {
     }
   };
 
-  const filteredAppointments = appointments.filter(
-    (appointment) =>
-      appointment.customer.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      appointment.vehicle.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      appointment.service.toLowerCase().includes(searchTerm.toLowerCase())
-  );
-
+  const filteredAppointments = appointments.filter((appointment) => {
+    const customerName =
+      typeof appointment.customer === "object" && appointment.customer !== null
+        ? appointment.customer.name
+        : appointment.customer || "";
+    const vehicleName =
+      typeof appointment.vehicle === "object" && appointment.vehicle !== null
+        ? `${appointment.vehicle.make} ${appointment.vehicle.model} (${appointment.vehicle.regNumber})`
+        : appointment.vehicle || "";
+    return (
+      customerName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      vehicleName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (appointment.service || "")
+        .toLowerCase()
+        .includes(searchTerm.toLowerCase())
+    );
+  });
   return (
     <div className="space-y-6">
       <motion.div
@@ -227,7 +244,10 @@ const Appointments = () => {
                             size={14}
                             className="text-gray-400 mr-1"
                           />
-                          {appointment.date}
+
+                          {appointment.date
+                            ? appointment.date.slice(0, 10)
+                            : ""}
                         </div>
                         <div className="text-sm text-gray-500 flex items-center mt-1">
                           <Clock size={14} className="text-gray-400 mr-1" />
@@ -239,14 +259,22 @@ const Appointments = () => {
                       <div className="flex flex-col">
                         <div className="text-sm font-medium text-gray-900 flex items-center">
                           <User size={14} className="text-gray-400 mr-1" />
-                          {appointment.customer}
+                          {/* Fix: Only show name if object and not null */}
+                          {typeof appointment.customer === "object" &&
+                          appointment.customer !== null
+                            ? appointment.customer.name
+                            : appointment.customer || ""}
                         </div>
                         <div className="text-sm text-gray-500 flex items-center mt-1">
                           <Car size={14} className="text-gray-400 mr-1" />
-                          {appointment.vehicle}
+                          {typeof appointment.vehicle === "object" &&
+                          appointment.vehicle !== null
+                            ? `${appointment.vehicle.make} ${appointment.vehicle.model} (${appointment.vehicle.regNumber})`
+                            : appointment.vehicle || ""}
                         </div>
                       </div>
                     </td>
+
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="flex items-center text-sm text-gray-900">
                         <Wrench size={14} className="text-gray-400 mr-1" />
@@ -299,19 +327,24 @@ const Appointments = () => {
 
           <div className="px-6 py-3 flex items-center justify-between border-t border-gray-200">
             <div className="text-sm text-gray-500">
-              Showing{" "}
-              <span className="font-medium">{filteredAppointments.length}</span>{" "}
-              of <span className="font-medium">{appointments.length}</span>{" "}
-              appointments
+              Showing {filteredAppointments.length} of {total} appointments
             </div>
             <div className="flex items-center space-x-2">
               <button
-                className="px-3 py-1 border border-gray-300 rounded text-gray-700 hover:bg-gray-50 disabled:opacity-50"
-                disabled
+                className="px-3 py-1 border border-gray-300 rounded text-gray-700 hover:bg-gray-50"
+                disabled={currentPage === 1}
+                onClick={() => setCurrentPage((prev) => prev - 1)}
               >
                 Previous
               </button>
-              <button className="px-3 py-1 border border-gray-300 rounded text-gray-700 hover:bg-gray-50">
+              <span className="text-sm px-2">
+                Page {currentPage} of {totalPages}
+              </span>
+              <button
+                className="px-3 py-1 border border-gray-300 rounded text-gray-700 hover:bg-gray-50"
+                disabled={currentPage === totalPages || totalPages === 0}
+                onClick={() => setCurrentPage((prev) => prev + 1)}
+              >
                 Next
               </button>
             </div>
@@ -462,7 +495,6 @@ const Appointments = () => {
                     Customer
                   </label>
                   <select
-                    className="w-full rounded-lg border border-gray-300 py-2 px-3 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                     value={appointmentForm.customer}
                     onChange={(e) =>
                       setAppointmentForm({
@@ -473,8 +505,8 @@ const Appointments = () => {
                   >
                     <option value="">Select a customer</option>
                     {customers.map((c) => (
-                      <option key={c.name || c} value={c.name || c}>
-                        {c.name || c}
+                      <option key={c._id} value={c._id}>
+                        {c.name}
                       </option>
                     ))}
                   </select>
@@ -490,7 +522,6 @@ const Appointments = () => {
                     Vehicle
                   </label>
                   <select
-                    className="w-full rounded-lg border border-gray-300 py-2 px-3 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                     value={appointmentForm.vehicle}
                     onChange={(e) =>
                       setAppointmentForm({
@@ -501,10 +532,7 @@ const Appointments = () => {
                   >
                     <option value="">Select a vehicle</option>
                     {vehicles.map((v) => (
-                      <option
-                        key={v.id}
-                        value={`${v.make} ${v.model} (${v.regNumber})`}
-                      >
+                      <option key={v._id} value={v._id}>
                         {v.make} {v.model} ({v.regNumber})
                       </option>
                     ))}
@@ -560,12 +588,15 @@ const Appointments = () => {
                   )}
                 </div>
               </div>
+              {/* Service Type input */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
                   Service Type
                 </label>
-                <select
+                <input
+                  type="text"
                   className="w-full rounded-lg border border-gray-300 py-2 px-3 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  placeholder="Enter service type"
                   value={appointmentForm.service}
                   onChange={(e) =>
                     setAppointmentForm({
@@ -573,25 +604,22 @@ const Appointments = () => {
                       service: e.target.value,
                     })
                   }
-                >
-                  <option value="">Select a service</option>
-                  <option value="Oil Change">Oil Change</option>
-                  <option value="Brake Inspection">Brake Inspection</option>
-                  <option value="Tire Rotation">Tire Rotation</option>
-                  <option value="Full Service">Full Service</option>
-                </select>
+                />
                 {appointmentErrors.service && (
                   <span className="text-red-500 text-xs">
                     {appointmentErrors.service}
                   </span>
                 )}
               </div>
+              {/* Technician input */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
                   Assign Technician
                 </label>
-                <select
+                <input
+                  type="text"
                   className="w-full rounded-lg border border-gray-300 py-2 px-3 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  placeholder="Enter technician name"
                   value={appointmentForm.technician}
                   onChange={(e) =>
                     setAppointmentForm({
@@ -599,12 +627,7 @@ const Appointments = () => {
                       technician: e.target.value,
                     })
                   }
-                >
-                  <option value="">Select a technician</option>
-                  <option value="Robert Smith">Robert Smith</option>
-                  <option value="James Wilson">James Wilson</option>
-                  <option value="Lisa Brown">Lisa Brown</option>
-                </select>
+                />
                 {appointmentErrors.technician && (
                   <span className="text-red-500 text-xs">
                     {appointmentErrors.technician}
