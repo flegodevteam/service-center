@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import {
   Download,
@@ -23,25 +23,8 @@ import {
   Pie,
   Cell,
 } from "recharts";
-
-// Sample data for charts
-const revenueData = [
-  { month: "Jan", revenue: 14500 },
-  { month: "Feb", revenue: 16800 },
-  { month: "Mar", revenue: 18200 },
-  { month: "Apr", revenue: 17500 },
-  { month: "May", revenue: 19200 },
-  { month: "Jun", revenue: 20500 },
-];
-
-const serviceTypeData = [
-  { name: "Oil Change", value: 35 },
-  { name: "Brake Service", value: 20 },
-  { name: "Tire Service", value: 15 },
-  { name: "Engine Repair", value: 10 },
-  { name: "AC Service", value: 8 },
-  { name: "Other", value: 12 },
-];
+import axios from "axios";
+import { API_URL } from "../api/api";
 
 const COLORS = [
   "#0088FE",
@@ -55,6 +38,35 @@ const COLORS = [
 const Reports = () => {
   const [reportType, setReportType] = useState("revenue");
   const [dateRange, setDateRange] = useState("month");
+
+  // State for backend data
+  const [monthlyRevenue, setMonthlyRevenue] = useState([]);
+  const [serviceStats, setServiceStats] = useState([]);
+
+  // Fetch data from backend
+  useEffect(() => {
+    // Monthly Revenue
+    axios.get(`${API_URL}/reports/monthly-revenue`).then((res) => {
+      setMonthlyRevenue(
+        res.data.data.map((d) => ({
+          month: d._id,
+          revenue: d.revenue,
+        }))
+      );
+    });
+    // Service Stats (for Pie & Table)
+    axios.get(`${API_URL}/reports/service-stats`).then((res) => {
+      setServiceStats(
+        res.data.data.map((d) => ({
+          name: d._id,
+          value: d.jobs, // For PieChart
+          jobs: d.jobs,
+          revenue: d.revenue,
+          avgValue: d.jobs ? d.revenue / d.jobs : 0,
+        }))
+      );
+    });
+  }, []);
 
   const getReportTitle = () => {
     switch (reportType) {
@@ -118,7 +130,6 @@ const Reports = () => {
                 <span>Report Type</span>
                 <ChevronDown size={16} className="ml-2" />
               </button>
-
               <div className="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg py-1 hidden group-hover:block z-10">
                 <button
                   onClick={() => setReportType("revenue")}
@@ -169,7 +180,6 @@ const Reports = () => {
                 <span>Date Range</span>
                 <ChevronDown size={16} className="ml-2" />
               </button>
-
               <div className="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg py-1 hidden group-hover:block z-10">
                 <button
                   onClick={() => setDateRange("week")}
@@ -248,17 +258,18 @@ const Reports = () => {
                   <p className="text-sm font-medium text-gray-600">
                     Total Revenue
                   </p>
-                  <p className="text-2xl font-bold text-gray-800">$106,700</p>
+                  <p className="text-2xl font-bold text-gray-800">
+                    $
+                    {monthlyRevenue
+                      .reduce((sum, d) => sum + d.revenue, 0)
+                      .toLocaleString()}
+                  </p>
                 </div>
                 <div className="rounded-full p-3 bg-blue-100">
                   <DollarSign size={20} className="text-blue-700" />
                 </div>
               </div>
-              <div className="flex items-center mt-2 text-sm">
-                <TrendingUp size={16} className="text-green-500 mr-1" />
-                <span className="text-green-500 font-medium">+12.5%</span>
-                <span className="text-gray-500 ml-1">vs last period</span>
-              </div>
+              {/* Growth/Comparison can be calculated if needed */}
             </motion.div>
 
             <motion.div
@@ -272,16 +283,19 @@ const Reports = () => {
                   <p className="text-sm font-medium text-gray-600">
                     Average Job Value
                   </p>
-                  <p className="text-2xl font-bold text-gray-800">$185.50</p>
+                  <p className="text-2xl font-bold text-gray-800">
+                    $
+                    {serviceStats.length > 0
+                      ? (
+                          serviceStats.reduce((sum, s) => sum + s.revenue, 0) /
+                          serviceStats.reduce((sum, s) => sum + s.jobs, 0)
+                        ).toFixed(2)
+                      : "0.00"}
+                  </p>
                 </div>
                 <div className="rounded-full p-3 bg-green-100">
                   <BarChart2 size={20} className="text-green-700" />
                 </div>
-              </div>
-              <div className="flex items-center mt-2 text-sm">
-                <TrendingUp size={16} className="text-green-500 mr-1" />
-                <span className="text-green-500 font-medium">+5.2%</span>
-                <span className="text-gray-500 ml-1">vs last period</span>
               </div>
             </motion.div>
 
@@ -296,19 +310,17 @@ const Reports = () => {
                   <p className="text-sm font-medium text-gray-600">
                     Jobs Completed
                   </p>
-                  <p className="text-2xl font-bold text-gray-800">576</p>
+                  <p className="text-2xl font-bold text-gray-800">
+                    {serviceStats.reduce((sum, s) => sum + s.jobs, 0)}
+                  </p>
                 </div>
                 <div className="rounded-full p-3 bg-purple-100">
                   <FileText size={20} className="text-purple-700" />
                 </div>
               </div>
-              <div className="flex items-center mt-2 text-sm">
-                <TrendingUp size={16} className="text-green-500 mr-1" />
-                <span className="text-green-500 font-medium">+8.7%</span>
-                <span className="text-gray-500 ml-1">vs last period</span>
-              </div>
             </motion.div>
 
+            {/* New Customers card - implement if you have customer data */}
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
@@ -320,16 +332,11 @@ const Reports = () => {
                   <p className="text-sm font-medium text-gray-600">
                     New Customers
                   </p>
-                  <p className="text-2xl font-bold text-gray-800">142</p>
+                  <p className="text-2xl font-bold text-gray-800">-</p>
                 </div>
                 <div className="rounded-full p-3 bg-yellow-100">
                   <LineChart size={20} className="text-yellow-700" />
                 </div>
-              </div>
-              <div className="flex items-center mt-2 text-sm">
-                <TrendingUp size={16} className="text-green-500 mr-1" />
-                <span className="text-green-500 font-medium">+15.3%</span>
-                <span className="text-gray-500 ml-1">vs last period</span>
               </div>
             </motion.div>
           </div>
@@ -347,7 +354,7 @@ const Reports = () => {
               </h3>
               <div className="h-80">
                 <ResponsiveContainer width="100%" height="100%">
-                  <BarChart data={revenueData}>
+                  <BarChart data={monthlyRevenue}>
                     <CartesianGrid strokeDasharray="3 3" />
                     <XAxis dataKey="month" />
                     <YAxis />
@@ -367,11 +374,11 @@ const Reports = () => {
               <h3 className="text-lg font-semibold text-gray-800 mb-4">
                 Service Distribution
               </h3>
-              <div className="h-80 " >
+              <div className="h-80 ">
                 <ResponsiveContainer width="150%" height="100%">
                   <RechartsPieChart>
                     <Pie
-                      data={serviceTypeData}
+                      data={serviceStats}
                       cx="50%"
                       cy="50%"
                       labelLine={false}
@@ -382,7 +389,7 @@ const Reports = () => {
                         `${name} ${(percent * 100).toFixed(0)}%`
                       }
                     >
-                      {serviceTypeData.map((_, index) => (
+                      {serviceStats.map((_, index) => (
                         <Cell
                           key={`cell-${index}`}
                           fill={COLORS[index % COLORS.length]}
@@ -447,116 +454,34 @@ const Reports = () => {
                   </tr>
                 </thead>
                 <tbody className="bg-white divide-y divide-gray-200">
-                  <tr>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm font-medium text-gray-900">
-                        Oil Change
-                      </div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm text-gray-900">215</div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm text-gray-900">$10,750</div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm text-gray-900">$50.00</div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm text-green-600 flex items-center">
-                        <TrendingUp size={16} className="mr-1" />
-                        12.5%
-                      </div>
-                    </td>
-                  </tr>
-                  <tr>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm font-medium text-gray-900">
-                        Brake Service
-                      </div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm text-gray-900">98</div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm text-gray-900">$19,600</div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm text-gray-900">$200.00</div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm text-green-600 flex items-center">
-                        <TrendingUp size={16} className="mr-1" />
-                        8.2%
-                      </div>
-                    </td>
-                  </tr>
-                  <tr>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm font-medium text-gray-900">
-                        Tire Service
-                      </div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm text-gray-900">87</div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm text-gray-900">$13,050</div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm text-gray-900">$150.00</div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm text-green-600 flex items-center">
-                        <TrendingUp size={16} className="mr-1" />
-                        15.7%
-                      </div>
-                    </td>
-                  </tr>
-                  <tr>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm font-medium text-gray-900">
-                        Engine Repair
-                      </div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm text-gray-900">42</div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm text-gray-900">$31,500</div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm text-gray-900">$750.00</div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm text-green-600 flex items-center">
-                        <TrendingUp size={16} className="mr-1" />
-                        5.3%
-                      </div>
-                    </td>
-                  </tr>
-                  <tr>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm font-medium text-gray-900">
-                        AC Service
-                      </div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm text-gray-900">36</div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm text-gray-900">$9,000</div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm text-gray-900">$250.00</div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm text-green-600 flex items-center">
-                        <TrendingUp size={16} className="mr-1" />
-                        18.9%
-                      </div>
-                    </td>
-                  </tr>
+                  {serviceStats.map((s) => (
+                    <tr key={s.name}>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div className="text-sm font-medium text-gray-900">
+                          {s.name}
+                        </div>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div className="text-sm text-gray-900">{s.jobs}</div>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div className="text-sm text-gray-900">
+                          ${s.revenue.toFixed(2)}
+                        </div>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div className="text-sm text-gray-900">
+                          ${s.avgValue.toFixed(2)}
+                        </div>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div className="text-sm text-green-600 flex items-center">
+                          <TrendingUp size={16} className="mr-1" />
+                          {/* Growth calculation can be added */}
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
                 </tbody>
               </table>
             </div>

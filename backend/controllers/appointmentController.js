@@ -39,3 +39,42 @@ exports.getAppointments = async (req, res, next) => {
     next(err);
   }
 };
+
+// Get single appointment by ID
+exports.getAppointmentById = async (req, res, next) => {
+  try {
+    const appointment = await Appointment.findById(req.params.id)
+      .populate("customer", "name email phone")
+      .populate("vehicle", "make model regNumber year vin");
+    if (!appointment) {
+      return res
+        .status(404)
+        .json({ success: false, message: "Appointment not found" });
+    }
+    res.json({ success: true, appointment });
+  } catch (err) {
+    next(err);
+  }
+};
+
+// Update appointment status
+exports.updateAppointmentStatus = async (req, res, next) => {
+  try {
+    const { status } = req.body;
+    const appointment = await Appointment.findByIdAndUpdate(
+      req.params.id,
+      { status },
+      { new: true }
+    )
+      .populate("customer", "name email phone")
+      .populate("vehicle", "make model regNumber");
+    if (!appointment) {
+      return res
+        .status(404)
+        .json({ success: false, message: "Appointment not found" });
+    }
+    res.json({ success: true, appointment });
+  } catch (err) {
+    next(err);
+  }
+};

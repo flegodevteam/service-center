@@ -16,6 +16,7 @@ import {
 import { useContext } from "react";
 import { CustomerContext } from "../context/CustomerContext";
 import { VehicleContext } from "../context/VehicleContext";
+import { useLocation } from "react-router-dom";
 
 const Vehicles = () => {
   const [searchTerm, setSearchTerm] = useState("");
@@ -34,7 +35,7 @@ const Vehicles = () => {
     status: "active",
     notes: "",
   });
-  const { customers } = useContext(CustomerContext);
+  const { customers, fetchAllCustomers } = useContext(CustomerContext);
   const {
     vehicles,
     setVehicles,
@@ -51,10 +52,22 @@ const Vehicles = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const vehiclesPerPage = 5;
   const currentVehicles = vehicles;
+  const location = useLocation();
+
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    if (params.get("add") === "true") {
+      setIsAddVehicleModalOpen(true);
+    }
+  }, [location.search]);
 
   useEffect(() => {
     fetchVehicles(currentPage, vehiclesPerPage);
   }, [currentPage, vehiclesPerPage, fetchVehicles]);
+
+  useEffect(() => {
+    fetchAllCustomers();
+  }, [fetchAllCustomers]);
 
   const validateVehicle = () => {
     const errors = {};

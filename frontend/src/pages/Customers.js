@@ -13,8 +13,10 @@ import {
 } from "lucide-react";
 import { CustomerContext } from "../context/CustomerContext";
 import { useContext } from "react";
+import { useLocation } from "react-router-dom";
 
 const Customers = () => {
+  const location = useLocation();
   const [searchTerm, setSearchTerm] = useState("");
   const [isAddCustomerModalOpen, setIsAddCustomerModalOpen] = useState(false);
   const {
@@ -37,6 +39,13 @@ const Customers = () => {
   useEffect(() => {
     fetchCustomers(currentPage, customersPerPage);
   }, [currentPage, customersPerPage, fetchCustomers]);
+
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    if (params.get("add") === "true") {
+      setIsAddCustomerModalOpen(true);
+    }
+  }, [location.search]);
 
   const [newCustomer, setNewCustomer] = useState({
     name: "",

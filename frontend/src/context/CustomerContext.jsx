@@ -50,18 +50,28 @@ export const CustomerProvider = ({ children }) => {
     setCustomers((prev) => prev.filter((c) => c._id !== customerId));
   };
 
+  const fetchAllCustomers = async () => {
+    try {
+      const res = await axios.get(`${API_URL}/customers?limit=1000`);
+      setCustomers(res.data.customers);
+    } catch (err) {
+      console.error("Customer fetch error", err);
+    }
+  };
+
   return (
     <CustomerContext.Provider
       value={{
-       customers,
-      setCustomers,
-      addCustomer,
-      updateCustomer,
-      deleteCustomer,
-      fetchCustomers,
-      loading,
-      total,
-      totalPages, 
+        customers,
+        setCustomers,
+        addCustomer,
+        updateCustomer,
+        deleteCustomer,
+        fetchCustomers,
+        fetchAllCustomers,
+        loading,
+        total,
+        totalPages,
       }}
     >
       {children}

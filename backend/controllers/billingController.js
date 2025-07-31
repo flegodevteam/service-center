@@ -42,6 +42,7 @@ exports.getInvoices = async (req, res, next) => {
 };
 
 // Download invoice as PDF
+
 exports.downloadInvoicePDF = async (req, res, next) => {
   try {
     const invoice = await Invoice.findById(req.params.id)
@@ -49,12 +50,17 @@ exports.downloadInvoicePDF = async (req, res, next) => {
       .populate("vehicle", "make model regNumber");
 
     if (!invoice || !invoice.customer || !invoice.vehicle) {
+      // CORS header for error response
+      res.setHeader("Access-Control-Allow-Origin", "http://localhost:3000");
+      res.setHeader("Access-Control-Expose-Headers", "Content-Disposition");
       return res
         .status(404)
         .json({ message: "Invoice or related data not found" });
     }
 
-    // Set response headers
+    // CORS headers for PDF response
+    res.setHeader("Access-Control-Allow-Origin", "http://localhost:3000");
+    res.setHeader("Access-Control-Expose-Headers", "Content-Disposition");
     res.setHeader("Content-Type", "application/pdf");
     res.setHeader(
       "Content-Disposition",
@@ -86,5 +92,25 @@ exports.downloadInvoicePDF = async (req, res, next) => {
   } catch (err) {
     console.error("PDF Download Error:", err);
     if (!res.headersSent) next(err);
+  }
+};
+
+
+// Process payment for an invoice
+exports.processPayment = async (req, res, next) => {
+  try {
+    const invoice = await Invoice.findById(req.params.id);
+    if (!invoice) {
+      return res.status(404).json({ message: "Invoice not found" });
+    }
+    if (invoice.paymentStatus === "paid") {
+      return res.status(400).json({ message: "Already paid" });
+    }
+    invoice.paymentStatus = "paid";
+    invoice.paymentMethod = req.body.paymentMethod || "Cash";
+    await invoice.save();
+    res.json({ success: true, invoice });
+  } catch (err) {
+    next(err);
   }
 };

@@ -57,8 +57,8 @@ const Billing = () => {
     paymentMethod: "Pending",
   });
   const [errors, setErrors] = useState({});
-  const { customers } = useContext(CustomerContext);
-  const { vehicles } = useContext(VehicleContext);
+  const { customers, fetchAllCustomers } = useContext(CustomerContext);
+  const { vehicles, fetchAllVehicles } = useContext(VehicleContext);
   const { invoices, addInvoice, fetchInvoices, total, totalPages } =
     useContext(BillingContext);
   const [currentPage, setCurrentPage] = useState(1);
@@ -169,6 +169,40 @@ const Billing = () => {
       setDownloading(false);
     }
   };
+
+  const [processing, setProcessing] = useState(false);
+
+  const handleProcessPayment = async (invoiceId) => {
+    setProcessing(true);
+    try {
+      const res = await fetch(`${API_URL}/invoices/${invoiceId}/pay`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ paymentMethod: "Cash" }), // Or get from user input
+      });
+      const data = await res.json();
+      if (res.ok) {
+        alert("Payment processed successfully!");
+        fetchInvoices(); // Refresh invoice list
+      } else {
+        alert(data.message || "Payment failed");
+      }
+    } catch (err) {
+      alert("Payment failed");
+    } finally {
+      setProcessing(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchAllCustomers();
+  }, [fetchAllCustomers]);
+
+  useEffect(() => {
+    fetchAllVehicles();
+  }, [fetchAllVehicles]);
 
   return (
     <div className="space-y-6">
@@ -594,9 +628,19 @@ const Billing = () => {
                     </span>
                   </button>
                   {selectedInvoiceData.paymentStatus === "pending" && (
-                    <button className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 flex items-center">
+                    <button
+                      className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 flex items-center"
+                      onClick={() =>
+                        handleProcessPayment(
+                          selectedInvoiceData._id || selectedInvoiceData.id
+                        )
+                      }
+                      disabled={processing}
+                    >
                       <CreditCard size={16} className="mr-2" />
-                      <span>Process Payment</span>
+                      <span>
+                        {processing ? "Processing..." : "Process Payment"}
+                      </span>
                     </button>
                   )}
                 </div>

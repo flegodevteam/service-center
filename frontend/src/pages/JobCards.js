@@ -16,6 +16,9 @@ import {
 import { CustomerContext } from "../context/CustomerContext";
 import { VehicleContext } from "../context/VehicleContext";
 import JobCardsContext from "../context/JobCardsContext";
+import { API_URL } from "../api/api";
+import { useLocation } from "react-router-dom";
+import axios from "axios";
 
 const JobCards = () => {
   const [searchTerm, setSearchTerm] = useState("");
@@ -31,18 +34,34 @@ const JobCards = () => {
     totalAmount: "",
   });
   const [errors, setErrors] = useState({});
-  const { customers } = useContext(CustomerContext);
-  const { vehicles } = useContext(VehicleContext);
+  const { customers, fetchAllCustomers } = useContext(CustomerContext);
+  const { vehicles, fetchAllVehicles } = useContext(VehicleContext);
   const { jobCards, addJobCard, fetchJobCards, total, totalPages } =
     useContext(JobCardsContext);
   const [currentPage, setCurrentPage] = useState(1);
   const jobCardsPerPage = 5;
+  const location = useLocation();
+
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    if (params.get("add") === "true") {
+      setIsAddJobCardModalOpen(true);
+    }
+  }, [location.search]);
 
   useEffect(() => {
     fetchJobCards(currentPage, jobCardsPerPage);
   }, [currentPage, jobCardsPerPage, fetchJobCards]);
 
-  const [isInvoiceModalOpen, setIsInvoiceModalOpen] = useState(false);
+  useEffect(() => {
+    fetchAllCustomers();
+  }, [fetchAllCustomers]);
+
+  useEffect(() => {
+    fetchAllVehicles();
+  }, [fetchAllVehicles]);
+
+  // const [isInvoiceModalOpen, setIsInvoiceModalOpen] = useState(false);
 
   // Validate form
   const validate = () => {
@@ -126,6 +145,76 @@ const JobCards = () => {
   const selectedJobCardData = jobCards.find(
     (jobCard) => (jobCard._id || jobCard.id) === selectedJobCard
   );
+
+  // Handle job card selection
+  const handleDownloadJobCard = async (jobCardId) => {
+    try {
+      const response = await fetch(`${API_URL}/jobcards/${jobCardId}/pdf`, {
+        method: "GET",
+        headers: { Accept: "application/pdf" },
+      });
+      if (response.ok) {
+        const blob = await response.blob();
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = `jobcard_${jobCardId}.pdf`;
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        window.URL.revokeObjectURL(url);
+        alert("Job Card PDF downloaded!");
+      } else {
+        alert("Download failed");
+      }
+    } catch (err) {
+      alert("Download failed");
+    }
+  };
+
+  // Handle job card completion
+  const handleMarkComplete = async (jobCardId) => {
+    try {
+      const res = await fetch(`${API_URL}/jobcards/${jobCardId}/complete`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+      });
+      const data = await res.json();
+      if (res.ok) {
+        alert("Job Card marked as completed!");
+        fetchJobCards(); // Refresh list
+      } else {
+        alert(data.message || "Failed to mark as complete");
+      }
+    } catch (err) {
+      alert("Failed to mark as complete");
+    }
+  };
+
+  const [serviceOptions, setServiceOptions] = useState([]);
+
+  // Fetch service types from backend
+  useEffect(() => {
+    axios.get(`${API_URL}/service-types`).then((res) => {
+      setServiceOptions(res.data.serviceTypes.map((s) => s.name));
+    });
+  }, []);
+
+  // Multi-select handler
+  const handleServiceSelect = (service) => {
+    let selected = Array.isArray(newJobCard.services)
+      ? [...newJobCard.services]
+      : typeof newJobCard.services === "string" &&
+        newJobCard.services.length > 0
+      ? newJobCard.services.split(",").map((s) => s.trim())
+      : [];
+    if (selected.includes(service)) {
+      selected = selected.filter((s) => s !== service);
+    } else {
+      selected.push(service);
+    }
+    setNewJobCard({ ...newJobCard, services: selected });
+  };
 
   return (
     <div className="space-y-6">
@@ -214,18 +303,39 @@ const JobCards = () => {
                 )}
               </div>
               <div>
-                <label className="block text-sm">
-                  Services (comma separated)
+                <label className="block text-sm font-medium mb-1">
+                  Services
                 </label>
-                <input
-                  type="text"
-                  className="w-full border rounded px-2 py-1"
-                  placeholder="eg: Oil Change, Brake Check"
-                  value={newJobCard.services}
-                  onChange={(e) =>
-                    setNewJobCard({ ...newJobCard, services: e.target.value })
-                  }
-                />
+                <div className="border rounded px-2 py-2 bg-white max-h-40 overflow-y-auto">
+                  {serviceOptions.length === 0 && (
+                    <div className="text-gray-400 text-sm">
+                      No services found
+                    </div>
+                  )}
+                  {serviceOptions.map((service) => (
+                    <label
+                      key={service}
+                      className="flex items-center space-x-2 mb-1"
+                    >
+                      <input
+                        type="checkbox"
+                        checked={
+                          Array.isArray(newJobCard.services)
+                            ? newJobCard.services.includes(service)
+                            : typeof newJobCard.services === "string"
+                            ? newJobCard.services
+                                .split(",")
+                                .map((s) => s.trim())
+                                .includes(service)
+                            : false
+                        }
+                        onChange={() => handleServiceSelect(service)}
+                        className="accent-blue-600"
+                      />
+                      <span>{service}</span>
+                    </label>
+                  ))}
+                </div>
                 {errors.services && (
                   <span className="text-red-500 text-xs">
                     {errors.services}
@@ -617,14 +727,30 @@ const JobCards = () => {
                 </div>
 
                 <div className="flex justify-between pt-4">
-                  <button className="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 flex items-center">
+                  <button
+                    className="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 flex items-center"
+                    onClick={() =>
+                      handleDownloadJobCard(
+                        selectedJobCardData._id || selectedJobCardData.id
+                      )
+                    }
+                  >
                     <FileText size={16} className="mr-2" />
-                    <span>Generate Invoice</span>
+                    <span>Generate JobCard</span>
                   </button>
-                  <button className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 flex items-center">
-                    <CheckCircle size={16} className="mr-2" />
-                    <span>Mark as Complete</span>
-                  </button>
+                  {selectedJobCardData.status !== "completed" && (
+                    <button
+                      className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 flex items-center"
+                      onClick={() =>
+                        handleMarkComplete(
+                          selectedJobCardData._id || selectedJobCardData.id
+                        )
+                      }
+                    >
+                      <CheckCircle size={16} className="mr-2" />
+                      <span>Mark as Complete</span>
+                    </button>
+                  )}
                 </div>
               </div>
             </motion.div>

@@ -15,6 +15,9 @@ import "react-calendar/dist/Calendar.css";
 import { CustomerContext } from "../context/CustomerContext";
 import { VehicleContext } from "../context/VehicleContext";
 import AppointmentContext from "../context/AppointmentContext";
+import { useLocation } from "react-router-dom";
+import axios from "axios";
+import { API_URL } from "../api/api";
 
 const Appointments = () => {
   const [date, setDate] = useState(new Date());
@@ -22,10 +25,17 @@ const Appointments = () => {
   const [selectedView, setSelectedView] = useState("list");
   const [isAddAppointmentModalOpen, setIsAddAppointmentModalOpen] =
     useState(false);
-  const { customers } = useContext(CustomerContext);
-  const { vehicles } = useContext(VehicleContext);
-  const { appointments, addAppointment, fetchAppointments, total, totalPages } =
-    useContext(AppointmentContext);
+  const { customers, fetchAllCustomers } = useContext(CustomerContext);
+  const { vehicles, fetchAllVehicles } = useContext(VehicleContext);
+  const {
+    appointments,
+    addAppointment,
+    fetchAppointments,
+    total,
+    totalPages,
+    getAppointmentById,
+    updateAppointmentStatus,
+  } = useContext(AppointmentContext);
   const [currentPage, setCurrentPage] = useState(1);
   const appointmentsPerPage = 5;
 
@@ -43,6 +53,17 @@ const Appointments = () => {
     notes: "",
   });
   const [appointmentErrors, setAppointmentErrors] = useState({});
+  const [selectedAppointment, setSelectedAppointment] = useState(null);
+  const [appointmentDetails, setAppointmentDetails] = useState(null);
+  const [isDetailsOpen, setIsDetailsOpen] = useState(false);
+  const location = useLocation();
+
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    if (params.get("add") === "true") {
+      setIsAddAppointmentModalOpen(true);
+    }
+  }, [location.search]);
 
   const validateAppointment = () => {
     const errors = {};
@@ -113,6 +134,60 @@ const Appointments = () => {
         .includes(searchTerm.toLowerCase())
     );
   });
+
+  // Details button click handler
+  const handleShowDetails = async (id) => {
+    setIsDetailsOpen(true);
+    setAppointmentDetails(null); // loading state
+    const details = await getAppointmentById(id);
+    setAppointmentDetails(details);
+  };
+
+  const handleCheckIn = async (id) => {
+    await updateAppointmentStatus(id, "in-progress");
+    fetchAppointments(currentPage, appointmentsPerPage); // Refresh list
+  };
+
+  // Job Card button click (for now, just alert or navigate)
+  const handleJobCard = async (id) => {
+    // Appointment status update to "completed"
+    await updateAppointmentStatus(id, "completed");
+    fetchAppointments(currentPage, appointmentsPerPage); // Refresh list
+  };
+
+  const [serviceOptions, setServiceOptions] = useState([]);
+  const [showAddServiceInput, setShowAddServiceInput] = useState(false);
+  const [newServiceOption, setNewServiceOption] = useState("");
+
+  // Fetch service types from backend
+  useEffect(() => {
+    axios.get(`${API_URL}/service-types`).then((res) => {
+      setServiceOptions(res.data.serviceTypes.map((s) => s.name));
+    });
+  }, []);
+
+  // Add new service type to backend
+  // const handleAddServiceType = async () => {
+  //   if (newServiceOption && !serviceOptions.includes(newServiceOption)) {
+  //     await axios.post(`${API_URL}/service-types`, { name: newServiceOption });
+  //     setServiceOptions([...serviceOptions, newServiceOption]);
+  //     setAppointmentForm({
+  //       ...appointmentForm,
+  //       service: newServiceOption,
+  //     });
+  //   }
+  //   setShowAddServiceInput(false);
+  //   setNewServiceOption("");
+  // };
+
+  useEffect(() => {
+    fetchAllCustomers();
+  }, [fetchAllCustomers]);
+
+  useEffect(() => {
+    fetchAllVehicles();
+  }, [fetchAllVehicles]);
+
   return (
     <div className="space-y-6">
       <motion.div
@@ -296,16 +371,31 @@ const Appointments = () => {
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                       <div className="flex items-center justify-end space-x-2">
-                        <button className="text-blue-600 hover:text-blue-900 px-2 py-1 rounded border border-blue-200 hover:bg-blue-50">
+                        <button
+                          className="text-blue-600 hover:text-blue-900 text-sm"
+                          onClick={() =>
+                            handleShowDetails(appointment.id || appointment._id)
+                          }
+                        >
                           Details
                         </button>
                         {appointment.status === "scheduled" && (
-                          <button className="text-green-600 hover:text-green-900 px-2 py-1 rounded border border-green-200 hover:bg-green-50">
+                          <button
+                            className="text-green-600 hover:text-green-900 px-2 py-1 rounded border border-green-200 hover:bg-green-50"
+                            onClick={() =>
+                              handleCheckIn(appointment.id || appointment._id)
+                            }
+                          >
                             Check In
                           </button>
                         )}
                         {appointment.status === "in-progress" && (
-                          <button className="text-purple-600 hover:text-purple-900 px-2 py-1 rounded border border-purple-200 hover:bg-purple-50">
+                          <button
+                            className="text-purple-600 hover:text-purple-900 px-2 py-1 rounded border border-purple-200 hover:bg-purple-50"
+                            onClick={() =>
+                              handleJobCard(appointment.id || appointment._id)
+                            }
+                          >
                             Job Card
                           </button>
                         )}
@@ -316,6 +406,95 @@ const Appointments = () => {
               </tbody>
             </table>
           </div>
+
+          {/* Appointment Details Side Panel */}
+          {isDetailsOpen && (
+            <div className="fixed top-0 right-0 w-full max-w-md h-full bg-white shadow-lg z-50 overflow-y-auto transition-all duration-300">
+              <div className="flex justify-between items-center p-4 border-b">
+                <h2 className="text-xl font-bold text-gray-800">
+                  Appointment Details
+                </h2>
+                <button
+                  onClick={() => setIsDetailsOpen(false)}
+                  className="text-gray-500 hover:text-gray-700"
+                >
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    className="h-6 w-6"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M6 18L18 6M6 6l12 12"
+                    />
+                  </svg>
+                </button>
+              </div>
+              {!appointmentDetails ? (
+                <div className="p-6 text-center text-gray-500">Loading...</div>
+              ) : (
+                <div className="p-6 space-y-4">
+                  <div>
+                    <span className="font-medium text-gray-700">Date:</span>{" "}
+                    {appointmentDetails.date?.slice(0, 10)} <br />
+                    <span className="font-medium text-gray-700">
+                      Time:
+                    </span>{" "}
+                    {appointmentDetails.time}
+                  </div>
+                  <div>
+                    <span className="font-medium text-gray-700">Customer:</span>{" "}
+                    {appointmentDetails.customer?.name} <br />
+                    <span className="font-medium text-gray-700">
+                      Phone:
+                    </span>{" "}
+                    {appointmentDetails.customer?.phone} <br />
+                    <span className="font-medium text-gray-700">
+                      Email:
+                    </span>{" "}
+                    {appointmentDetails.customer?.email}
+                  </div>
+                  <div>
+                    <span className="font-medium text-gray-700">Vehicle:</span>{" "}
+                    {appointmentDetails.vehicle
+                      ? `${appointmentDetails.vehicle.make} ${appointmentDetails.vehicle.model} (${appointmentDetails.vehicle.regNumber})`
+                      : ""}
+                  </div>
+                  <div>
+                    <span className="font-medium text-gray-700">Service:</span>{" "}
+                    {appointmentDetails.service}
+                  </div>
+                  <div>
+                    <span className="font-medium text-gray-700">
+                      Technician:
+                    </span>{" "}
+                    {appointmentDetails.technician}
+                  </div>
+                  <div>
+                    <span className="font-medium text-gray-700">Status:</span>{" "}
+                    <span
+                      className={`px-2 py-1 rounded-full text-xs font-semibold ${getStatusColor(
+                        appointmentDetails.status
+                      )}`}
+                    >
+                      {appointmentDetails.status?.charAt(0).toUpperCase() +
+                        appointmentDetails.status?.slice(1)}
+                    </span>
+                  </div>
+                  {appointmentDetails.notes && (
+                    <div>
+                      <span className="font-medium text-gray-700">Notes:</span>{" "}
+                      {appointmentDetails.notes}
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+          )}
 
           {filteredAppointments.length === 0 && (
             <div className="text-center py-10">
@@ -593,23 +772,61 @@ const Appointments = () => {
                 <label className="block text-sm font-medium text-gray-700 mb-1">
                   Service Type
                 </label>
-                <input
-                  type="text"
+                <select
                   className="w-full rounded-lg border border-gray-300 py-2 px-3 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  placeholder="Enter service type"
                   value={appointmentForm.service}
-                  onChange={(e) =>
-                    setAppointmentForm({
-                      ...appointmentForm,
-                      service: e.target.value,
-                    })
-                  }
-                />
+                  onChange={(e) => {
+                    if (e.target.value === "__add_new__") {
+                      setShowAddServiceInput(true);
+                    } else {
+                      setAppointmentForm({
+                        ...appointmentForm,
+                        service: e.target.value,
+                      });
+                    }
+                  }}
+                >
+                  <option value="">Select service type</option>
+                  {serviceOptions.map((opt) => (
+                    <option key={opt} value={opt}>
+                      {opt}
+                    </option>
+                  ))}
+                </select>
                 {appointmentErrors.service && (
                   <span className="text-red-500 text-xs">
                     {appointmentErrors.service}
                   </span>
                 )}
+
+                {/* {showAddServiceInput && (
+                  <div className="flex mt-2 space-x-2">
+                    <input
+                      type="text"
+                      className="flex-1 rounded-lg border border-gray-300 py-2 px-3 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      placeholder="Enter new service type"
+                      value={newServiceOption}
+                      onChange={(e) => setNewServiceOption(e.target.value)}
+                    />
+                    <button
+                      type="button"
+                      className="px-3 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+                      onClick={handleAddServiceType}
+                    >
+                      Add
+                    </button>
+                    <button
+                      type="button"
+                      className="px-3 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50"
+                      onClick={() => {
+                        setShowAddServiceInput(false);
+                        setNewServiceOption("");
+                      }}
+                    >
+                      Cancel
+                    </button>
+                  </div>
+                )} */}
               </div>
               {/* Technician input */}
               <div>

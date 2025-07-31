@@ -47,6 +47,15 @@ export const VehicleProvider = ({ children }) => {
     setVehicles((prev) => prev.filter((v) => v._id !== vehicleId));
   };
 
+  const fetchAllVehicles = async () => {
+  try {
+    const res = await axios.get(`${API_URL}/vehicles?limit=1000`);
+    setVehicles(res.data.vehicles);
+  } catch (err) {
+    console.error("Vehicle fetch error", err);
+  }
+};
+
   useEffect(() => {
     fetchVehicles();
   }, []);
@@ -60,6 +69,7 @@ export const VehicleProvider = ({ children }) => {
         updateVehicle,
         deleteVehicle,
         fetchVehicles,
+        fetchAllVehicles,
         loading,
         total,
         totalPages,

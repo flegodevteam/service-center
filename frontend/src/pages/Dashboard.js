@@ -46,6 +46,7 @@ const Dashboard = () => {
 
   const [todaysCount, setTodaysCount] = useState(0);
   const [revenueThisMonth, setRevenueThisMonth] = useState(0);
+  const [serviceTrends, setServiceTrends] = useState([]);
 
   // Today's date string
   const todayStr = new Date().toISOString().split("T")[0];
@@ -76,6 +77,18 @@ const Dashboard = () => {
   }, [fetchAppointments, fetchCustomers, fetchVehicles, todayStr]);
 
   const navigate = useNavigate();
+
+  useEffect(() => {
+    // Fetch service trends
+    axios.get(`${API_URL}/reports/service-stats`).then((res) => {
+      setServiceTrends(
+        res.data.data.map((d) => ({
+          name: d._id,
+          value: d.jobs,
+        }))
+      );
+    });
+  }, []);
 
   // Stats cards data
   const stats = [
@@ -188,9 +201,9 @@ const Dashboard = () => {
                     <p className="text-sm font-medium text-gray-900">
                       {appointment.time}
                     </p>
-                    <button className="mt-2 text-xs font-medium text-teal-600 hover:text-teal-500">
+                    {/* <button className="mt-2 text-xs font-medium text-teal-600 hover:text-teal-500">
                       Create Job Card
-                    </button>
+                    </button> */}
                   </div>
                 </motion.div>
               ))
@@ -288,7 +301,7 @@ const Dashboard = () => {
           </h2>
           <div className="h-80">
             <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={serviceData}>
+              <BarChart data={serviceTrends}>
                 <CartesianGrid strokeDasharray="3 3" />
                 <XAxis dataKey="name" />
                 <YAxis />

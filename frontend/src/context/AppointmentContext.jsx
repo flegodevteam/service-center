@@ -36,6 +36,26 @@ export const AppointmentProvider = ({ children }) => {
     setAppointments((prev) => [...prev, res.data.appointment]);
   };
 
+  const getAppointmentById = async (id) => {
+    const res = await axios.get(`${API_URL}/appointments/${id}`);
+    return res.data.appointment;
+  };
+
+  const updateAppointmentStatus = async (id, status) => {
+    const res = await axios.patch(`${API_URL}/appointments/${id}/status`, {
+      status,
+    });
+    // Update local state
+    setAppointments((prev) =>
+      prev.map((a) =>
+        (a._id || a.id) === id
+          ? { ...a, status: res.data.appointment.status }
+          : a
+      )
+    );
+    return res.data.appointment;
+  };
+
   return (
     <AppointmentContext.Provider
       value={{
@@ -45,6 +65,8 @@ export const AppointmentProvider = ({ children }) => {
         fetchAppointments,
         total,
         totalPages,
+        getAppointmentById,
+        updateAppointmentStatus,
       }}
     >
       {children}
