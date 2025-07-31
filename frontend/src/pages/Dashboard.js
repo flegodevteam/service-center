@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useContext, useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import {
   Clock,
@@ -19,8 +19,15 @@ import {
   Tooltip,
   ResponsiveContainer,
 } from "recharts";
+import { useNavigate } from "react-router-dom";
+import AppointmentContext from "../context/AppointmentContext";
+import { CustomerContext } from "../context/CustomerContext";
+import { VehicleContext } from "../context/VehicleContext";
+import axios from "axios";
+import { API_URL } from "../api/api";
+import { useAuth } from "../context/AuthContext"; // Step 1: import
 
-// Sample data for charts
+// Sample data for charts (can be replaced with real data)
 const serviceData = [
   { name: "Jan", value: 12 },
   { name: "Feb", value: 19 },
@@ -31,50 +38,66 @@ const serviceData = [
 ];
 
 const Dashboard = () => {
+  const { user } = useAuth();
+  const { appointments, loading, fetchAppointments } =
+    useContext(AppointmentContext);
+  const { total: totalCustomers, fetchCustomers } = useContext(CustomerContext);
+  const { total: totalVehicles, fetchVehicles } = useContext(VehicleContext);
+
+  const [todaysCount, setTodaysCount] = useState(0);
+  const [revenueThisMonth, setRevenueThisMonth] = useState(0);
+
+  // Today's date string
+  const todayStr = new Date().toISOString().split("T")[0];
+
+  // Filter today's appointments
+  const todaysAppointments = appointments.filter(
+    (a) => a.date && a.date.slice(0, 10) === todayStr
+  );
+
+  useEffect(() => {
+    // Fetch all appointments (for today's count)
+    fetchAppointments(1, 1000);
+    // Fetch total customers and vehicles (for stats)
+    fetchCustomers(1, 1);
+    fetchVehicles(1, 1);
+
+    // Fetch revenue for this month
+    axios.get(`${API_URL}/reports/monthly-revenue`).then((res) => {
+      const month = new Date().toISOString().slice(0, 7); // "YYYY-MM"
+      const monthData = res.data.data.find((d) => d._id === month);
+      setRevenueThisMonth(monthData ? monthData.revenue : 0);
+    });
+
+    // Fetch today's appointments count (if backend supports direct count)
+    axios
+      .get(`${API_URL}/appointments?date=${todayStr}`)
+      .then((res) => setTodaysCount(res.data.total || 0));
+  }, [fetchAppointments, fetchCustomers, fetchVehicles, todayStr]);
+
+  const navigate = useNavigate();
+
+  // Stats cards data
   const stats = [
     {
       title: "Today's Appointments",
-      value: "12",
+      value: loading ? "..." : todaysAppointments.length || todaysCount,
       icon: <Clock size={20} className="text-blue-600" />,
     },
     {
       title: "Total Customers",
-      value: "1,248",
+      value: totalCustomers?.toLocaleString() || "...",
       icon: <Users size={20} className="text-teal-600" />,
     },
     {
       title: "Vehicles Serviced",
-      value: "3,427",
+      value: totalVehicles?.toLocaleString() || "...",
       icon: <Car size={20} className="text-purple-600" />,
     },
     {
       title: "Revenue This Month",
-      value: "$24,300",
+      value: revenueThisMonth ? `$${revenueThisMonth.toLocaleString()}` : "$0",
       icon: <DollarSign size={20} className="text-green-600" />,
-    },
-  ];
-
-  const upcomingAppointments = [
-    {
-      id: 1,
-      customer: "Michael Johnson",
-      vehicle: "Toyota Camry (ABC-123)",
-      time: "09:30 AM",
-      service: "Oil Change",
-    },
-    {
-      id: 2,
-      customer: "Sarah Williams",
-      vehicle: "Honda Civic (XYZ-789)",
-      time: "10:45 AM",
-      service: "Brake Inspection",
-    },
-    {
-      id: 3,
-      customer: "David Martinez",
-      vehicle: "Ford F-150 (DEF-456)",
-      time: "01:15 PM",
-      service: "Tire Rotation",
     },
   ];
 
@@ -131,33 +154,47 @@ const Dashboard = () => {
           </div>
 
           <div className="space-y-4">
-            {upcomingAppointments.map((appointment) => (
-              <motion.div
-                key={appointment.id}
-                whileHover={{ scale: 1.01 }}
-                className="border border-gray-100 rounded-lg p-4 flex items-center justify-between"
-              >
-                <div>
-                  <p className="font-medium text-gray-800">
-                    {appointment.customer}
-                  </p>
-                  <p className="text-sm text-gray-600">{appointment.vehicle}</p>
-                  <div className="flex items-center mt-1">
-                    <span className="text-xs font-medium px-2 py-1 bg-blue-50 text-blue-700 rounded-full">
-                      {appointment.service}
-                    </span>
+            {loading ? (
+              <div>Loading...</div>
+            ) : todaysAppointments.length === 0 ? (
+              <div className="text-gray-500 text-center py-6">
+                No appointments scheduled for today.
+              </div>
+            ) : (
+              todaysAppointments.map((appointment) => (
+                <motion.div
+                  key={appointment._id || appointment.id}
+                  whileHover={{ scale: 1.01 }}
+                  className="border border-gray-100 rounded-lg p-4 flex items-center justify-between"
+                >
+                  <div>
+                    <p className="font-medium text-gray-800">
+                      {typeof appointment.customer === "object"
+                        ? appointment.customer?.name
+                        : appointment.customer}
+                    </p>
+                    <p className="text-sm text-gray-600">
+                      {typeof appointment.vehicle === "object"
+                        ? `${appointment.vehicle?.make} ${appointment.vehicle?.model} (${appointment.vehicle?.regNumber})`
+                        : appointment.vehicle}
+                    </p>
+                    <div className="flex items-center mt-1">
+                      <span className="text-xs font-medium px-2 py-1 bg-blue-50 text-blue-700 rounded-full">
+                        {appointment.service}
+                      </span>
+                    </div>
                   </div>
-                </div>
-                <div className="text-right">
-                  <p className="text-sm font-medium text-gray-900">
-                    {appointment.time}
-                  </p>
-                  <button className="mt-2 text-xs font-medium text-teal-600 hover:text-teal-500">
-                    Create Job Card
-                  </button>
-                </div>
-              </motion.div>
-            ))}
+                  <div className="text-right">
+                    <p className="text-sm font-medium text-gray-900">
+                      {appointment.time}
+                    </p>
+                    <button className="mt-2 text-xs font-medium text-teal-600 hover:text-teal-500">
+                      Create Job Card
+                    </button>
+                  </div>
+                </motion.div>
+              ))
+            )}
           </div>
         </motion.div>
 
@@ -173,41 +210,67 @@ const Dashboard = () => {
           </h2>
 
           <div className="space-y-4">
-            <button className="w-full flex items-center p-3 bg-blue-50 hover:bg-blue-100 rounded-lg transition-colors">
-              <div className="w-8 h-8 flex items-center justify-center rounded-full bg-blue-500 text-white">
-                <Users size={16} />
-              </div>
-              <span className="ml-3 font-medium text-blue-700">
-                Add New Customer
-              </span>
-            </button>
+            {/* Add New Customer: admin, manager, front-desk */}
+            {["admin", "manager", "front-desk"].includes(user?.role) && (
+              <button
+                className="w-full flex items-center p-3 bg-blue-50 hover:bg-blue-100 rounded-lg transition-colors"
+                onClick={() => navigate("/customers?add=true")}
+              >
+                <div className="w-8 h-8 flex items-center justify-center rounded-full bg-blue-500 text-white">
+                  <Users size={16} />
+                </div>
+                <span className="ml-3 font-medium text-blue-700">
+                  Add New Customer
+                </span>
+              </button>
+            )}
 
-            <button className="w-full flex items-center p-3 bg-teal-50 hover:bg-teal-100 rounded-lg transition-colors">
-              <div className="w-8 h-8 flex items-center justify-center rounded-full bg-teal-500 text-white">
-                <Car size={16} />
-              </div>
-              <span className="ml-3 font-medium text-teal-700">
-                Register New Vehicle
-              </span>
-            </button>
+            {/* Register New Vehicle: admin, manager, technician, front-desk */}
+            {["admin", "manager", "technician", "front-desk"].includes(
+              user?.role
+            ) && (
+              <button
+                className="w-full flex items-center p-3 bg-teal-50 hover:bg-teal-100 rounded-lg transition-colors"
+                onClick={() => navigate("/vehicles?add=true")}
+              >
+                <div className="w-8 h-8 flex items-center justify-center rounded-full bg-teal-500 text-white">
+                  <Car size={16} />
+                </div>
+                <span className="ml-3 font-medium text-teal-700">
+                  Register New Vehicle
+                </span>
+              </button>
+            )}
 
-            <button className="w-full flex items-center p-3 bg-purple-50 hover:bg-purple-100 rounded-lg transition-colors">
-              <div className="w-8 h-8 flex items-center justify-center rounded-full bg-purple-500 text-white">
-                <Clock size={16} />
-              </div>
-              <span className="ml-3 font-medium text-purple-700">
-                Schedule Appointment
-              </span>
-            </button>
+            {/* Schedule Appointment: admin, manager, front-desk */}
+            {["admin", "manager", "front-desk"].includes(user?.role) && (
+              <button
+                className="w-full flex items-center p-3 bg-purple-50 hover:bg-purple-100 rounded-lg transition-colors"
+                onClick={() => navigate("/appointments?add=true")}
+              >
+                <div className="w-8 h-8 flex items-center justify-center rounded-full bg-purple-500 text-white">
+                  <Clock size={16} />
+                </div>
+                <span className="ml-3 font-medium text-purple-700">
+                  Schedule Appointment
+                </span>
+              </button>
+            )}
 
-            <button className="w-full flex items-center p-3 bg-orange-50 hover:bg-orange-100 rounded-lg transition-colors">
-              <div className="w-8 h-8 flex items-center justify-center rounded-full bg-orange-500 text-white">
-                <FileText size={16} />
-              </div>
-              <span className="ml-3 font-medium text-orange-700">
-                Create Job Card
-              </span>
-            </button>
+            {/* Create Job Card: admin, manager, technician */}
+            {["admin", "manager", "technician"].includes(user?.role) && (
+              <button
+                className="w-full flex items-center p-3 bg-orange-50 hover:bg-orange-100 rounded-lg transition-colors"
+                onClick={() => navigate("/job-cards?add=true")}
+              >
+                <div className="w-8 h-8 flex items-center justify-center rounded-full bg-orange-500 text-white">
+                  <FileText size={16} />
+                </div>
+                <span className="ml-3 font-medium text-orange-700">
+                  Create Job Card
+                </span>
+              </button>
+            )}
           </div>
         </motion.div>
       </div>
