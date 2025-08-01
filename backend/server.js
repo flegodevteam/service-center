@@ -30,3 +30,4 @@ process.on("uncaughtException", (err) => {
 
 // console.log(a);
 // a is not defined so uncaught exception aagum
+
