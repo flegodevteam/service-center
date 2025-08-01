@@ -23,6 +23,8 @@ app.use("/api/invoices", require("./routes/billingRoutes"));
 app.use("/api/service-types", require("./routes/serviceTypeRoutes"));
 app.use("/api/reports", require("./routes/reportsRoutes"));
 app.use("/api/users", require("./routes/userRoutes"));
+app.use("/api/test", require("./routes/testRoutes"));
+
 
 // Error Handler
 app.use(errorHandler);
