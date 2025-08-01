@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useContext, useEffect } from "react";
 import { motion } from "framer-motion";
 import {
   Search,
@@ -13,60 +13,10 @@ import {
   XCircle,
   Clock,
 } from "lucide-react";
-
-// Sample data
-const invoicesData = [
-  {
-    id: "INV-2024-001",
-    customer: "Michael Johnson",
-    vehicle: "Toyota Camry (ABC-123)",
-    date: "2024-06-15",
-    amount: 95.75,
-    jobCard: "JC-2024-001",
-    paymentStatus: "paid",
-    paymentMethod: "Credit Card",
-  },
-  {
-    id: "INV-2024-002",
-    customer: "Sarah Williams",
-    vehicle: "Honda Civic (XYZ-789)",
-    date: "2024-06-15",
-    amount: 220.5,
-    jobCard: "JC-2024-002",
-    paymentStatus: "pending",
-    paymentMethod: "Pending",
-  },
-  {
-    id: "INV-2024-003",
-    customer: "David Martinez",
-    vehicle: "Ford F-150 (DEF-456)",
-    date: "2024-06-14",
-    amount: 150.0,
-    jobCard: "JC-2024-003",
-    paymentStatus: "paid",
-    paymentMethod: "Cash",
-  },
-  {
-    id: "INV-2024-004",
-    customer: "Jennifer Taylor",
-    vehicle: "Nissan Altima (GHI-789)",
-    date: "2024-06-14",
-    amount: 320.25,
-    jobCard: "JC-2024-004",
-    paymentStatus: "cancelled",
-    paymentMethod: "Cancelled",
-  },
-  {
-    id: "INV-2024-005",
-    customer: "Robert Brown",
-    vehicle: "BMW X5 (JKL-012)",
-    date: "2024-06-13",
-    amount: 485.0,
-    jobCard: "JC-2024-005",
-    paymentStatus: "paid",
-    paymentMethod: "Mobile Payment",
-  },
-];
+import BillingContext from "../context/BillingContext";
+import { CustomerContext } from "../context/CustomerContext";
+import { VehicleContext } from "../context/VehicleContext";
+import { API_URL } from "../api/api";
 
 const getStatusColor = (status) => {
   switch (status) {
@@ -97,26 +47,162 @@ const getStatusIcon = (status) => {
 const Billing = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedInvoice, setSelectedInvoice] = useState(null);
+  const [isAddInvoiceModalOpen, setIsAddInvoiceModalOpen] = useState(false);
+  const [newInvoice, setNewInvoice] = useState({
+    customer: "",
+    vehicle: "",
+    date: "",
+    amount: "",
+    paymentStatus: "pending",
+    paymentMethod: "Pending",
+  });
+  const [errors, setErrors] = useState({});
+  const { customers, fetchAllCustomers } = useContext(CustomerContext);
+  const { vehicles, fetchAllVehicles } = useContext(VehicleContext);
+  const { invoices, addInvoice, fetchInvoices, total, totalPages } =
+    useContext(BillingContext);
+  const [currentPage, setCurrentPage] = useState(1);
+  const invoicesPerPage = 5;
 
-  const filteredInvoices = invoicesData.filter(
-    (invoice) =>
-      invoice.id.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      invoice.customer.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      invoice.vehicle.toLowerCase().includes(searchTerm.toLowerCase())
+  useEffect(() => {
+    fetchInvoices(currentPage, invoicesPerPage);
+  }, [currentPage, invoicesPerPage, fetchInvoices]);
+
+  const filteredInvoices = invoices.filter((invoice) => {
+    const customerName =
+      typeof invoice.customer === "object" && invoice.customer !== null
+        ? invoice.customer.name
+        : invoice.customer || "";
+    const vehicleName =
+      typeof invoice.vehicle === "object" && invoice.vehicle !== null
+        ? `${invoice.vehicle.make} ${invoice.vehicle.model} (${invoice.vehicle.regNumber})`
+        : invoice.vehicle || "";
+    return (
+      (invoice.id || "").toLowerCase().includes(searchTerm.toLowerCase()) ||
+      customerName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      vehicleName.toLowerCase().includes(searchTerm.toLowerCase())
+    );
+  });
+
+  const selectedInvoiceData = invoices.find(
+    (invoice) => (invoice._id || invoice.id) === selectedInvoice
   );
 
-  const selectedInvoiceData = invoicesData.find(
-    (invoice) => invoice.id === selectedInvoice
-  );
-
-  // Calculate summary values
-  const totalRevenue = invoicesData
+  // Summary
+  const totalRevenue = invoices
     .filter((invoice) => invoice.paymentStatus === "paid")
     .reduce((sum, invoice) => sum + invoice.amount, 0);
 
-  const pendingPayments = invoicesData
+  const pendingPayments = invoices
     .filter((invoice) => invoice.paymentStatus === "pending")
     .reduce((sum, invoice) => sum + invoice.amount, 0);
+
+  // Validation
+  const validate = () => {
+    const err = {};
+    if (!newInvoice.customer) err.customer = "Customer is required";
+    if (!newInvoice.vehicle) err.vehicle = "Vehicle is required";
+    if (!newInvoice.date) err.date = "Date is required";
+    if (
+      !newInvoice.amount ||
+      isNaN(newInvoice.amount) ||
+      newInvoice.amount <= 0
+    )
+      err.amount = "Valid amount required";
+    if (!newInvoice.paymentStatus) err.paymentStatus = "Status required";
+    if (!newInvoice.paymentMethod)
+      err.paymentMethod = "Payment method required";
+    setErrors(err);
+    return Object.keys(err).length === 0;
+  };
+
+  const handleAddInvoice = (e) => {
+    e.preventDefault();
+    if (!validate()) return;
+    addInvoice(newInvoice);
+    setIsAddInvoiceModalOpen(false);
+    setNewInvoice({
+      customer: "",
+      vehicle: "",
+      date: "",
+      amount: "",
+      paymentStatus: "pending",
+      paymentMethod: "Pending",
+    });
+    setErrors({});
+  };
+
+  const [downloading, setDownloading] = useState(false);
+
+  const handleDownloadPDF = async (invoiceId) => {
+    setDownloading(true);
+    try {
+      const response = await fetch(`${API_URL}/invoices/${invoiceId}/pdf`, {
+        method: "GET",
+        headers: {
+          Accept: "application/pdf",
+        },
+      });
+
+      console.log("PDF Download response:", response.status, response.ok);
+
+      const blob = await response.blob();
+
+      // ✅ Fallback: Check content type
+      if (blob.type === "application/pdf") {
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = `invoice_${invoiceId}.pdf`;
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        window.URL.revokeObjectURL(url);
+        alert("PDF downloaded successfully!");
+      } else {
+        alert("Download failed: Received non-PDF file.");
+      }
+    } catch (err) {
+      alert("PDF download failed");
+      console.error(err);
+    } finally {
+      setDownloading(false);
+    }
+  };
+
+  const [processing, setProcessing] = useState(false);
+
+  const handleProcessPayment = async (invoiceId) => {
+    setProcessing(true);
+    try {
+      const res = await fetch(`${API_URL}/invoices/${invoiceId}/pay`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ paymentMethod: "Cash" }), // Or get from user input
+      });
+      const data = await res.json();
+      if (res.ok) {
+        alert("Payment processed successfully!");
+        fetchInvoices(); // Refresh invoice list
+      } else {
+        alert(data.message || "Payment failed");
+      }
+    } catch (err) {
+      alert("Payment failed");
+    } finally {
+      setProcessing(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchAllCustomers();
+  }, [fetchAllCustomers]);
+
+  useEffect(() => {
+    fetchAllVehicles();
+  }, [fetchAllVehicles]);
 
   return (
     <div className="space-y-6">
@@ -183,7 +269,7 @@ const Billing = () => {
                 Invoices This Month
               </p>
               <p className="text-2xl font-bold text-gray-800">
-                {invoicesData.length}
+                {invoices.length}
               </p>
             </div>
             <div className="rounded-full p-3 bg-blue-100">
@@ -219,6 +305,7 @@ const Billing = () => {
             whileHover={{ scale: 1.02 }}
             whileTap={{ scale: 0.98 }}
             className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 flex items-center"
+            onClick={() => setIsAddInvoiceModalOpen(true)}
           >
             <Plus size={16} className="mr-2" />
             <span>New Invoice</span>
@@ -226,7 +313,7 @@ const Billing = () => {
         </div>
       </div>
 
-      {/* Invoices */}
+      {/* Invoices Table & Details */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <div className="lg:col-span-2">
           <div className="bg-white rounded-xl shadow-sm overflow-hidden">
@@ -234,34 +321,19 @@ const Billing = () => {
               <table className="min-w-full divide-y divide-gray-200">
                 <thead className="bg-gray-50">
                   <tr>
-                    <th
-                      scope="col"
-                      className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
-                    >
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                       Invoice
                     </th>
-                    <th
-                      scope="col"
-                      className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
-                    >
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                       Customer & Vehicle
                     </th>
-                    <th
-                      scope="col"
-                      className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
-                    >
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                       Amount
                     </th>
-                    <th
-                      scope="col"
-                      className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
-                    >
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                       Status
                     </th>
-                    <th
-                      scope="col"
-                      className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider"
-                    >
+                    <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
                       Actions
                     </th>
                   </tr>
@@ -269,13 +341,17 @@ const Billing = () => {
                 <tbody className="bg-white divide-y divide-gray-200">
                   {filteredInvoices.map((invoice) => (
                     <motion.tr
-                      key={invoice.id}
+                      key={invoice._id || invoice.id}
                       initial={{ opacity: 0 }}
                       animate={{ opacity: 1 }}
                       transition={{ duration: 0.3 }}
-                      onClick={() => setSelectedInvoice(invoice.id)}
+                      onClick={() =>
+                        setSelectedInvoice(invoice._id || invoice.id)
+                      }
                       className={`hover:bg-gray-50 cursor-pointer ${
-                        selectedInvoice === invoice.id ? "bg-blue-50" : ""
+                        selectedInvoice === (invoice._id || invoice.id)
+                          ? "bg-blue-50"
+                          : ""
                       }`}
                     >
                       <td className="px-6 py-4 whitespace-nowrap">
@@ -288,25 +364,28 @@ const Billing = () => {
                               {invoice.id}
                             </div>
                             <div className="text-sm text-gray-500">
-                              {invoice.date}
+                              {invoice.date ? invoice.date.slice(0, 10) : ""}
                             </div>
                           </div>
                         </div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="text-sm font-medium text-gray-900">
-                          {invoice.customer}
+                          {typeof invoice.customer === "object" &&
+                          invoice.customer !== null
+                            ? invoice.customer.name
+                            : invoice.customer}
                         </div>
                         <div className="text-sm text-gray-500">
-                          {invoice.vehicle}
+                          {typeof invoice.vehicle === "object" &&
+                          invoice.vehicle !== null
+                            ? `${invoice.vehicle.make} ${invoice.vehicle.model} (${invoice.vehicle.regNumber})`
+                            : invoice.vehicle}
                         </div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="text-sm font-medium text-gray-900">
                           ${invoice.amount.toFixed(2)}
-                        </div>
-                        <div className="text-sm text-gray-500">
-                          Job: {invoice.jobCard}
                         </div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
@@ -359,19 +438,24 @@ const Billing = () => {
 
             <div className="px-6 py-3 flex items-center justify-between border-t border-gray-200">
               <div className="text-sm text-gray-500">
-                Showing{" "}
-                <span className="font-medium">{filteredInvoices.length}</span>{" "}
-                of <span className="font-medium">{invoicesData.length}</span>{" "}
-                invoices
+                Showing {filteredInvoices.length} of {total} invoices
               </div>
               <div className="flex items-center space-x-2">
                 <button
-                  className="px-3 py-1 border border-gray-300 rounded text-gray-700 hover:bg-gray-50 disabled:opacity-50"
-                  disabled
+                  className="px-3 py-1 border border-gray-300 rounded text-gray-700 hover:bg-gray-50"
+                  disabled={currentPage === 1}
+                  onClick={() => setCurrentPage((prev) => prev - 1)}
                 >
                   Previous
                 </button>
-                <button className="px-3 py-1 border border-gray-300 rounded text-gray-700 hover:bg-gray-50">
+                <span className="text-sm px-2">
+                  Page {currentPage} of {totalPages}
+                </span>
+                <button
+                  className="px-3 py-1 border border-gray-300 rounded text-gray-700 hover:bg-gray-50"
+                  disabled={currentPage === totalPages || totalPages === 0}
+                  onClick={() => setCurrentPage((prev) => prev + 1)}
+                >
                   Next
                 </button>
               </div>
@@ -417,7 +501,9 @@ const Billing = () => {
                   <div className="text-right">
                     <p className="text-sm font-medium text-gray-500">Date</p>
                     <p className="text-base text-gray-900">
-                      {selectedInvoiceData.date}
+                      {selectedInvoiceData.date
+                        ? selectedInvoiceData.date.slice(0, 10)
+                        : ""}
                     </p>
                   </div>
                 </div>
@@ -427,19 +513,16 @@ const Billing = () => {
                     Customer
                   </p>
                   <p className="text-base font-medium text-gray-900">
-                    {selectedInvoiceData.customer}
+                    {typeof selectedInvoiceData.customer === "object" &&
+                    selectedInvoiceData.customer !== null
+                      ? selectedInvoiceData.customer.name
+                      : selectedInvoiceData.customer}
                   </p>
                   <p className="text-sm text-gray-600">
-                    {selectedInvoiceData.vehicle}
-                  </p>
-                </div>
-
-                <div>
-                  <p className="text-sm font-medium text-gray-500 mb-1">
-                    Related Job Card
-                  </p>
-                  <p className="text-base font-medium text-blue-600">
-                    {selectedInvoiceData.jobCard}
+                    {typeof selectedInvoiceData.vehicle === "object" &&
+                    selectedInvoiceData.vehicle !== null
+                      ? `${selectedInvoiceData.vehicle.make} ${selectedInvoiceData.vehicle.model} (${selectedInvoiceData.vehicle.regNumber})`
+                      : selectedInvoiceData.vehicle}
                   </p>
                 </div>
 
@@ -447,7 +530,6 @@ const Billing = () => {
                   <h3 className="text-sm font-medium text-gray-700 mb-3">
                     Service Summary
                   </h3>
-
                   <div className="space-y-2">
                     <div className="flex justify-between text-sm">
                       <span className="text-gray-600">Oil Change</span>
@@ -464,7 +546,6 @@ const Billing = () => {
                       <span className="text-gray-900">$75.00</span>
                     </div>
                   </div>
-
                   <div className="border-t border-gray-200 mt-4 pt-4 space-y-2">
                     <div className="flex justify-between text-sm">
                       <span className="text-gray-600">Subtotal</span>
@@ -491,7 +572,6 @@ const Billing = () => {
                   <h3 className="text-sm font-medium text-gray-700 mb-3">
                     Payment Information
                   </h3>
-
                   <div className="bg-gray-50 rounded-lg p-3">
                     <div className="flex justify-between text-sm mb-1">
                       <span className="text-gray-600">Status</span>
@@ -522,7 +602,9 @@ const Billing = () => {
                         <div className="flex justify-between text-sm">
                           <span className="text-gray-600">Payment Date</span>
                           <span className="text-gray-900">
-                            {selectedInvoiceData.date}
+                            {selectedInvoiceData.date
+                              ? selectedInvoiceData.date.slice(0, 10)
+                              : ""}
                           </span>
                         </div>
                       </>
@@ -531,14 +613,34 @@ const Billing = () => {
                 </div>
 
                 <div className="flex justify-between pt-4">
-                  <button className="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 flex items-center">
+                  <button
+                    className="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 flex items-center"
+                    onClick={() =>
+                      handleDownloadPDF(
+                        selectedInvoiceData._id || selectedInvoiceData.id
+                      )
+                    }
+                    disabled={downloading}
+                  >
                     <Download size={16} className="mr-2" />
-                    <span>Download PDF</span>
+                    <span>
+                      {downloading ? "Downloading..." : "Download PDF"}
+                    </span>
                   </button>
                   {selectedInvoiceData.paymentStatus === "pending" && (
-                    <button className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 flex items-center">
+                    <button
+                      className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 flex items-center"
+                      onClick={() =>
+                        handleProcessPayment(
+                          selectedInvoiceData._id || selectedInvoiceData.id
+                        )
+                      }
+                      disabled={processing}
+                    >
                       <CreditCard size={16} className="mr-2" />
-                      <span>Process Payment</span>
+                      <span>
+                        {processing ? "Processing..." : "Process Payment"}
+                      </span>
                     </button>
                   )}
                 </div>
@@ -554,6 +656,186 @@ const Billing = () => {
           )}
         </div>
       </div>
+
+      {/* Add Invoice Modal */}
+      {isAddInvoiceModalOpen && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 z-[1000] flex items-center justify-center p-4">
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ duration: 0.2 }}
+            className="bg-white rounded-xl shadow-xl p-6 w-full max-w-2xl"
+          >
+            <div className="flex justify-between items-center mb-6">
+              <h2 className="text-xl font-bold text-gray-800">
+                Add New Invoice
+              </h2>
+              <button
+                onClick={() => setIsAddInvoiceModalOpen(false)}
+                className="text-gray-500 hover:text-gray-700"
+              >
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  className="h-6 w-6"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M6 18L18 6M6 6l12 12"
+                  />
+                </svg>
+              </button>
+            </div>
+
+            <form className="space-y-4" onSubmit={handleAddInvoice}>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Customer
+                </label>
+                <select
+                  className="w-full border rounded px-4 py-2"
+                  value={newInvoice.customer}
+                  onChange={(e) =>
+                    setNewInvoice({ ...newInvoice, customer: e.target.value })
+                  }
+                >
+                  <option value="">Select a customer</option>
+                  {customers.map((c) => (
+                    <option key={c._id} value={c._id}>
+                      {c.name}
+                    </option>
+                  ))}
+                </select>
+                {errors.customer && (
+                  <span className="text-red-500 text-xs">
+                    {errors.customer}
+                  </span>
+                )}
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Vehicle
+                </label>
+                <select
+                  className="w-full border rounded px-4 py-2"
+                  value={newInvoice.vehicle}
+                  onChange={(e) =>
+                    setNewInvoice({ ...newInvoice, vehicle: e.target.value })
+                  }
+                >
+                  <option value="">Select a vehicle</option>
+                  {vehicles.map((v) => (
+                    <option key={v._id} value={v._id}>
+                      {v.make} {v.model} ({v.regNumber})
+                    </option>
+                  ))}
+                </select>
+                {errors.vehicle && (
+                  <span className="text-red-500 text-xs">{errors.vehicle}</span>
+                )}
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Date
+                </label>
+                <input
+                  type="date"
+                  placeholder="Date"
+                  className="w-full border rounded px-4 py-2"
+                  value={newInvoice.date}
+                  onChange={(e) =>
+                    setNewInvoice({ ...newInvoice, date: e.target.value })
+                  }
+                />
+                {errors.date && (
+                  <span className="text-red-500 text-xs">{errors.date}</span>
+                )}
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Amount
+                </label>
+                <input
+                  type="number"
+                  placeholder="Amount"
+                  className="w-full border rounded px-4 py-2"
+                  value={newInvoice.amount}
+                  onChange={(e) =>
+                    setNewInvoice({ ...newInvoice, amount: e.target.value })
+                  }
+                />
+                {errors.amount && (
+                  <span className="text-red-500 text-xs">{errors.amount}</span>
+                )}
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Payment Status
+                </label>
+                <select
+                  className="w-full border rounded px-4 py-2"
+                  value={newInvoice.paymentStatus}
+                  onChange={(e) =>
+                    setNewInvoice({
+                      ...newInvoice,
+                      paymentStatus: e.target.value,
+                      paymentMethod:
+                        e.target.value === "paid"
+                          ? "Cash"
+                          : e.target.value === "cancelled"
+                          ? "Cancelled"
+                          : "Pending",
+                    })
+                  }
+                >
+                  <option value="pending">Pending</option>
+                  <option value="paid">Paid</option>
+                  <option value="cancelled">Cancelled</option>
+                </select>
+                {errors.paymentStatus && (
+                  <span className="text-red-500 text-xs">
+                    {errors.paymentStatus}
+                  </span>
+                )}
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Payment Method
+                </label>
+                <input
+                  type="text"
+                  placeholder="Payment Method"
+                  className="w-full border rounded px-4 py-2"
+                  value={newInvoice.paymentMethod}
+                  onChange={(e) =>
+                    setNewInvoice({
+                      ...newInvoice,
+                      paymentMethod: e.target.value,
+                    })
+                  }
+                  disabled={newInvoice.paymentStatus !== "paid"}
+                />
+                {errors.paymentMethod && (
+                  <span className="text-red-500 text-xs">
+                    {errors.paymentMethod}
+                  </span>
+                )}
+              </div>
+              <button
+                type="submit"
+                className="w-full bg-blue-600 text-white py-2 rounded hover:bg-blue-700"
+              >
+                Save Invoice
+              </button>
+            </form>
+          </motion.div>
+        </div>
+      )}
     </div>
   );
 };

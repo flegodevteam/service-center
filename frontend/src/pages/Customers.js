@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import {
   Search,
@@ -11,65 +11,41 @@ import {
   Mail,
   Car,
 } from "lucide-react";
-
-// Sample data
-const customersData = [
-  {
-    id: 1,
-    name: "Michael Johnson",
-    email: "michael@example.com",
-    phone: "(555) 123-4567",
-    address: "123 Main St, City",
-    vehicles: 2,
-    lastService: "15 May 2024",
-    status: "active",
-  },
-  {
-    id: 2,
-    name: "Sarah Williams",
-    email: "sarah@example.com",
-    phone: "(555) 987-6543",
-    address: "456 Oak Ave, Town",
-    vehicles: 1,
-    lastService: "3 Jun 2024",
-    status: "active",
-  },
-  {
-    id: 3,
-    name: "David Martinez",
-    email: "david@example.com",
-    phone: "(555) 567-8901",
-    address: "789 Pine Rd, Village",
-    vehicles: 3,
-    lastService: "27 Apr 2024",
-    status: "inactive",
-  },
-  {
-    id: 4,
-    name: "Jennifer Taylor",
-    email: "jennifer@example.com",
-    phone: "(555) 234-5678",
-    address: "101 Elm Blvd, County",
-    vehicles: 1,
-    lastService: "9 Jun 2024",
-    status: "active",
-  },
-  {
-    id: 5,
-    name: "Robert Brown",
-    email: "robert@example.com",
-    phone: "(555) 345-6789",
-    address: "202 Maple Dr, District",
-    vehicles: 2,
-    lastService: "22 May 2024",
-    status: "active",
-  },
-];
+import { CustomerContext } from "../context/CustomerContext";
+import { useContext } from "react";
+import { useLocation } from "react-router-dom";
 
 const Customers = () => {
+  const location = useLocation();
   const [searchTerm, setSearchTerm] = useState("");
   const [isAddCustomerModalOpen, setIsAddCustomerModalOpen] = useState(false);
-  const [customers, setCustomers] = useState(customersData);
+  const {
+    customers,
+    setCustomers,
+    addCustomer,
+    updateCustomer,
+    deleteCustomer,
+    fetchCustomers,
+    loading,
+    total,
+    totalPages,
+  } = useContext(CustomerContext);
+  const [errors, setErrors] = useState({});
+  const [isEditCustomerModalOpen, setIsEditCustomerModalOpen] = useState(false);
+  const [editCustomer, setEditCustomer] = useState(null);
+  const [currentPage, setCurrentPage] = useState(1);
+  const customersPerPage = 5;
+
+  useEffect(() => {
+    fetchCustomers(currentPage, customersPerPage);
+  }, [currentPage, customersPerPage, fetchCustomers]);
+
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    if (params.get("add") === "true") {
+      setIsAddCustomerModalOpen(true);
+    }
+  }, [location.search]);
 
   const [newCustomer, setNewCustomer] = useState({
     name: "",
@@ -81,27 +57,70 @@ const Customers = () => {
     status: "active",
   });
 
-  const handleAddCustomer = () => {
-    const id = customers.length + 1;
-    setCustomers([...customers, { ...newCustomer, id }]);
-    setIsAddCustomerModalOpen(false);
-    setNewCustomer({
-      name: "",
-      email: "",
-      phone: "",
-      address: "",
-      vehicles: 1,
-      lastService: "",
-      status: "active",
-    });
+  const validate = () => {
+    const newErrors = {};
+
+    if (!newCustomer.name) newErrors.name = "Name is required";
+
+    if (!newCustomer.email.match(/^[\w-.]+@([\w-]+\.)+[\w-]{2,4}$/))
+      newErrors.email = "Valid Email is required";
+
+    if (!newCustomer.phone.match(/^\d{10}$/))
+      newErrors.phone = "10-digit Phone number is required";
+
+    if (!newCustomer.address) newErrors.address = "Address is required";
+
+    if (!newCustomer.vehicles || newCustomer.vehicles < 1)
+      newErrors.vehicles = "Number of vehicles is required";
+
+    if (!newCustomer.lastService)
+      newErrors.lastService = "Last Service Date is required";
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
   };
 
-  const filteredCustomers = customers.filter(
-    (customer) =>
-      customer.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      customer.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      customer.phone.includes(searchTerm)
-  );
+  const handleAddCustomer = async () => {
+    if (!validate()) return;
+    try {
+      await addCustomer(newCustomer);
+      setIsAddCustomerModalOpen(false);
+      setNewCustomer({
+        name: "",
+        email: "",
+        phone: "",
+        address: "",
+        vehicles: 1,
+        lastService: "",
+        status: "active",
+      });
+    } catch (err) {
+      setErrors({ api: "Failed to add customer" });
+    }
+  };
+
+  const filteredCustomers = customers.filter((customer) => {
+    // Check object and all fields before using toLowerCase
+    if (
+      customer &&
+      typeof customer.name === "string" &&
+      typeof customer.email === "string" &&
+      typeof customer.phone === "string"
+    ) {
+      return (
+        customer.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        customer.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        customer.phone.includes(searchTerm)
+      );
+    }
+    return false;
+  });
+
+  // Pagination logic
+  // const totalPages = Math.ceil(filteredCustomers.length / customersPerPage);
+  const indexOfLastCustomer = currentPage * customersPerPage;
+  const indexOfFirstCustomer = indexOfLastCustomer - customersPerPage;
+  const currentCustomers = filteredCustomers; // Or just use customers
 
   return (
     <div className="space-y-6">
@@ -177,7 +196,7 @@ const Customers = () => {
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
-              {filteredCustomers.map((customer) => (
+              {currentCustomers.map((customer) => (
                 <motion.tr
                   key={customer.id}
                   initial={{ opacity: 0 }}
@@ -219,7 +238,9 @@ const Customers = () => {
                     {customer.vehicles}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                    {customer.lastService}
+                    {customer.lastService
+                      ? customer.lastService.slice(0, 10)
+                      : ""}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
                     <span
@@ -234,16 +255,35 @@ const Customers = () => {
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                     <div className="flex items-center justify-end space-x-2">
-                      <button className="text-blue-600 hover:text-blue-900">
+                      <button
+                        className="text-blue-600 hover:text-blue-900"
+                        onClick={() => {
+                          setEditCustomer(customer);
+                          setIsEditCustomerModalOpen(true);
+                          setErrors({});
+                        }}
+                      >
                         <Edit size={16} />
                       </button>
-                      <button className="text-red-600 hover:text-red-900">
+                      <button
+                        className="text-red-600 hover:text-red-900"
+                        onClick={async () => {
+                          if (
+                            window.confirm(
+                              "Are you sure you want to delete this customer?"
+                            )
+                          ) {
+                            await deleteCustomer(customer._id); // You need to implement this in CustomerContext
+                          }
+                        }}
+                      >
                         <Trash2 size={16} />
                       </button>
                       <div className="relative group">
-                        <button className="text-gray-500 hover:text-gray-700">
+                        {/* <button className="text-gray-500 hover:text-gray-700">
                           <MoreVertical size={16} />
-                        </button>
+                        </button> */}
+
                         <div className="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg py-1 hidden group-hover:block z-10">
                           <a
                             href="#view-profile"
@@ -283,16 +323,25 @@ const Customers = () => {
 
         <div className="px-6 py-3 flex items-center justify-between border-t border-gray-200">
           <div className="text-sm text-gray-500">
-            Showing {filteredCustomers.length} of {customers.length} customers
+            Showing {currentCustomers.length} of {filteredCustomers.length}{" "}
+            customers
           </div>
           <div className="flex items-center space-x-2">
             <button
               className="px-3 py-1 border border-gray-300 rounded text-gray-700 hover:bg-gray-50"
-              disabled
+              disabled={currentPage === 1}
+              onClick={() => setCurrentPage((prev) => prev - 1)}
             >
               Previous
             </button>
-            <button className="px-3 py-1 border border-gray-300 rounded text-gray-700 hover:bg-gray-50">
+            <span className="text-sm px-2">
+              Page {currentPage} of {totalPages}
+            </span>
+            <button
+              className="px-3 py-1 border border-gray-300 rounded text-gray-700 hover:bg-gray-50"
+              disabled={currentPage === totalPages || totalPages === 0}
+              onClick={() => setCurrentPage((prev) => prev + 1)}
+            >
               Next
             </button>
           </div>
@@ -301,7 +350,7 @@ const Customers = () => {
 
       {/* Add Customer Modal */}
       {isAddCustomerModalOpen && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 z-40 flex items-center justify-center p-4">
+        <div className="fixed inset-0 bg-black bg-opacity-50 z-[1000] flex items-center justify-center p-4">
           <motion.div
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
@@ -334,66 +383,100 @@ const Customers = () => {
             </div>
 
             <div className="space-y-4">
-              <input
-                type="text"
-                placeholder="Name"
-                className="w-full border rounded px-4 py-2"
-                value={newCustomer.name}
-                onChange={(e) =>
-                  setNewCustomer({ ...newCustomer, name: e.target.value })
-                }
-              />
-              <input
-                type="email"
-                placeholder="Email"
-                className="w-full border rounded px-4 py-2"
-                value={newCustomer.email}
-                onChange={(e) =>
-                  setNewCustomer({ ...newCustomer, email: e.target.value })
-                }
-              />
-              <input
-                type="text"
-                placeholder="Phone"
-                className="w-full border rounded px-4 py-2"
-                value={newCustomer.phone}
-                onChange={(e) =>
-                  setNewCustomer({ ...newCustomer, phone: e.target.value })
-                }
-              />
-              <input
-                type="text"
-                placeholder="Address"
-                className="w-full border rounded px-4 py-2"
-                value={newCustomer.address}
-                onChange={(e) =>
-                  setNewCustomer({ ...newCustomer, address: e.target.value })
-                }
-              />
-              <input
-                type="number"
-                placeholder="Number of Vehicles"
-                className="w-full border rounded px-4 py-2"
-                value={newCustomer.vehicles}
-                onChange={(e) =>
-                  setNewCustomer({
-                    ...newCustomer,
-                    vehicles: parseInt(e.target.value),
-                  })
-                }
-              />
-              <input
-                type="date"
-                placeholder="Last Service Date"
-                className="w-full border rounded px-4 py-2"
-                value={newCustomer.lastService}
-                onChange={(e) =>
-                  setNewCustomer({
-                    ...newCustomer,
-                    lastService: e.target.value,
-                  })
-                }
-              />
+              <div>
+                <input
+                  type="text"
+                  placeholder="Name"
+                  className="w-full border rounded px-4 py-2"
+                  value={newCustomer.name}
+                  onChange={(e) =>
+                    setNewCustomer({ ...newCustomer, name: e.target.value })
+                  }
+                />
+                {errors.name && (
+                  <span className="text-red-500 text-xs">{errors.name}</span>
+                )}
+              </div>
+              <div>
+                <input
+                  type="email"
+                  placeholder="Email"
+                  className="w-full border rounded px-4 py-2"
+                  value={newCustomer.email}
+                  onChange={(e) =>
+                    setNewCustomer({ ...newCustomer, email: e.target.value })
+                  }
+                />
+                {errors.email && (
+                  <span className="text-red-500 text-xs">{errors.email}</span>
+                )}
+              </div>
+              <div>
+                <input
+                  type="text"
+                  placeholder="Phone"
+                  className="w-full border rounded px-4 py-2"
+                  value={newCustomer.phone}
+                  onChange={(e) =>
+                    setNewCustomer({ ...newCustomer, phone: e.target.value })
+                  }
+                />
+                {errors.phone && (
+                  <span className="text-red-500 text-xs">{errors.phone}</span>
+                )}
+              </div>
+              <div>
+                <input
+                  type="text"
+                  placeholder="Address"
+                  className="w-full border rounded px-4 py-2"
+                  value={newCustomer.address}
+                  onChange={(e) =>
+                    setNewCustomer({ ...newCustomer, address: e.target.value })
+                  }
+                />
+                {errors.address && (
+                  <span className="text-red-500 text-xs">{errors.address}</span>
+                )}
+              </div>
+              <div>
+                <input
+                  type="number"
+                  placeholder="Number of Vehicles"
+                  className="w-full border rounded px-4 py-2"
+                  value={newCustomer.vehicles}
+                  onChange={(e) =>
+                    setNewCustomer({
+                      ...newCustomer,
+                      vehicles: parseInt(e.target.value),
+                    })
+                  }
+                />
+                {errors.vehicles && (
+                  <span className="text-red-500 text-xs">
+                    {errors.vehicles}
+                  </span>
+                )}
+              </div>
+              <div>
+                <input
+                  type="date"
+                  placeholder="Last Service Date"
+                  className="w-full border rounded px-4 py-2"
+                  value={newCustomer.lastService}
+                  onChange={(e) =>
+                    setNewCustomer({
+                      ...newCustomer,
+                      lastService: e.target.value,
+                    })
+                  }
+                />
+                {errors.lastService && (
+                  <span className="text-red-500 text-xs">
+                    {errors.lastService}
+                  </span>
+                )}
+              </div>
               <select
                 className="w-full border rounded px-4 py-2"
                 value={newCustomer.status}
@@ -409,6 +492,197 @@ const Customers = () => {
                 className="w-full bg-blue-600 text-white py-2 rounded hover:bg-blue-700"
               >
                 Save Customer
+              </button>
+            </div>
+          </motion.div>
+        </div>
+      )}
+
+      {/* Edit Customer Modal */}
+      {isEditCustomerModalOpen && editCustomer && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 z-[1000] flex items-center justify-center p-4">
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ duration: 0.2 }}
+            className="bg-white rounded-xl shadow-xl p-6 w-full max-w-2xl"
+          >
+            <div className="flex justify-between items-center mb-6">
+              <h2 className="text-xl font-bold text-gray-800">Edit Customer</h2>
+              <button
+                onClick={() => setIsEditCustomerModalOpen(false)}
+                className="text-gray-500 hover:text-gray-700"
+              >
+                {/* Close icon */}
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  className="h-6 w-6"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M6 18L18 6M6 6l12 12"
+                  />
+                </svg>
+              </button>
+            </div>
+            <div className="space-y-4">
+              <div>
+                {" "}
+                <input
+                  type="text"
+                  placeholder="Name"
+                  className="w-full border rounded px-4 py-2"
+                  value={editCustomer.name}
+                  onChange={(e) =>
+                    setEditCustomer({
+                      ...editCustomer,
+                      name: e.target.value,
+                    })
+                  }
+                />
+                {errors.name && (
+                  <span className="text-red-500 text-xs">{errors.name}</span>
+                )}
+              </div>
+              <div>
+                {" "}
+                <input
+                  type="email"
+                  placeholder="Email"
+                  className="w-full border rounded px-4 py-2"
+                  value={editCustomer.email}
+                  onChange={(e) =>
+                    setEditCustomer({
+                      ...editCustomer,
+                      email: e.target.value,
+                    })
+                  }
+                />
+                {errors.email && (
+                  <span className="text-red-500 text-xs">{errors.email}</span>
+                )}
+              </div>
+
+              <div>
+                <input
+                  type="text"
+                  placeholder="Phone"
+                  className="w-full border rounded px-4 py-2"
+                  value={editCustomer.phone}
+                  onChange={(e) =>
+                    setEditCustomer({
+                      ...editCustomer,
+                      phone: e.target.value,
+                    })
+                  }
+                />
+                {errors.phone && (
+                  <span className="text-red-500 text-xs">{errors.phone}</span>
+                )}
+              </div>
+
+              <div>
+                <input
+                  type="text"
+                  placeholder="Address"
+                  className="w-full border rounded px-4 py-2"
+                  value={editCustomer.address}
+                  onChange={(e) =>
+                    setEditCustomer({
+                      ...editCustomer,
+                      address: e.target.value,
+                    })
+                  }
+                />
+                {errors.address && (
+                  <span className="text-red-500 text-xs">{errors.address}</span>
+                )}
+              </div>
+
+              <div>
+                <input
+                  type="number"
+                  placeholder="Number of Vehicles"
+                  className="w-full border rounded px-4 py-2"
+                  value={editCustomer.vehicles}
+                  onChange={(e) =>
+                    setEditCustomer({
+                      ...editCustomer,
+                      vehicles: parseInt(e.target.value),
+                    })
+                  }
+                />
+                {errors.vehicles && (
+                  <span className="text-red-500 text-xs">
+                    {errors.vehicles}
+                  </span>
+                )}
+              </div>
+
+              <div>
+                <input
+                  type="date"
+                  placeholder="Last Service Date"
+                  className="w-full border rounded px-4 py-2"
+                  value={editCustomer.lastService}
+                  onChange={(e) =>
+                    setEditCustomer({
+                      ...editCustomer,
+                      lastService: e.target.value,
+                    })
+                  }
+                />
+                {errors.lastService && (
+                  <span className="text-red-500 text-xs">
+                    {errors.lastService}
+                  </span>
+                )}
+              </div>
+
+              <select
+                className="w-full border rounded px-4 py-2"
+                value={editCustomer.status}
+                onChange={(e) =>
+                  setEditCustomer({
+                    ...editCustomer,
+                    status: e.target.value,
+                  })
+                }
+              >
+                <option value="active">Active</option>
+                <option value="inactive">Inactive</option>
+              </select>
+              {errors.api && (
+                <span className="text-red-500 text-xs">{errors.api}</span>
+              )}
+
+              {/* ...other fields... */}
+              <button
+                onClick={async () => {
+                  // Validate editCustomer fields (reuse validate logic)
+                  if (!editCustomer.name) {
+                    setErrors({ name: "Name is required" });
+                    return;
+                  }
+                  // Update API call (assume updateCustomer function exists in context)
+                  try {
+                    await updateCustomer(editCustomer); // You need to implement this in CustomerContext
+                    setIsEditCustomerModalOpen(false);
+                    setEditCustomer(null);
+                  } catch (err) {
+                    setErrors({
+                      api: "Failed to update customer",
+                    });
+                  }
+                }}
+                className="w-full bg-blue-600 text-white py-2 rounded hover:bg-blue-700"
+              >
+                Save Changes
               </button>
             </div>
           </motion.div>

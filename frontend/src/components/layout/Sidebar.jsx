@@ -12,8 +12,11 @@ import {
   Settings,
   X,
 } from "lucide-react";
+import { useAuth } from "../../context/AuthContext";
 
 const Sidebar = ({ isOpen, toggleSidebar }) => {
+  const { user } = useAuth();
+
   const allNavItems = [
     {
       to: "/",
@@ -72,7 +75,7 @@ const Sidebar = ({ isOpen, toggleSidebar }) => {
   ];
 
   const navItems = allNavItems.filter(
-    (item) => item.roles.includes("admin") 
+    (item) => user && item.roles.includes(user.role)
   );
 
   return (
@@ -106,11 +109,17 @@ const Sidebar = ({ isOpen, toggleSidebar }) => {
             <div className="p-4 border-b">
               <div className="flex items-center space-x-3">
                 <div className="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center">
-                  <span className="text-blue-700 font-semibold">Flego </span>
+                  <span className="text-blue-700 font-semibold">
+                    {user?.name?.charAt(0) || "U"}
+                  </span>
                 </div>
                 <div>
-                  <p className="font-medium text-gray-800">Flego </p>
-                  <p className="text-xs text-gray-500 capitalize">Staff</p>
+                  <p className="font-medium text-gray-800">
+                    {user?.name || "User"}
+                  </p>
+                  <p className="text-xs text-gray-500 capitalize">
+                    {user?.role || "Staff"}
+                  </p>
                 </div>
               </div>
             </div>
@@ -149,11 +158,17 @@ const Sidebar = ({ isOpen, toggleSidebar }) => {
         <div className="p-4 border-b">
           <div className="flex items-center space-x-3">
             <div className="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center">
-              <span className="text-blue-700 font-semibold">Flego</span>
+              <span className="text-blue-700 font-semibold">
+                {user?.name?.charAt(0) || "U"}
+              </span>
             </div>
             <div>
-              <p className="font-medium text-gray-800">Flego</p>
-              <p className="text-xs text-gray-500 capitalize">Staff</p>
+              <p className="font-medium text-gray-800">
+                {user?.name || "User"}
+              </p>
+              <p className="text-xs text-gray-500 capitalize">
+                {user?.role || "Staff"}
+              </p>
             </div>
           </div>
         </div>

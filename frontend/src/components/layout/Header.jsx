@@ -1,11 +1,14 @@
 import React, { useState, useRef, useEffect } from "react";
 import { Bell, Menu, Search } from "lucide-react";
+import { useAuth } from "../../context/AuthContext";
 import { motion } from "framer-motion";
 
 const Header = ({ toggleSidebar }) => {
+  const { user, logout } = useAuth();
   const [showMenu, setShowMenu] = useState(false);
   const menuRef = useRef(null);
 
+  // Dropdown வெளியே கிளிக் செய்தால் மூட
   useEffect(() => {
     const handleClickOutside = (e) => {
       if (menuRef.current && !menuRef.current.contains(e.target)) {
@@ -50,12 +53,13 @@ const Header = ({ toggleSidebar }) => {
             whileTap={{ scale: 0.95 }}
             className="relative"
           >
-            <button className="p-2 rounded-full hover:bg-gray-100">
+            
+            {/* <button className="p-2 rounded-full hover:bg-gray-100">
               <Bell size={20} className="text-gray-600" />
               <span className="absolute top-1 right-1 w-4 h-4 bg-red-500 rounded-full text-xs text-white flex items-center justify-center">
                 3
               </span>
-            </button>
+            </button> */}
           </motion.div>
 
           <div className="relative" ref={menuRef}>
@@ -64,9 +68,13 @@ const Header = ({ toggleSidebar }) => {
               onClick={() => setShowMenu((prev) => !prev)}
             >
               <div className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center">
-                <span className="text-blue-700 font-semibold">Flego</span>
+                <span className="text-blue-700 font-semibold">
+                  {user?.name?.charAt(0) || "U"}
+                </span>
               </div>
-              <span className="text-sm font-medium text-gray-700 hidden md:inline"></span>
+              <span className="text-sm font-medium text-gray-700 hidden md:inline">
+                {user?.name || "User"}
+              </span>
             </button>
 
             <div
@@ -74,7 +82,7 @@ const Header = ({ toggleSidebar }) => {
                 showMenu ? "" : "hidden"
               }`}
             >
-              <a
+              {/* <a
                 href="#profile"
                 className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
               >
@@ -85,8 +93,11 @@ const Header = ({ toggleSidebar }) => {
                 className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
               >
                 Settings
-              </a>
-              <button className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
+              </a> */}
+              <button
+                onClick={logout}
+                className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+              >
                 Sign out
               </button>
             </div>

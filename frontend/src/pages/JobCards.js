@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useContext, useEffect } from "react";
 import { motion } from "framer-motion";
 import {
   Search,
@@ -13,64 +13,87 @@ import {
   PenTool as Tool,
   Clipboard,
 } from "lucide-react";
-
-// Sample data
-const jobCardsData = [
-  {
-    id: "JC-2024-001",
-    customer: "Michael Johnson",
-    vehicle: "Toyota Camry (ABC-123)",
-    date: "2024-06-15",
-    services: ["Oil Change", "Air Filter Replacement"],
-    status: "completed",
-    technician: "Robert Smith",
-    totalAmount: 95.75,
-  },
-  {
-    id: "JC-2024-002",
-    customer: "Sarah Williams",
-    vehicle: "Honda Civic (XYZ-789)",
-    date: "2024-06-15",
-    services: ["Brake Inspection", "Brake Pad Replacement"],
-    status: "in-progress",
-    technician: "James Wilson",
-    totalAmount: 220.5,
-  },
-  {
-    id: "JC-2024-003",
-    customer: "David Martinez",
-    vehicle: "Ford F-150 (DEF-456)",
-    date: "2024-06-14",
-    services: ["Tire Rotation", "Wheel Alignment"],
-    status: "completed",
-    technician: "Lisa Brown",
-    totalAmount: 150.0,
-  },
-  {
-    id: "JC-2024-004",
-    customer: "Jennifer Taylor",
-    vehicle: "Nissan Altima (GHI-789)",
-    date: "2024-06-14",
-    services: ["AC Repair", "Coolant Flush"],
-    status: "pending",
-    technician: "Robert Smith",
-    totalAmount: 320.25,
-  },
-  {
-    id: "JC-2024-005",
-    customer: "Robert Brown",
-    vehicle: "BMW X5 (JKL-012)",
-    date: "2024-06-13",
-    services: ["Full Service", "Spark Plug Replacement"],
-    status: "completed",
-    technician: "James Wilson",
-    totalAmount: 485.0,
-  },
-];
+import { CustomerContext } from "../context/CustomerContext";
+import { VehicleContext } from "../context/VehicleContext";
+import JobCardsContext from "../context/JobCardsContext";
+import { API_URL } from "../api/api";
+import { useLocation } from "react-router-dom";
+import axios from "axios";
 
 const JobCards = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedJobCard, setSelectedJobCard] = useState(null);
+  const [isAddJobCardModalOpen, setIsAddJobCardModalOpen] = useState(false);
+  const [newJobCard, setNewJobCard] = useState({
+    customer: "",
+    vehicle: "",
+    date: "",
+    services: "",
+    status: "pending",
+    technician: "",
+    totalAmount: "",
+  });
+  const [errors, setErrors] = useState({});
+  const { customers, fetchAllCustomers } = useContext(CustomerContext);
+  const { vehicles, fetchAllVehicles } = useContext(VehicleContext);
+  const { jobCards, addJobCard, fetchJobCards, total, totalPages } =
+    useContext(JobCardsContext);
+  const [currentPage, setCurrentPage] = useState(1);
+  const jobCardsPerPage = 5;
+  const location = useLocation();
+
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    if (params.get("add") === "true") {
+      setIsAddJobCardModalOpen(true);
+    }
+  }, [location.search]);
+
+  useEffect(() => {
+    fetchJobCards(currentPage, jobCardsPerPage);
+  }, [currentPage, jobCardsPerPage, fetchJobCards]);
+
+  useEffect(() => {
+    fetchAllCustomers();
+  }, [fetchAllCustomers]);
+
+  useEffect(() => {
+    fetchAllVehicles();
+  }, [fetchAllVehicles]);
+
+  // const [isInvoiceModalOpen, setIsInvoiceModalOpen] = useState(false);
+
+  // Validate form
+  const validate = () => {
+    let err = {};
+    if (!newJobCard.customer) err.customer = "Customer thevai";
+    if (!newJobCard.vehicle) err.vehicle = "Vehicle thevai";
+    if (!newJobCard.date) err.date = "Date thevai";
+    if (!newJobCard.services) err.services = "Service thevai";
+    if (!newJobCard.technician) err.technician = "Technician thevai";
+    if (!newJobCard.totalAmount || isNaN(newJobCard.totalAmount))
+      err.totalAmount = "Amount sari illai";
+    setErrors(err);
+    return Object.keys(err).length === 0;
+  };
+
+  // Add Job Card
+  const handleAddJobCard = () => {
+    if (!validate()) return;
+    addJobCard(newJobCard);
+    setIsAddJobCardModalOpen(false);
+    setNewJobCard({
+      customer: "",
+      vehicle: "",
+      date: "",
+      services: "",
+      status: "pending",
+      technician: "",
+      totalAmount: "",
+    });
+    setErrors({});
+    fetchJobCards(currentPage, jobCardsPerPage);
+  };
 
   const getStatusColor = (status) => {
     switch (status) {
@@ -102,19 +125,270 @@ const JobCards = () => {
     }
   };
 
-  const filteredJobCards = jobCardsData.filter(
-    (jobCard) =>
-      jobCard.id.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      jobCard.customer.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      jobCard.vehicle.toLowerCase().includes(searchTerm.toLowerCase())
+  // Filter job cards based on search term (without typeof)
+  const filteredJobCards = jobCards.filter((jobCard) => {
+    const customerName = jobCard.customer?.name || jobCard.customer || "";
+    const vehicle = jobCard.vehicle || {};
+    const vehicleMake = vehicle.make || "";
+    const vehicleModel = vehicle.model || "";
+    const vehicleRegNumber = vehicle.regNumber || "";
+    const vehicleText = `${vehicleMake} ${vehicleModel} ${vehicleRegNumber}`;
+
+    return (
+      (jobCard.id || "").toLowerCase().includes(searchTerm.toLowerCase()) ||
+      customerName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      vehicleText.toLowerCase().includes(searchTerm.toLowerCase())
+    );
+  });
+
+  // Find selected job card data
+  const selectedJobCardData = jobCards.find(
+    (jobCard) => (jobCard._id || jobCard.id) === selectedJobCard
   );
 
-  const selectedJobCardData = jobCardsData.find(
-    (jobCard) => jobCard.id === selectedJobCard
-  );
+  // Handle job card selection
+  const handleDownloadJobCard = async (jobCardId) => {
+    try {
+      const response = await fetch(`${API_URL}/jobcards/${jobCardId}/pdf`, {
+        method: "GET",
+        headers: { Accept: "application/pdf" },
+      });
+      if (response.ok) {
+        const blob = await response.blob();
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = `jobcard_${jobCardId}.pdf`;
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        window.URL.revokeObjectURL(url);
+        alert("Job Card PDF downloaded!");
+      } else {
+        alert("Download failed");
+      }
+    } catch (err) {
+      alert("Download failed");
+    }
+  };
+
+  // Handle job card completion
+  const handleMarkComplete = async (jobCardId) => {
+    try {
+      const res = await fetch(`${API_URL}/jobcards/${jobCardId}/complete`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+      });
+      const data = await res.json();
+      if (res.ok) {
+        alert("Job Card marked as completed!");
+        fetchJobCards(); // Refresh list
+      } else {
+        alert(data.message || "Failed to mark as complete");
+      }
+    } catch (err) {
+      alert("Failed to mark as complete");
+    }
+  };
+
+  const [serviceOptions, setServiceOptions] = useState([]);
+
+  // Fetch service types from backend
+  useEffect(() => {
+    axios.get(`${API_URL}/service-types`).then((res) => {
+      setServiceOptions(res.data.serviceTypes.map((s) => s.name));
+    });
+  }, []);
+
+  // Multi-select handler
+  const handleServiceSelect = (service) => {
+    let selected = Array.isArray(newJobCard.services)
+      ? [...newJobCard.services]
+      : typeof newJobCard.services === "string" &&
+        newJobCard.services.length > 0
+      ? newJobCard.services.split(",").map((s) => s.trim())
+      : [];
+    if (selected.includes(service)) {
+      selected = selected.filter((s) => s !== service);
+    } else {
+      selected.push(service);
+    }
+    setNewJobCard({ ...newJobCard, services: selected });
+  };
 
   return (
     <div className="space-y-6">
+      {/* Modal */}
+      {isAddJobCardModalOpen && (
+        <div className="fixed inset-0 bg-black bg-opacity-30 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg shadow-lg p-6 w-full max-w-md relative">
+            <div className="flex justify-between items-center ">
+              <h2 className="text-lg font-bold mb-4">Add New Job Card</h2>
+              <button
+                onClick={() => setIsAddJobCardModalOpen(false)}
+                className="text-gray-500 hover:text-gray-700"
+              >
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  className="h-6 w-6"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M6 18L18 6M6 6l12 12"
+                  />
+                </svg>
+              </button>
+            </div>
+
+            <div className="space-y-3">
+              <div>
+                <label className="block text-sm">Customer</label>
+                <select
+                  className="w-full border rounded px-2 py-1"
+                  value={newJobCard.customer}
+                  onChange={(e) =>
+                    setNewJobCard({ ...newJobCard, customer: e.target.value })
+                  }
+                >
+                  <option value="">Select</option>
+                  {customers.map((c) => (
+                    <option key={c._id} value={c._id}>
+                      {c.name}
+                    </option>
+                  ))}
+                </select>
+                {errors.customer && (
+                  <span className="text-red-500 text-xs">
+                    {errors.customer}
+                  </span>
+                )}
+              </div>
+              <div>
+                <label className="block text-sm">Vehicle</label>
+                <select
+                  className="w-full border rounded px-2 py-1"
+                  value={newJobCard.vehicle}
+                  onChange={(e) =>
+                    setNewJobCard({ ...newJobCard, vehicle: e.target.value })
+                  }
+                >
+                  <option value="">Select</option>
+                  {vehicles.map((v) => (
+                    <option key={v._id} value={v._id}>
+                      {v.make} {v.model} ({v.regNumber})
+                    </option>
+                  ))}
+                </select>
+                {errors.vehicle && (
+                  <span className="text-red-500 text-xs">{errors.vehicle}</span>
+                )}
+              </div>
+              <div>
+                <label className="block text-sm">Date</label>
+                <input
+                  type="date"
+                  className="w-full border rounded px-2 py-1"
+                  value={newJobCard.date}
+                  onChange={(e) =>
+                    setNewJobCard({ ...newJobCard, date: e.target.value })
+                  }
+                />
+                {errors.date && (
+                  <span className="text-red-500 text-xs">{errors.date}</span>
+                )}
+              </div>
+              <div>
+                <label className="block text-sm font-medium mb-1">
+                  Services
+                </label>
+                <div className="border rounded px-2 py-2 bg-white max-h-40 overflow-y-auto">
+                  {serviceOptions.length === 0 && (
+                    <div className="text-gray-400 text-sm">
+                      No services found
+                    </div>
+                  )}
+                  {serviceOptions.map((service) => (
+                    <label
+                      key={service}
+                      className="flex items-center space-x-2 mb-1"
+                    >
+                      <input
+                        type="checkbox"
+                        checked={
+                          Array.isArray(newJobCard.services)
+                            ? newJobCard.services.includes(service)
+                            : typeof newJobCard.services === "string"
+                            ? newJobCard.services
+                                .split(",")
+                                .map((s) => s.trim())
+                                .includes(service)
+                            : false
+                        }
+                        onChange={() => handleServiceSelect(service)}
+                        className="accent-blue-600"
+                      />
+                      <span>{service}</span>
+                    </label>
+                  ))}
+                </div>
+                {errors.services && (
+                  <span className="text-red-500 text-xs">
+                    {errors.services}
+                  </span>
+                )}
+              </div>
+              <div>
+                <label className="block text-sm">Technician</label>
+                <input
+                  type="text"
+                  className="w-full border rounded px-2 py-1"
+                  value={newJobCard.technician}
+                  onChange={(e) =>
+                    setNewJobCard({ ...newJobCard, technician: e.target.value })
+                  }
+                />
+                {errors.technician && (
+                  <span className="text-red-500 text-xs">
+                    {errors.technician}
+                  </span>
+                )}
+              </div>
+              <div>
+                <label className="block text-sm">Total Amount</label>
+                <input
+                  type="number"
+                  className="w-full border rounded px-2 py-1"
+                  value={newJobCard.totalAmount}
+                  onChange={(e) =>
+                    setNewJobCard({
+                      ...newJobCard,
+                      totalAmount: e.target.value,
+                    })
+                  }
+                />
+                {errors.totalAmount && (
+                  <span className="text-red-500 text-xs">
+                    {errors.totalAmount}
+                  </span>
+                )}
+              </div>
+              <div>
+                <button
+                  className="w-full bg-blue-600 text-white py-2 rounded mt-2"
+                  onClick={handleAddJobCard}
+                >
+                  Add Job Card
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
       <motion.div
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
@@ -152,6 +426,7 @@ const JobCards = () => {
             whileHover={{ scale: 1.02 }}
             whileTap={{ scale: 0.98 }}
             className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 flex items-center"
+            onClick={() => setIsAddJobCardModalOpen(true)}
           >
             <FileText size={16} className="mr-2" />
             <span>New Job Card</span>
@@ -202,13 +477,17 @@ const JobCards = () => {
                 <tbody className="bg-white divide-y divide-gray-200">
                   {filteredJobCards.map((jobCard) => (
                     <motion.tr
-                      key={jobCard.id}
+                      key={jobCard._id || jobCard.id}
                       initial={{ opacity: 0 }}
                       animate={{ opacity: 1 }}
                       transition={{ duration: 0.3 }}
-                      onClick={() => setSelectedJobCard(jobCard.id)}
+                      onClick={() =>
+                        setSelectedJobCard(jobCard._id || jobCard.id)
+                      }
                       className={`hover:bg-gray-50 cursor-pointer ${
-                        selectedJobCard === jobCard.id ? "bg-blue-50" : ""
+                        selectedJobCard === (jobCard._id || jobCard.id)
+                          ? "bg-blue-50"
+                          : ""
                       }`}
                     >
                       <td className="px-6 py-4 whitespace-nowrap">
@@ -221,7 +500,7 @@ const JobCards = () => {
                               {jobCard.id}
                             </div>
                             <div className="text-sm text-gray-500">
-                              {jobCard.date}
+                              {jobCard.date ? jobCard.date.slice(0, 10) : ""}
                             </div>
                           </div>
                         </div>
@@ -229,13 +508,20 @@ const JobCards = () => {
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="flex flex-col">
                           <div className="text-sm font-medium text-gray-900">
-                            {jobCard.customer}
+                            {typeof jobCard.customer === "object" &&
+                            jobCard.customer !== null
+                              ? jobCard.customer.name
+                              : jobCard.customer}
                           </div>
                           <div className="text-sm text-gray-500">
-                            {jobCard.vehicle}
+                            {typeof jobCard.vehicle === "object" &&
+                            jobCard.vehicle !== null
+                              ? `${jobCard.vehicle.make} ${jobCard.vehicle.model} (${jobCard.vehicle.regNumber})`
+                              : jobCard.vehicle}
                           </div>
                         </div>
                       </td>
+
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="flex flex-wrap gap-1">
                           {jobCard.services.map((service, index) => (
@@ -280,19 +566,24 @@ const JobCards = () => {
 
             <div className="px-6 py-3 flex items-center justify-between border-t border-gray-200">
               <div className="text-sm text-gray-500">
-                Showing{" "}
-                <span className="font-medium">{filteredJobCards.length}</span>{" "}
-                of <span className="font-medium">{jobCardsData.length}</span>{" "}
-                job cards
+                Showing {filteredJobCards.length} of {total} job cards
               </div>
               <div className="flex items-center space-x-2">
                 <button
-                  className="px-3 py-1 border border-gray-300 rounded text-gray-700 hover:bg-gray-50 disabled:opacity-50"
-                  disabled
+                  className="px-3 py-1 border border-gray-300 rounded text-gray-700 hover:bg-gray-50"
+                  disabled={currentPage === 1}
+                  onClick={() => setCurrentPage((prev) => prev - 1)}
                 >
                   Previous
                 </button>
-                <button className="px-3 py-1 border border-gray-300 rounded text-gray-700 hover:bg-gray-50">
+                <span className="text-sm px-2">
+                  Page {currentPage} of {totalPages}
+                </span>
+                <button
+                  className="px-3 py-1 border border-gray-300 rounded text-gray-700 hover:bg-gray-50"
+                  disabled={currentPage === totalPages || totalPages === 0}
+                  onClick={() => setCurrentPage((prev) => prev + 1)}
+                >
                   Next
                 </button>
               </div>
@@ -337,7 +628,9 @@ const JobCards = () => {
                     <div className="flex items-center">
                       <Calendar size={16} className="text-gray-400 mr-2" />
                       <span className="text-sm text-gray-700">
-                        {selectedJobCardData.date}
+                        {selectedJobCardData.date
+                          ? selectedJobCardData.date.slice(0, 10)
+                          : ""}
                       </span>
                     </div>
                   </div>
@@ -347,17 +640,24 @@ const JobCards = () => {
                   <h3 className="text-sm font-medium text-gray-500 mb-2">
                     Customer & Vehicle
                   </h3>
+
                   <div className="bg-gray-50 rounded-lg p-4">
                     <div className="flex items-center mb-2">
                       <User size={16} className="text-gray-400 mr-2" />
                       <span className="text-sm font-medium text-gray-700">
-                        {selectedJobCardData.customer}
+                        {typeof selectedJobCardData.customer === "object" &&
+                        selectedJobCardData.customer !== null
+                          ? selectedJobCardData.customer.name
+                          : selectedJobCardData.customer}
                       </span>
                     </div>
                     <div className="flex items-center">
                       <Car size={16} className="text-gray-400 mr-2" />
                       <span className="text-sm text-gray-700">
-                        {selectedJobCardData.vehicle}
+                        {typeof selectedJobCardData.vehicle === "object" &&
+                        selectedJobCardData.vehicle !== null
+                          ? `${selectedJobCardData.vehicle.make} ${selectedJobCardData.vehicle.model} (${selectedJobCardData.vehicle.regNumber})`
+                          : selectedJobCardData.vehicle}
                       </span>
                     </div>
                   </div>
@@ -427,14 +727,30 @@ const JobCards = () => {
                 </div>
 
                 <div className="flex justify-between pt-4">
-                  <button className="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 flex items-center">
+                  <button
+                    className="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 flex items-center"
+                    onClick={() =>
+                      handleDownloadJobCard(
+                        selectedJobCardData._id || selectedJobCardData.id
+                      )
+                    }
+                  >
                     <FileText size={16} className="mr-2" />
-                    <span>Generate Invoice</span>
+                    <span>Generate JobCard</span>
                   </button>
-                  <button className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 flex items-center">
-                    <CheckCircle size={16} className="mr-2" />
-                    <span>Mark as Complete</span>
-                  </button>
+                  {selectedJobCardData.status !== "completed" && (
+                    <button
+                      className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 flex items-center"
+                      onClick={() =>
+                        handleMarkComplete(
+                          selectedJobCardData._id || selectedJobCardData.id
+                        )
+                      }
+                    >
+                      <CheckCircle size={16} className="mr-2" />
+                      <span>Mark as Complete</span>
+                    </button>
+                  )}
                 </div>
               </div>
             </motion.div>
