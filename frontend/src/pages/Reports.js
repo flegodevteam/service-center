@@ -234,10 +234,10 @@ const Reports = () => {
               </div>
             </div>
 
-            <button className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 flex items-center">
+            {/* <button className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 flex items-center">
               <Download size={16} className="mr-2" />
               <span>Export</span>
-            </button>
+            </button> */}
           </div>
         </div>
       </div>

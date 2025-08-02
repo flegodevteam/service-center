@@ -57,40 +57,7 @@ const Settings = () => {
   const [editUserErrors, setEditUserErrors] = useState({});
 
   // User Management State
-  const [users, setUsers] = useState([
-    {
-      id: 1,
-      username: "admin",
-      email: "admin@example.com",
-      role: "admin",
-      status: "active",
-      lastLogin: "2024-06-15 10:30 AM",
-    },
-    {
-      id: 2,
-      username: "manager1",
-      email: "manager@example.com",
-      role: "manager",
-      status: "active",
-      lastLogin: "2024-06-15 09:15 AM",
-    },
-    {
-      id: 3,
-      username: "tech1",
-      email: "tech1@example.com",
-      role: "technician",
-      status: "active",
-      lastLogin: "2024-06-14 04:45 PM",
-    },
-    {
-      id: 4,
-      username: "frontdesk",
-      email: "frontdesk@example.com",
-      role: "front-desk",
-      status: "inactive",
-      lastLogin: "2024-06-13 02:20 PM",
-    },
-  ]);
+  const [users, setUsers] = useState([]);
 
   // service management state
   const [isAddServiceModalOpen, setIsAddServiceModalOpen] = useState(false);
@@ -361,18 +328,18 @@ const Settings = () => {
       label: "Service Configuration",
       icon: <Wrench size={18} />,
     },
-    { id: "notifications", label: "Notifications", icon: <Bell size={18} /> },
-    {
-      id: "backup-restore",
-      label: "Backup & Restore",
-      icon: <Database size={18} />,
-    },
-    { id: "audit-logs", label: "Audit Logs", icon: <History size={18} /> },
-    {
-      id: "system-config",
-      label: "System Config",
-      icon: <SettingsIcon size={18} />,
-    },
+    // { id: "notifications", label: "Notifications", icon: <Bell size={18} /> },
+    // {
+    //   id: "backup-restore",
+    //   label: "Backup & Restore",
+    //   icon: <Database size={18} />,
+    // },
+    // { id: "audit-logs", label: "Audit Logs", icon: <History size={18} /> },
+    // {
+    //   id: "system-config",
+    //   label: "System Config",
+    //   icon: <SettingsIcon size={18} />,
+    // },
   ];
 
   // Fetch all users from backend
@@ -1654,823 +1621,823 @@ const Settings = () => {
           </div>
         );
 
-      case "notifications":
-        return (
-          <div className="space-y-6">
-            <div className="flex justify-between items-center">
-              <h3 className="text-lg font-semibold text-gray-800">
-                Notification Settings
-              </h3>
-              <button
-                onClick={handleSaveNotifications}
-                disabled={loading}
-                className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 flex items-center disabled:opacity-50"
-              >
-                {loading ? (
-                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-                ) : (
-                  <Save size={16} className="mr-2" />
-                )}
-                Save Settings
-              </button>
-            </div>
+      // case "notifications":
+      //   return (
+      //     <div className="space-y-6">
+      //       <div className="flex justify-between items-center">
+      //         <h3 className="text-lg font-semibold text-gray-800">
+      //           Notification Settings
+      //         </h3>
+      //         <button
+      //           onClick={handleSaveNotifications}
+      //           disabled={loading}
+      //           className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 flex items-center disabled:opacity-50"
+      //         >
+      //           {loading ? (
+      //             <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+      //           ) : (
+      //             <Save size={16} className="mr-2" />
+      //           )}
+      //           Save Settings
+      //         </button>
+      //       </div>
 
-            {/* Notification Channels */}
-            <div className="bg-white border border-gray-200 rounded-lg p-6">
-              <h4 className="text-md font-semibold text-gray-800 mb-4">
-                Notification Channels
-              </h4>
-              <div className="space-y-4">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center">
-                    <Mail size={20} className="text-gray-500 mr-3" />
-                    <div>
-                      <p className="text-sm font-medium text-gray-900">
-                        Email Notifications
-                      </p>
-                      <p className="text-xs text-gray-500">
-                        Send notifications via email
-                      </p>
-                    </div>
-                  </div>
-                  <label className="relative inline-flex items-center cursor-pointer">
-                    <input
-                      type="checkbox"
-                      checked={notificationSettings.emailEnabled}
-                      onChange={(e) =>
-                        setNotificationSettings((prev) => ({
-                          ...prev,
-                          emailEnabled: e.target.checked,
-                        }))
-                      }
-                      className="sr-only peer"
-                    />
-                    <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
-                  </label>
-                </div>
+      //       {/* Notification Channels */}
+      //       <div className="bg-white border border-gray-200 rounded-lg p-6">
+      //         <h4 className="text-md font-semibold text-gray-800 mb-4">
+      //           Notification Channels
+      //         </h4>
+      //         <div className="space-y-4">
+      //           <div className="flex items-center justify-between">
+      //             <div className="flex items-center">
+      //               <Mail size={20} className="text-gray-500 mr-3" />
+      //               <div>
+      //                 <p className="text-sm font-medium text-gray-900">
+      //                   Email Notifications
+      //                 </p>
+      //                 <p className="text-xs text-gray-500">
+      //                   Send notifications via email
+      //                 </p>
+      //               </div>
+      //             </div>
+      //             <label className="relative inline-flex items-center cursor-pointer">
+      //               <input
+      //                 type="checkbox"
+      //                 checked={notificationSettings.emailEnabled}
+      //                 onChange={(e) =>
+      //                   setNotificationSettings((prev) => ({
+      //                     ...prev,
+      //                     emailEnabled: e.target.checked,
+      //                   }))
+      //                 }
+      //                 className="sr-only peer"
+      //               />
+      //               <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+      //             </label>
+      //           </div>
 
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center">
-                    <Smartphone size={20} className="text-gray-500 mr-3" />
-                    <div>
-                      <p className="text-sm font-medium text-gray-900">
-                        SMS Notifications
-                      </p>
-                      <p className="text-xs text-gray-500">
-                        Send notifications via SMS
-                      </p>
-                    </div>
-                  </div>
-                  <label className="relative inline-flex items-center cursor-pointer">
-                    <input
-                      type="checkbox"
-                      checked={notificationSettings.smsEnabled}
-                      onChange={(e) =>
-                        setNotificationSettings((prev) => ({
-                          ...prev,
-                          smsEnabled: e.target.checked,
-                        }))
-                      }
-                      className="sr-only peer"
-                    />
-                    <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
-                  </label>
-                </div>
-              </div>
-            </div>
+      //           <div className="flex items-center justify-between">
+      //             <div className="flex items-center">
+      //               <Smartphone size={20} className="text-gray-500 mr-3" />
+      //               <div>
+      //                 <p className="text-sm font-medium text-gray-900">
+      //                   SMS Notifications
+      //                 </p>
+      //                 <p className="text-xs text-gray-500">
+      //                   Send notifications via SMS
+      //                 </p>
+      //               </div>
+      //             </div>
+      //             <label className="relative inline-flex items-center cursor-pointer">
+      //               <input
+      //                 type="checkbox"
+      //                 checked={notificationSettings.smsEnabled}
+      //                 onChange={(e) =>
+      //                   setNotificationSettings((prev) => ({
+      //                     ...prev,
+      //                     smsEnabled: e.target.checked,
+      //                   }))
+      //                 }
+      //                 className="sr-only peer"
+      //               />
+      //               <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+      //             </label>
+      //           </div>
+      //         </div>
+      //       </div>
 
-            {/* Notification Types */}
-            <div className="bg-white border border-gray-200 rounded-lg p-6">
-              <h4 className="text-md font-semibold text-gray-800 mb-4">
-                Notification Types
-              </h4>
-              <div className="space-y-4">
-                {[
-                  {
-                    key: "appointmentReminders",
-                    label: "Appointment Reminders",
-                    desc: "Send reminders before scheduled appointments",
-                  },
-                  {
-                    key: "serviceCompletion",
-                    label: "Service Completion",
-                    desc: "Notify when a service job is completed",
-                  },
-                  {
-                    key: "inventoryAlerts",
-                    label: "Inventory Alerts",
-                    desc: "Notify when inventory items are low in stock",
-                  },
-                  {
-                    key: "paymentReminders",
-                    label: "Payment Reminders",
-                    desc: "Send payment due reminders",
-                  },
-                ].map((item) => (
-                  <div
-                    key={item.key}
-                    className="flex items-center justify-between"
-                  >
-                    <div className="flex items-center">
-                      <Bell size={20} className="text-gray-500 mr-3" />
-                      <div>
-                        <p className="text-sm font-medium text-gray-900">
-                          {item.label}
-                        </p>
-                        <p className="text-xs text-gray-500">{item.desc}</p>
-                      </div>
-                    </div>
-                    <label className="relative inline-flex items-center cursor-pointer">
-                      <input
-                        type="checkbox"
-                        checked={notificationSettings[item.key]}
-                        onChange={(e) =>
-                          setNotificationSettings((prev) => ({
-                            ...prev,
-                            [item.key]: e.target.checked,
-                          }))
-                        }
-                        className="sr-only peer"
-                      />
-                      <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
-                    </label>
-                  </div>
-                ))}
-              </div>
-            </div>
+      //       {/* Notification Types */}
+      //       <div className="bg-white border border-gray-200 rounded-lg p-6">
+      //         <h4 className="text-md font-semibold text-gray-800 mb-4">
+      //           Notification Types
+      //         </h4>
+      //         <div className="space-y-4">
+      //           {[
+      //             {
+      //               key: "appointmentReminders",
+      //               label: "Appointment Reminders",
+      //               desc: "Send reminders before scheduled appointments",
+      //             },
+      //             {
+      //               key: "serviceCompletion",
+      //               label: "Service Completion",
+      //               desc: "Notify when a service job is completed",
+      //             },
+      //             {
+      //               key: "inventoryAlerts",
+      //               label: "Inventory Alerts",
+      //               desc: "Notify when inventory items are low in stock",
+      //             },
+      //             {
+      //               key: "paymentReminders",
+      //               label: "Payment Reminders",
+      //               desc: "Send payment due reminders",
+      //             },
+      //           ].map((item) => (
+      //             <div
+      //               key={item.key}
+      //               className="flex items-center justify-between"
+      //             >
+      //               <div className="flex items-center">
+      //                 <Bell size={20} className="text-gray-500 mr-3" />
+      //                 <div>
+      //                   <p className="text-sm font-medium text-gray-900">
+      //                     {item.label}
+      //                   </p>
+      //                   <p className="text-xs text-gray-500">{item.desc}</p>
+      //                 </div>
+      //               </div>
+      //               <label className="relative inline-flex items-center cursor-pointer">
+      //                 <input
+      //                   type="checkbox"
+      //                   checked={notificationSettings[item.key]}
+      //                   onChange={(e) =>
+      //                     setNotificationSettings((prev) => ({
+      //                       ...prev,
+      //                       [item.key]: e.target.checked,
+      //                     }))
+      //                   }
+      //                   className="sr-only peer"
+      //                 />
+      //                 <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+      //               </label>
+      //             </div>
+      //           ))}
+      //         </div>
+      //       </div>
 
-            {/* Email Templates */}
-            <div className="bg-white border border-gray-200 rounded-lg p-6">
-              <h4 className="text-md font-semibold text-gray-800 mb-4">
-                Email Templates
-              </h4>
-              <div className="space-y-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Appointment Confirmation
-                  </label>
-                  <textarea
-                    value={
-                      notificationSettings.emailTemplate.appointmentConfirmation
-                    }
-                    onChange={(e) =>
-                      setNotificationSettings((prev) => ({
-                        ...prev,
-                        emailTemplate: {
-                          ...prev.emailTemplate,
-                          appointmentConfirmation: e.target.value,
-                        },
-                      }))
-                    }
-                    className="w-full rounded-lg border border-gray-300 py-2 px-3 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    rows={3}
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Service Completion
-                  </label>
-                  <textarea
-                    value={notificationSettings.emailTemplate.serviceCompletion}
-                    onChange={(e) =>
-                      setNotificationSettings((prev) => ({
-                        ...prev,
-                        emailTemplate: {
-                          ...prev.emailTemplate,
-                          serviceCompletion: e.target.value,
-                        },
-                      }))
-                    }
-                    className="w-full rounded-lg border border-gray-300 py-2 px-3 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    rows={3}
-                  />
-                </div>
-              </div>
-            </div>
-          </div>
-        );
+      //       {/* Email Templates */}
+      //       <div className="bg-white border border-gray-200 rounded-lg p-6">
+      //         <h4 className="text-md font-semibold text-gray-800 mb-4">
+      //           Email Templates
+      //         </h4>
+      //         <div className="space-y-4">
+      //           <div>
+      //             <label className="block text-sm font-medium text-gray-700 mb-1">
+      //               Appointment Confirmation
+      //             </label>
+      //             <textarea
+      //               value={
+      //                 notificationSettings.emailTemplate.appointmentConfirmation
+      //               }
+      //               onChange={(e) =>
+      //                 setNotificationSettings((prev) => ({
+      //                   ...prev,
+      //                   emailTemplate: {
+      //                     ...prev.emailTemplate,
+      //                     appointmentConfirmation: e.target.value,
+      //                   },
+      //                 }))
+      //               }
+      //               className="w-full rounded-lg border border-gray-300 py-2 px-3 focus:outline-none focus:ring-2 focus:ring-blue-500"
+      //               rows={3}
+      //             />
+      //           </div>
+      //           <div>
+      //             <label className="block text-sm font-medium text-gray-700 mb-1">
+      //               Service Completion
+      //             </label>
+      //             <textarea
+      //               value={notificationSettings.emailTemplate.serviceCompletion}
+      //               onChange={(e) =>
+      //                 setNotificationSettings((prev) => ({
+      //                   ...prev,
+      //                   emailTemplate: {
+      //                     ...prev.emailTemplate,
+      //                     serviceCompletion: e.target.value,
+      //                   },
+      //                 }))
+      //               }
+      //               className="w-full rounded-lg border border-gray-300 py-2 px-3 focus:outline-none focus:ring-2 focus:ring-blue-500"
+      //               rows={3}
+      //             />
+      //           </div>
+      //         </div>
+      //       </div>
+      //     </div>
+      //   );
 
-      case "backup-restore":
-        return (
-          <div className="space-y-6">
-            <h3 className="text-lg font-semibold text-gray-800">
-              Backup & Restore
-            </h3>
+      // case "backup-restore":
+      //   return (
+      //     <div className="space-y-6">
+      //       <h3 className="text-lg font-semibold text-gray-800">
+      //         Backup & Restore
+      //       </h3>
 
-            {/* Database Backup */}
-            <div className="bg-white border border-gray-200 rounded-lg p-6">
-              <div className="flex items-center justify-between mb-4">
-                <div>
-                  <h4 className="text-md font-semibold text-gray-800">
-                    Database Backup
-                  </h4>
-                  <p className="text-sm text-gray-600">
-                    Create a backup of your database to protect your data
-                  </p>
-                </div>
-                <Database size={32} className="text-blue-600" />
-              </div>
+      //       {/* Database Backup */}
+      //       <div className="bg-white border border-gray-200 rounded-lg p-6">
+      //         <div className="flex items-center justify-between mb-4">
+      //           <div>
+      //             <h4 className="text-md font-semibold text-gray-800">
+      //               Database Backup
+      //             </h4>
+      //             <p className="text-sm text-gray-600">
+      //               Create a backup of your database to protect your data
+      //             </p>
+      //           </div>
+      //           <Database size={32} className="text-blue-600" />
+      //         </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-                <div className="bg-gray-50 p-4 rounded-lg">
-                  <div className="text-2xl font-bold text-gray-800">2.4 GB</div>
-                  <div className="text-sm text-gray-600">Database Size</div>
-                </div>
-                <div className="bg-gray-50 p-4 rounded-lg">
-                  <div className="text-2xl font-bold text-gray-800">15,847</div>
-                  <div className="text-sm text-gray-600">Total Records</div>
-                </div>
-                <div className="bg-gray-50 p-4 rounded-lg">
-                  <div className="text-2xl font-bold text-gray-800">
-                    June 14
-                  </div>
-                  <div className="text-sm text-gray-600">Last Backup</div>
-                </div>
-              </div>
+      //         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+      //           <div className="bg-gray-50 p-4 rounded-lg">
+      //             <div className="text-2xl font-bold text-gray-800">2.4 GB</div>
+      //             <div className="text-sm text-gray-600">Database Size</div>
+      //           </div>
+      //           <div className="bg-gray-50 p-4 rounded-lg">
+      //             <div className="text-2xl font-bold text-gray-800">15,847</div>
+      //             <div className="text-sm text-gray-600">Total Records</div>
+      //           </div>
+      //           <div className="bg-gray-50 p-4 rounded-lg">
+      //             <div className="text-2xl font-bold text-gray-800">
+      //               June 14
+      //             </div>
+      //             <div className="text-sm text-gray-600">Last Backup</div>
+      //           </div>
+      //         </div>
 
-              <div className="flex space-x-3">
-                <button
-                  onClick={handleCreateBackup}
-                  disabled={loading}
-                  className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 flex items-center disabled:opacity-50"
-                >
-                  {loading ? (
-                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-                  ) : (
-                    <Download size={16} className="mr-2" />
-                  )}
-                  Create Backup
-                </button>
-                <button
-                  onClick={handleRestoreBackup}
-                  disabled={loading}
-                  className="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 flex items-center disabled:opacity-50"
-                >
-                  {loading ? (
-                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-gray-700 mr-2"></div>
-                  ) : (
-                    <Upload size={16} className="mr-2" />
-                  )}
-                  Restore Backup
-                </button>
-              </div>
-            </div>
+      //         <div className="flex space-x-3">
+      //           <button
+      //             onClick={handleCreateBackup}
+      //             disabled={loading}
+      //             className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 flex items-center disabled:opacity-50"
+      //           >
+      //             {loading ? (
+      //               <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+      //             ) : (
+      //               <Download size={16} className="mr-2" />
+      //             )}
+      //             Create Backup
+      //           </button>
+      //           <button
+      //             onClick={handleRestoreBackup}
+      //             disabled={loading}
+      //             className="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 flex items-center disabled:opacity-50"
+      //           >
+      //             {loading ? (
+      //               <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-gray-700 mr-2"></div>
+      //             ) : (
+      //               <Upload size={16} className="mr-2" />
+      //             )}
+      //             Restore Backup
+      //           </button>
+      //         </div>
+      //       </div>
 
-            {/* Backup Schedule */}
-            <div className="bg-white border border-gray-200 rounded-lg p-6">
-              <h4 className="text-md font-semibold text-gray-800 mb-4">
-                Automatic Backup Schedule
-              </h4>
-              <div className="space-y-4">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm font-medium text-gray-900">
-                      Enable Automatic Backups
-                    </p>
-                    <p className="text-xs text-gray-500">
-                      Automatically create backups on a schedule
-                    </p>
-                  </div>
-                  <label className="relative inline-flex items-center cursor-pointer">
-                    <input
-                      type="checkbox"
-                      defaultChecked
-                      className="sr-only peer"
-                    />
-                    <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
-                  </label>
-                </div>
+      //       {/* Backup Schedule */}
+      //       <div className="bg-white border border-gray-200 rounded-lg p-6">
+      //         <h4 className="text-md font-semibold text-gray-800 mb-4">
+      //           Automatic Backup Schedule
+      //         </h4>
+      //         <div className="space-y-4">
+      //           <div className="flex items-center justify-between">
+      //             <div>
+      //               <p className="text-sm font-medium text-gray-900">
+      //                 Enable Automatic Backups
+      //               </p>
+      //               <p className="text-xs text-gray-500">
+      //                 Automatically create backups on a schedule
+      //               </p>
+      //             </div>
+      //             <label className="relative inline-flex items-center cursor-pointer">
+      //               <input
+      //                 type="checkbox"
+      //                 defaultChecked
+      //                 className="sr-only peer"
+      //               />
+      //               <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+      //             </label>
+      //           </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Frequency
-                    </label>
-                    <select className="w-full rounded-lg border border-gray-300 py-2 px-3 focus:outline-none focus:ring-2 focus:ring-blue-500">
-                      <option>Daily</option>
-                      <option>Weekly</option>
-                      <option>Monthly</option>
-                    </select>
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Time
-                    </label>
-                    <input
-                      type="time"
-                      defaultValue="02:00"
-                      className="w-full rounded-lg border border-gray-300 py-2 px-3 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    />
-                  </div>
-                </div>
-              </div>
-            </div>
+      //           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      //             <div>
+      //               <label className="block text-sm font-medium text-gray-700 mb-1">
+      //                 Frequency
+      //               </label>
+      //               <select className="w-full rounded-lg border border-gray-300 py-2 px-3 focus:outline-none focus:ring-2 focus:ring-blue-500">
+      //                 <option>Daily</option>
+      //                 <option>Weekly</option>
+      //                 <option>Monthly</option>
+      //               </select>
+      //             </div>
+      //             <div>
+      //               <label className="block text-sm font-medium text-gray-700 mb-1">
+      //                 Time
+      //               </label>
+      //               <input
+      //                 type="time"
+      //                 defaultValue="02:00"
+      //                 className="w-full rounded-lg border border-gray-300 py-2 px-3 focus:outline-none focus:ring-2 focus:ring-blue-500"
+      //               />
+      //             </div>
+      //           </div>
+      //         </div>
+      //       </div>
 
-            {/* Recent Backups */}
-            <div className="bg-white border border-gray-200 rounded-lg p-6">
-              <h4 className="text-md font-semibold text-gray-800 mb-4">
-                Recent Backups
-              </h4>
-              <div className="space-y-3">
-                {[
-                  {
-                    date: "2024-06-15 02:00:00",
-                    size: "2.4 GB",
-                    status: "Success",
-                    type: "Automatic",
-                  },
-                  {
-                    date: "2024-06-14 02:00:00",
-                    size: "2.3 GB",
-                    status: "Success",
-                    type: "Automatic",
-                  },
-                  {
-                    date: "2024-06-13 14:30:00",
-                    size: "2.3 GB",
-                    status: "Success",
-                    type: "Manual",
-                  },
-                  {
-                    date: "2024-06-13 02:00:00",
-                    size: "2.3 GB",
-                    status: "Failed",
-                    type: "Automatic",
-                  },
-                ].map((backup, index) => (
-                  <div
-                    key={index}
-                    className="flex items-center justify-between p-3 bg-gray-50 rounded-lg"
-                  >
-                    <div className="flex items-center">
-                      <div
-                        className={`w-3 h-3 rounded-full mr-3 ${
-                          backup.status === "Success"
-                            ? "bg-green-500"
-                            : "bg-red-500"
-                        }`}
-                      ></div>
-                      <div>
-                        <div className="text-sm font-medium text-gray-900">
-                          {backup.date}
-                        </div>
-                        <div className="text-xs text-gray-500">
-                          {backup.size} • {backup.type}
-                        </div>
-                      </div>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      <span
-                        className={`px-2 py-1 text-xs font-semibold rounded-full ${
-                          backup.status === "Success"
-                            ? "bg-green-100 text-green-800"
-                            : "bg-red-100 text-red-800"
-                        }`}
-                      >
-                        {backup.status}
-                      </span>
-                      {backup.status === "Success" && (
-                        <button className="text-blue-600 hover:text-blue-900 p-1 rounded hover:bg-blue-50">
-                          <Download size={16} />
-                        </button>
-                      )}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
-        );
+      //       {/* Recent Backups */}
+      //       <div className="bg-white border border-gray-200 rounded-lg p-6">
+      //         <h4 className="text-md font-semibold text-gray-800 mb-4">
+      //           Recent Backups
+      //         </h4>
+      //         <div className="space-y-3">
+      //           {[
+      //             {
+      //               date: "2024-06-15 02:00:00",
+      //               size: "2.4 GB",
+      //               status: "Success",
+      //               type: "Automatic",
+      //             },
+      //             {
+      //               date: "2024-06-14 02:00:00",
+      //               size: "2.3 GB",
+      //               status: "Success",
+      //               type: "Automatic",
+      //             },
+      //             {
+      //               date: "2024-06-13 14:30:00",
+      //               size: "2.3 GB",
+      //               status: "Success",
+      //               type: "Manual",
+      //             },
+      //             {
+      //               date: "2024-06-13 02:00:00",
+      //               size: "2.3 GB",
+      //               status: "Failed",
+      //               type: "Automatic",
+      //             },
+      //           ].map((backup, index) => (
+      //             <div
+      //               key={index}
+      //               className="flex items-center justify-between p-3 bg-gray-50 rounded-lg"
+      //             >
+      //               <div className="flex items-center">
+      //                 <div
+      //                   className={`w-3 h-3 rounded-full mr-3 ${
+      //                     backup.status === "Success"
+      //                       ? "bg-green-500"
+      //                       : "bg-red-500"
+      //                   }`}
+      //                 ></div>
+      //                 <div>
+      //                   <div className="text-sm font-medium text-gray-900">
+      //                     {backup.date}
+      //                   </div>
+      //                   <div className="text-xs text-gray-500">
+      //                     {backup.size} • {backup.type}
+      //                   </div>
+      //                 </div>
+      //               </div>
+      //               <div className="flex items-center space-x-2">
+      //                 <span
+      //                   className={`px-2 py-1 text-xs font-semibold rounded-full ${
+      //                     backup.status === "Success"
+      //                       ? "bg-green-100 text-green-800"
+      //                       : "bg-red-100 text-red-800"
+      //                   }`}
+      //                 >
+      //                   {backup.status}
+      //                 </span>
+      //                 {backup.status === "Success" && (
+      //                   <button className="text-blue-600 hover:text-blue-900 p-1 rounded hover:bg-blue-50">
+      //                     <Download size={16} />
+      //                   </button>
+      //                 )}
+      //               </div>
+      //             </div>
+      //           ))}
+      //         </div>
+      //       </div>
+      //     </div>
+      //   );
 
-      case "audit-logs":
-        return (
-          <div className="space-y-6">
-            <div className="flex justify-between items-center">
-              <h3 className="text-lg font-semibold text-gray-800">
-                Audit Logs
-              </h3>
-              <button
-                onClick={handleExportLogs}
-                className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 flex items-center"
-              >
-                <Download size={16} className="mr-2" />
-                Export Logs
-              </button>
-            </div>
+      // case "audit-logs":
+      //   return (
+      //     <div className="space-y-6">
+      //       <div className="flex justify-between items-center">
+      //         <h3 className="text-lg font-semibold text-gray-800">
+      //           Audit Logs
+      //         </h3>
+      //         <button
+      //           onClick={handleExportLogs}
+      //           className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 flex items-center"
+      //         >
+      //           <Download size={16} className="mr-2" />
+      //           Export Logs
+      //         </button>
+      //       </div>
 
-            {/* Log Filters */}
-            <div className="bg-white border border-gray-200 rounded-lg p-4">
-              <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Date From
-                  </label>
-                  <input
-                    type="date"
-                    className="w-full rounded-lg border border-gray-300 py-2 px-3 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Date To
-                  </label>
-                  <input
-                    type="date"
-                    className="w-full rounded-lg border border-gray-300 py-2 px-3 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    User
-                  </label>
-                  <select className="w-full rounded-lg border border-gray-300 py-2 px-3 focus:outline-none focus:ring-2 focus:ring-blue-500">
-                    <option value="">All Users</option>
-                    <option value="admin">Admin</option>
-                    <option value="manager1">Manager</option>
-                    <option value="tech1">Technician</option>
-                  </select>
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Severity
-                  </label>
-                  <select className="w-full rounded-lg border border-gray-300 py-2 px-3 focus:outline-none focus:ring-2 focus:ring-blue-500">
-                    <option value="">All Levels</option>
-                    <option value="info">Info</option>
-                    <option value="warning">Warning</option>
-                    <option value="error">Error</option>
-                    <option value="success">Success</option>
-                  </select>
-                </div>
-              </div>
-            </div>
+      //       {/* Log Filters */}
+      //       <div className="bg-white border border-gray-200 rounded-lg p-4">
+      //         <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+      //           <div>
+      //             <label className="block text-sm font-medium text-gray-700 mb-1">
+      //               Date From
+      //             </label>
+      //             <input
+      //               type="date"
+      //               className="w-full rounded-lg border border-gray-300 py-2 px-3 focus:outline-none focus:ring-2 focus:ring-blue-500"
+      //             />
+      //           </div>
+      //           <div>
+      //             <label className="block text-sm font-medium text-gray-700 mb-1">
+      //               Date To
+      //             </label>
+      //             <input
+      //               type="date"
+      //               className="w-full rounded-lg border border-gray-300 py-2 px-3 focus:outline-none focus:ring-2 focus:ring-blue-500"
+      //             />
+      //           </div>
+      //           <div>
+      //             <label className="block text-sm font-medium text-gray-700 mb-1">
+      //               User
+      //             </label>
+      //             <select className="w-full rounded-lg border border-gray-300 py-2 px-3 focus:outline-none focus:ring-2 focus:ring-blue-500">
+      //               <option value="">All Users</option>
+      //               <option value="admin">Admin</option>
+      //               <option value="manager1">Manager</option>
+      //               <option value="tech1">Technician</option>
+      //             </select>
+      //           </div>
+      //           <div>
+      //             <label className="block text-sm font-medium text-gray-700 mb-1">
+      //               Severity
+      //             </label>
+      //             <select className="w-full rounded-lg border border-gray-300 py-2 px-3 focus:outline-none focus:ring-2 focus:ring-blue-500">
+      //               <option value="">All Levels</option>
+      //               <option value="info">Info</option>
+      //               <option value="warning">Warning</option>
+      //               <option value="error">Error</option>
+      //               <option value="success">Success</option>
+      //             </select>
+      //           </div>
+      //         </div>
+      //       </div>
 
-            {/* Audit Log Entries */}
-            <div className="bg-white border border-gray-200 rounded-lg overflow-hidden">
-              <div className="overflow-x-auto">
-                <table className="min-w-full divide-y divide-gray-200">
-                  <thead className="bg-gray-50">
-                    <tr>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Timestamp
-                      </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        User
-                      </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Action
-                      </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Details
-                      </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Severity
-                      </th>
-                    </tr>
-                  </thead>
-                  <tbody className="bg-white divide-y divide-gray-200">
-                    {auditLogs.map((log) => (
-                      <tr key={log.id} className="hover:bg-gray-50">
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                          {log.timestamp}
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <div className="flex items-center">
-                            <User size={16} className="text-gray-400 mr-2" />
-                            <span className="text-sm font-medium text-gray-900">
-                              {log.user}
-                            </span>
-                          </div>
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                          {log.action}
-                        </td>
-                        <td className="px-6 py-4 text-sm text-gray-500 max-w-xs truncate">
-                          {log.details}
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <span
-                            className={`px-2 py-1 inline-flex items-center text-xs leading-5 font-semibold rounded-full ${getSeverityColor(
-                              log.severity
-                            )}`}
-                          >
-                            <span className="mr-1">
-                              {getSeverityIcon(log.severity)}
-                            </span>
-                            {log.severity}
-                          </span>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            </div>
+      //       {/* Audit Log Entries */}
+      //       <div className="bg-white border border-gray-200 rounded-lg overflow-hidden">
+      //         <div className="overflow-x-auto">
+      //           <table className="min-w-full divide-y divide-gray-200">
+      //             <thead className="bg-gray-50">
+      //               <tr>
+      //                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+      //                   Timestamp
+      //                 </th>
+      //                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+      //                   User
+      //                 </th>
+      //                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+      //                   Action
+      //                 </th>
+      //                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+      //                   Details
+      //                 </th>
+      //                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+      //                   Severity
+      //                 </th>
+      //               </tr>
+      //             </thead>
+      //             <tbody className="bg-white divide-y divide-gray-200">
+      //               {auditLogs.map((log) => (
+      //                 <tr key={log.id} className="hover:bg-gray-50">
+      //                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+      //                     {log.timestamp}
+      //                   </td>
+      //                   <td className="px-6 py-4 whitespace-nowrap">
+      //                     <div className="flex items-center">
+      //                       <User size={16} className="text-gray-400 mr-2" />
+      //                       <span className="text-sm font-medium text-gray-900">
+      //                         {log.user}
+      //                       </span>
+      //                     </div>
+      //                   </td>
+      //                   <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+      //                     {log.action}
+      //                   </td>
+      //                   <td className="px-6 py-4 text-sm text-gray-500 max-w-xs truncate">
+      //                     {log.details}
+      //                   </td>
+      //                   <td className="px-6 py-4 whitespace-nowrap">
+      //                     <span
+      //                       className={`px-2 py-1 inline-flex items-center text-xs leading-5 font-semibold rounded-full ${getSeverityColor(
+      //                         log.severity
+      //                       )}`}
+      //                     >
+      //                       <span className="mr-1">
+      //                         {getSeverityIcon(log.severity)}
+      //                       </span>
+      //                       {log.severity}
+      //                     </span>
+      //                   </td>
+      //                 </tr>
+      //               ))}
+      //             </tbody>
+      //           </table>
+      //         </div>
+      //       </div>
 
-            {/* Log Statistics */}
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-              <div className="bg-white border border-gray-200 rounded-lg p-4">
-                <div className="flex items-center">
-                  <div className="flex-shrink-0">
-                    <FileText size={24} className="text-blue-600" />
-                  </div>
-                  <div className="ml-3">
-                    <div className="text-lg font-semibold text-gray-900">
-                      1,247
-                    </div>
-                    <div className="text-sm text-gray-500">Total Logs</div>
-                  </div>
-                </div>
-              </div>
-              <div className="bg-white border border-gray-200 rounded-lg p-4">
-                <div className="flex items-center">
-                  <div className="flex-shrink-0">
-                    <CheckCircle size={24} className="text-green-600" />
-                  </div>
-                  <div className="ml-3">
-                    <div className="text-lg font-semibold text-gray-900">
-                      1,156
-                    </div>
-                    <div className="text-sm text-gray-500">Success</div>
-                  </div>
-                </div>
-              </div>
-              <div className="bg-white border border-gray-200 rounded-lg p-4">
-                <div className="flex items-center">
-                  <div className="flex-shrink-0">
-                    <AlertTriangle size={24} className="text-yellow-600" />
-                  </div>
-                  <div className="ml-3">
-                    <div className="text-lg font-semibold text-gray-900">
-                      78
-                    </div>
-                    <div className="text-sm text-gray-500">Warnings</div>
-                  </div>
-                </div>
-              </div>
-              <div className="bg-white border border-gray-200 rounded-lg p-4">
-                <div className="flex items-center">
-                  <div className="flex-shrink-0">
-                    <XCircle size={24} className="text-red-600" />
-                  </div>
-                  <div className="ml-3">
-                    <div className="text-lg font-semibold text-gray-900">
-                      13
-                    </div>
-                    <div className="text-sm text-gray-500">Errors</div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        );
+      //       {/* Log Statistics */}
+      //       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+      //         <div className="bg-white border border-gray-200 rounded-lg p-4">
+      //           <div className="flex items-center">
+      //             <div className="flex-shrink-0">
+      //               <FileText size={24} className="text-blue-600" />
+      //             </div>
+      //             <div className="ml-3">
+      //               <div className="text-lg font-semibold text-gray-900">
+      //                 1,247
+      //               </div>
+      //               <div className="text-sm text-gray-500">Total Logs</div>
+      //             </div>
+      //           </div>
+      //         </div>
+      //         <div className="bg-white border border-gray-200 rounded-lg p-4">
+      //           <div className="flex items-center">
+      //             <div className="flex-shrink-0">
+      //               <CheckCircle size={24} className="text-green-600" />
+      //             </div>
+      //             <div className="ml-3">
+      //               <div className="text-lg font-semibold text-gray-900">
+      //                 1,156
+      //               </div>
+      //               <div className="text-sm text-gray-500">Success</div>
+      //             </div>
+      //           </div>
+      //         </div>
+      //         <div className="bg-white border border-gray-200 rounded-lg p-4">
+      //           <div className="flex items-center">
+      //             <div className="flex-shrink-0">
+      //               <AlertTriangle size={24} className="text-yellow-600" />
+      //             </div>
+      //             <div className="ml-3">
+      //               <div className="text-lg font-semibold text-gray-900">
+      //                 78
+      //               </div>
+      //               <div className="text-sm text-gray-500">Warnings</div>
+      //             </div>
+      //           </div>
+      //         </div>
+      //         <div className="bg-white border border-gray-200 rounded-lg p-4">
+      //           <div className="flex items-center">
+      //             <div className="flex-shrink-0">
+      //               <XCircle size={24} className="text-red-600" />
+      //             </div>
+      //             <div className="ml-3">
+      //               <div className="text-lg font-semibold text-gray-900">
+      //                 13
+      //               </div>
+      //               <div className="text-sm text-gray-500">Errors</div>
+      //             </div>
+      //           </div>
+      //         </div>
+      //       </div>
+      //     </div>
+      //   );
 
-      case "system-config":
-        return (
-          <div className="space-y-6">
-            <h3 className="text-lg font-semibold text-gray-800">
-              System Configuration
-            </h3>
+      // case "system-config":
+      //   return (
+      //     <div className="space-y-6">
+      //       <h3 className="text-lg font-semibold text-gray-800">
+      //         System Configuration
+      //       </h3>
 
-            {/* General Settings */}
-            <div className="bg-white border border-gray-200 rounded-lg p-6">
-              <h4 className="text-md font-semibold text-gray-800 mb-4">
-                General Settings
-              </h4>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    System Name
-                  </label>
-                  <input
-                    type="text"
-                    defaultValue="AutoService Center Management"
-                    className="w-full rounded-lg border border-gray-300 py-2 px-3 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Time Zone
-                  </label>
-                  <select className="w-full rounded-lg border border-gray-300 py-2 px-3 focus:outline-none focus:ring-2 focus:ring-blue-500">
-                    <option>UTC-5 (Eastern Time)</option>
-                    <option>UTC-6 (Central Time)</option>
-                    <option>UTC-7 (Mountain Time)</option>
-                    <option>UTC-8 (Pacific Time)</option>
-                  </select>
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Date Format
-                  </label>
-                  <select className="w-full rounded-lg border border-gray-300 py-2 px-3 focus:outline-none focus:ring-2 focus:ring-blue-500">
-                    <option>MM/DD/YYYY</option>
-                    <option>DD/MM/YYYY</option>
-                    <option>YYYY-MM-DD</option>
-                  </select>
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Currency
-                  </label>
-                  <select className="w-full rounded-lg border border-gray-300 py-2 px-3 focus:outline-none focus:ring-2 focus:ring-blue-500">
-                    <option>USD ($)</option>
-                    <option>EUR (€)</option>
-                    <option>GBP (£)</option>
-                    <option>CAD ($)</option>
-                  </select>
-                </div>
-              </div>
-            </div>
+      //       {/* General Settings */}
+      //       <div className="bg-white border border-gray-200 rounded-lg p-6">
+      //         <h4 className="text-md font-semibold text-gray-800 mb-4">
+      //           General Settings
+      //         </h4>
+      //         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+      //           <div>
+      //             <label className="block text-sm font-medium text-gray-700 mb-1">
+      //               System Name
+      //             </label>
+      //             <input
+      //               type="text"
+      //               defaultValue="AutoService Center Management"
+      //               className="w-full rounded-lg border border-gray-300 py-2 px-3 focus:outline-none focus:ring-2 focus:ring-blue-500"
+      //             />
+      //           </div>
+      //           <div>
+      //             <label className="block text-sm font-medium text-gray-700 mb-1">
+      //               Time Zone
+      //             </label>
+      //             <select className="w-full rounded-lg border border-gray-300 py-2 px-3 focus:outline-none focus:ring-2 focus:ring-blue-500">
+      //               <option>UTC-5 (Eastern Time)</option>
+      //               <option>UTC-6 (Central Time)</option>
+      //               <option>UTC-7 (Mountain Time)</option>
+      //               <option>UTC-8 (Pacific Time)</option>
+      //             </select>
+      //           </div>
+      //           <div>
+      //             <label className="block text-sm font-medium text-gray-700 mb-1">
+      //               Date Format
+      //             </label>
+      //             <select className="w-full rounded-lg border border-gray-300 py-2 px-3 focus:outline-none focus:ring-2 focus:ring-blue-500">
+      //               <option>MM/DD/YYYY</option>
+      //               <option>DD/MM/YYYY</option>
+      //               <option>YYYY-MM-DD</option>
+      //             </select>
+      //           </div>
+      //           <div>
+      //             <label className="block text-sm font-medium text-gray-700 mb-1">
+      //               Currency
+      //             </label>
+      //             <select className="w-full rounded-lg border border-gray-300 py-2 px-3 focus:outline-none focus:ring-2 focus:ring-blue-500">
+      //               <option>USD ($)</option>
+      //               <option>EUR (€)</option>
+      //               <option>GBP (£)</option>
+      //               <option>CAD ($)</option>
+      //             </select>
+      //           </div>
+      //         </div>
+      //       </div>
 
-            {/* Security Settings */}
-            <div className="bg-white border border-gray-200 rounded-lg p-6">
-              <h4 className="text-md font-semibold text-gray-800 mb-4">
-                Security Settings
-              </h4>
-              <div className="space-y-4">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm font-medium text-gray-900">
-                      Require Strong Passwords
-                    </p>
-                    <p className="text-xs text-gray-500">
-                      Enforce minimum 8 characters with mixed case and numbers
-                    </p>
-                  </div>
-                  <label className="relative inline-flex items-center cursor-pointer">
-                    <input
-                      type="checkbox"
-                      defaultChecked
-                      className="sr-only peer"
-                    />
-                    <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
-                  </label>
-                </div>
+      //       {/* Security Settings */}
+      //       <div className="bg-white border border-gray-200 rounded-lg p-6">
+      //         <h4 className="text-md font-semibold text-gray-800 mb-4">
+      //           Security Settings
+      //         </h4>
+      //         <div className="space-y-4">
+      //           <div className="flex items-center justify-between">
+      //             <div>
+      //               <p className="text-sm font-medium text-gray-900">
+      //                 Require Strong Passwords
+      //               </p>
+      //               <p className="text-xs text-gray-500">
+      //                 Enforce minimum 8 characters with mixed case and numbers
+      //               </p>
+      //             </div>
+      //             <label className="relative inline-flex items-center cursor-pointer">
+      //               <input
+      //                 type="checkbox"
+      //                 defaultChecked
+      //                 className="sr-only peer"
+      //               />
+      //               <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+      //             </label>
+      //           </div>
 
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm font-medium text-gray-900">
-                      Session Timeout
-                    </p>
-                    <p className="text-xs text-gray-500">
-                      Automatically log out inactive users
-                    </p>
-                  </div>
-                  <select className="rounded-lg border border-gray-300 py-2 px-3 focus:outline-none focus:ring-2 focus:ring-blue-500">
-                    <option>30 minutes</option>
-                    <option>1 hour</option>
-                    <option>2 hours</option>
-                    <option>4 hours</option>
-                  </select>
-                </div>
+      //           <div className="flex items-center justify-between">
+      //             <div>
+      //               <p className="text-sm font-medium text-gray-900">
+      //                 Session Timeout
+      //               </p>
+      //               <p className="text-xs text-gray-500">
+      //                 Automatically log out inactive users
+      //               </p>
+      //             </div>
+      //             <select className="rounded-lg border border-gray-300 py-2 px-3 focus:outline-none focus:ring-2 focus:ring-blue-500">
+      //               <option>30 minutes</option>
+      //               <option>1 hour</option>
+      //               <option>2 hours</option>
+      //               <option>4 hours</option>
+      //             </select>
+      //           </div>
 
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm font-medium text-gray-900">
-                      Two-Factor Authentication
-                    </p>
-                    <p className="text-xs text-gray-500">
-                      Require 2FA for admin accounts
-                    </p>
-                  </div>
-                  <label className="relative inline-flex items-center cursor-pointer">
-                    <input type="checkbox" className="sr-only peer" />
-                    <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
-                  </label>
-                </div>
-              </div>
-            </div>
+      //           <div className="flex items-center justify-between">
+      //             <div>
+      //               <p className="text-sm font-medium text-gray-900">
+      //                 Two-Factor Authentication
+      //               </p>
+      //               <p className="text-xs text-gray-500">
+      //                 Require 2FA for admin accounts
+      //               </p>
+      //             </div>
+      //             <label className="relative inline-flex items-center cursor-pointer">
+      //               <input type="checkbox" className="sr-only peer" />
+      //               <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+      //             </label>
+      //           </div>
+      //         </div>
+      //       </div>
 
-            {/* Performance Settings */}
-            <div className="bg-white border border-gray-200 rounded-lg p-6">
-              <h4 className="text-md font-semibold text-gray-800 mb-4">
-                Performance Settings
-              </h4>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Cache Duration (minutes)
-                  </label>
-                  <input
-                    type="number"
-                    defaultValue="30"
-                    className="w-full rounded-lg border border-gray-300 py-2 px-3 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Max File Upload Size (MB)
-                  </label>
-                  <input
-                    type="number"
-                    defaultValue="10"
-                    className="w-full rounded-lg border border-gray-300 py-2 px-3 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Records Per Page
-                  </label>
-                  <select className="w-full rounded-lg border border-gray-300 py-2 px-3 focus:outline-none focus:ring-2 focus:ring-blue-500">
-                    <option>10</option>
-                    <option>25</option>
-                    <option>50</option>
-                    <option>100</option>
-                  </select>
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Log Retention (days)
-                  </label>
-                  <input
-                    type="number"
-                    defaultValue="90"
-                    className="w-full rounded-lg border border-gray-300 py-2 px-3 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  />
-                </div>
-              </div>
-            </div>
+      //       {/* Performance Settings */}
+      //       <div className="bg-white border border-gray-200 rounded-lg p-6">
+      //         <h4 className="text-md font-semibold text-gray-800 mb-4">
+      //           Performance Settings
+      //         </h4>
+      //         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+      //           <div>
+      //             <label className="block text-sm font-medium text-gray-700 mb-1">
+      //               Cache Duration (minutes)
+      //             </label>
+      //             <input
+      //               type="number"
+      //               defaultValue="30"
+      //               className="w-full rounded-lg border border-gray-300 py-2 px-3 focus:outline-none focus:ring-2 focus:ring-blue-500"
+      //             />
+      //           </div>
+      //           <div>
+      //             <label className="block text-sm font-medium text-gray-700 mb-1">
+      //               Max File Upload Size (MB)
+      //             </label>
+      //             <input
+      //               type="number"
+      //               defaultValue="10"
+      //               className="w-full rounded-lg border border-gray-300 py-2 px-3 focus:outline-none focus:ring-2 focus:ring-blue-500"
+      //             />
+      //           </div>
+      //           <div>
+      //             <label className="block text-sm font-medium text-gray-700 mb-1">
+      //               Records Per Page
+      //             </label>
+      //             <select className="w-full rounded-lg border border-gray-300 py-2 px-3 focus:outline-none focus:ring-2 focus:ring-blue-500">
+      //               <option>10</option>
+      //               <option>25</option>
+      //               <option>50</option>
+      //               <option>100</option>
+      //             </select>
+      //           </div>
+      //           <div>
+      //             <label className="block text-sm font-medium text-gray-700 mb-1">
+      //               Log Retention (days)
+      //             </label>
+      //             <input
+      //               type="number"
+      //               defaultValue="90"
+      //               className="w-full rounded-lg border border-gray-300 py-2 px-3 focus:outline-none focus:ring-2 focus:ring-blue-500"
+      //             />
+      //           </div>
+      //         </div>
+      //       </div>
 
-            {/* System Information */}
-            <div className="bg-white border border-gray-200 rounded-lg p-6">
-              <h4 className="text-md font-semibold text-gray-800 mb-4">
-                System Information
-              </h4>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div className="space-y-3">
-                  <div className="flex justify-between">
-                    <span className="text-sm text-gray-600">Version</span>
-                    <span className="text-sm font-medium text-gray-900">
-                      v2.1.0
-                    </span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-sm text-gray-600">Last Updated</span>
-                    <span className="text-sm font-medium text-gray-900">
-                      June 15, 2024
-                    </span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-sm text-gray-600">
-                      Database Version
-                    </span>
-                    <span className="text-sm font-medium text-gray-900">
-                      PostgreSQL 14.2
-                    </span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-sm text-gray-600">Server Uptime</span>
-                    <span className="text-sm font-medium text-gray-900">
-                      15 days, 8 hours
-                    </span>
-                  </div>
-                </div>
-                <div className="space-y-3">
-                  <div className="flex justify-between">
-                    <span className="text-sm text-gray-600">Total Users</span>
-                    <span className="text-sm font-medium text-gray-900">
-                      24
-                    </span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-sm text-gray-600">
-                      Active Sessions
-                    </span>
-                    <span className="text-sm font-medium text-gray-900">8</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-sm text-gray-600">Storage Used</span>
-                    <span className="text-sm font-medium text-gray-900">
-                      2.4 GB / 10 GB
-                    </span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-sm text-gray-600">
-                      License Status
-                    </span>
-                    <span className="text-sm font-medium text-green-600">
-                      Active (Pro Plan)
-                    </span>
-                  </div>
-                </div>
-              </div>
-            </div>
+      //       {/* System Information */}
+      //       <div className="bg-white border border-gray-200 rounded-lg p-6">
+      //         <h4 className="text-md font-semibold text-gray-800 mb-4">
+      //           System Information
+      //         </h4>
+      //         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+      //           <div className="space-y-3">
+      //             <div className="flex justify-between">
+      //               <span className="text-sm text-gray-600">Version</span>
+      //               <span className="text-sm font-medium text-gray-900">
+      //                 v2.1.0
+      //               </span>
+      //             </div>
+      //             <div className="flex justify-between">
+      //               <span className="text-sm text-gray-600">Last Updated</span>
+      //               <span className="text-sm font-medium text-gray-900">
+      //                 June 15, 2024
+      //               </span>
+      //             </div>
+      //             <div className="flex justify-between">
+      //               <span className="text-sm text-gray-600">
+      //                 Database Version
+      //               </span>
+      //               <span className="text-sm font-medium text-gray-900">
+      //                 PostgreSQL 14.2
+      //               </span>
+      //             </div>
+      //             <div className="flex justify-between">
+      //               <span className="text-sm text-gray-600">Server Uptime</span>
+      //               <span className="text-sm font-medium text-gray-900">
+      //                 15 days, 8 hours
+      //               </span>
+      //             </div>
+      //           </div>
+      //           <div className="space-y-3">
+      //             <div className="flex justify-between">
+      //               <span className="text-sm text-gray-600">Total Users</span>
+      //               <span className="text-sm font-medium text-gray-900">
+      //                 24
+      //               </span>
+      //             </div>
+      //             <div className="flex justify-between">
+      //               <span className="text-sm text-gray-600">
+      //                 Active Sessions
+      //               </span>
+      //               <span className="text-sm font-medium text-gray-900">8</span>
+      //             </div>
+      //             <div className="flex justify-between">
+      //               <span className="text-sm text-gray-600">Storage Used</span>
+      //               <span className="text-sm font-medium text-gray-900">
+      //                 2.4 GB / 10 GB
+      //               </span>
+      //             </div>
+      //             <div className="flex justify-between">
+      //               <span className="text-sm text-gray-600">
+      //                 License Status
+      //               </span>
+      //               <span className="text-sm font-medium text-green-600">
+      //                 Active (Pro Plan)
+      //               </span>
+      //             </div>
+      //           </div>
+      //         </div>
+      //       </div>
 
-            {/* Save Button */}
-            <div className="flex justify-end">
-              <button
-                onClick={() =>
-                  toast.success("System configuration saved successfully!")
-                }
-                className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 flex items-center"
-              >
-                <Save size={16} className="mr-2" />
-                Save Configuration
-              </button>
-            </div>
-          </div>
-        );
+      //       {/* Save Button */}
+      //       <div className="flex justify-end">
+      //         <button
+      //           onClick={() =>
+      //             toast.success("System configuration saved successfully!")
+      //           }
+      //           className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 flex items-center"
+      //         >
+      //           <Save size={16} className="mr-2" />
+      //           Save Configuration
+      //         </button>
+      //       </div>
+      //     </div>
+      //   );
 
       default:
         return null;
