@@ -81,7 +81,7 @@ const Header = ({ toggleSidebar }) => {
                 showMenu ? "" : "hidden"
               }`}
             >
-              <a
+              {/* <a
                 href="#profile"
                 className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
               >
@@ -92,7 +92,7 @@ const Header = ({ toggleSidebar }) => {
                 className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
               >
                 Settings
-              </a>
+              </a> */}
               <button
                 onClick={logout}
                 className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"

@@ -306,7 +306,7 @@ const Appointments = () => {
               <tbody className="bg-white divide-y divide-gray-200">
                 {filteredAppointments.map((appointment) => (
                   <motion.tr
-                    key={appointment.id}
+                    key={appointment._id || appointment.id}
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
                     transition={{ duration: 0.3 }}
