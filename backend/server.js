@@ -31,7 +31,7 @@ app.get("/", (req, res) => {
   res.json({ message: "Hello World from Backend" });
 });
 
-const PORT = process.env.PORT || 8000;
+const PORT = process.env.PORT || 8080;
 
 const server = app.listen(process.env.PORT, () => {
   console.log(
