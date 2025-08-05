@@ -6,11 +6,7 @@ dotenv.config();
 
 connectDB();
 
-const server = app.listen(process.env.PORT, () => {
-  console.log(
-    `Server listening to the port: ${process.env.PORT} in ${process.env.NODE_ENV}`
-  );
-});
+
 
 // dbla catchkku use pannina error handling
 process.on("unhandledRejection", (err) => {
@@ -30,3 +26,15 @@ process.on("uncaughtException", (err) => {
 
 // console.log(a);
 // a is not defined so uncaught exception aagum
+
+app.get("/", (req, res) => {
+  res.json({ message: "Hello World from Backend" });
+});
+
+const PORT = process.env.PORT || 8000;
+
+const server = app.listen(process.env.PORT, () => {
+  console.log(
+    `Server listening to the port: ${process.env.PORT} in ${process.env.NODE_ENV}`
+  );
+});
