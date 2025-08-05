@@ -198,7 +198,7 @@ const Customers = () => {
             <tbody className="bg-white divide-y divide-gray-200">
               {currentCustomers.map((customer) => (
                 <motion.tr
-                  key={customer.id}
+                  key={customer._id || customer.id}
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
                   transition={{ duration: 0.3 }}
