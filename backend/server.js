@@ -28,7 +28,7 @@ process.on("uncaughtException", (err) => {
 // a is not defined so uncaught exception aagum
 
 app.get("/", (req, res) => {
-  res.json({ message: "Hello World from Backend" });
+  res.json({ message: "Hello World from SC Backend" });
 });
 
 const PORT = process.env.PORT || 8080;
