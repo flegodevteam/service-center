@@ -21,6 +21,8 @@ import { AppointmentProvider } from "./context/AppointmentContext";
 import { JobCardsProvider } from "./context/JobCardsContext";
 import { InventoryProvider } from "./context/InventoryContext";
 import { BillingProvider } from "./context/BillingContext";
+import Payroll from "./pages/Payroll";
+import Finance from "./pages/Finance";
 
 function App() {
   return (
@@ -134,6 +136,26 @@ function App() {
                               ]}
                             >
                               <Vehicles />
+                            </ProtectedRoute>
+                          }
+                        />
+
+                        {/* payroll */}
+                        <Route
+                          path="/payroll"
+                          element={
+                            <ProtectedRoute allowedRoles={["admin", "manager"]}>
+                              <Payroll />
+                            </ProtectedRoute>
+                          }
+                        />
+
+                        {/* Finance */}
+                        <Route
+                          path="/finance"
+                          element={
+                            <ProtectedRoute allowedRoles={["admin", "manager"]}>
+                              <Finance />
                             </ProtectedRoute>
                           }
                         />
