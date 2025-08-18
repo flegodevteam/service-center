@@ -11,6 +11,8 @@ import {
   BarChart2,
   Settings,
   X,
+  DollarSign,
+  TrendingUp,
 } from "lucide-react";
 import { useAuth } from "../../context/AuthContext";
 
@@ -66,6 +68,20 @@ const Sidebar = ({ isOpen, toggleSidebar }) => {
       label: "Reports",
       roles: ["admin", "manager"],
     },
+    {
+      to: "/payroll",
+      icon: <DollarSign size={20} />,
+      label: "Payroll",
+      roles: ["admin", "manager"],
+    },
+
+    // {
+    //   to: "/finance",
+    //   icon: <TrendingUp size={20} />,
+    //   label: "Finance",
+    //   roles: ["admin", "manager"],
+    // },
+
     {
       to: "/settings",
       icon: <Settings size={20} />,

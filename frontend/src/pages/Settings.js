@@ -33,6 +33,9 @@ import {
   History,
   Key,
   Zap,
+  X,
+  Edit,
+  Trash,
 } from "lucide-react";
 import toast from "react-hot-toast";
 import axios from "axios";
@@ -61,13 +64,13 @@ const Settings = () => {
 
   // service management state
   const [isAddServiceModalOpen, setIsAddServiceModalOpen] = useState(false);
-  const [newService, setNewService] = useState({
-    name: "",
-    category: "",
-    basePrice: "",
-    duration: "",
-    isActive: true,
-  });
+  // const [newService, setNewService] = useState({
+  //   name: "",
+  //   category: "",
+  //   basePrice: "",
+  //   duration: "",
+  //   isActive: true,
+  // });
   const [serviceErrors, setServiceErrors] = useState({});
   const [isEditServiceModalOpen, setIsEditServiceModalOpen] = useState(false);
   const [editService, setEditService] = useState(null);
@@ -82,42 +85,42 @@ const Settings = () => {
     }));
   };
 
-  const validateService = () => {
-    let err = {};
-    if (!newService.name) err.name = "Service name is required";
-    if (!newService.category) err.category = "Category is required";
-    if (!newService.basePrice) err.basePrice = "Base price is required";
-    if (!newService.duration) err.duration = "Duration is required";
-    setServiceErrors(err);
-    return Object.keys(err).length === 0;
-  };
+  // const validateService = () => {
+  //   let err = {};
+  //   if (!newService.name) err.name = "Service name is required";
+  //   if (!newService.category) err.category = "Category is required";
+  //   if (!newService.basePrice) err.basePrice = "Base price is required";
+  //   if (!newService.duration) err.duration = "Duration is required";
+  //   setServiceErrors(err);
+  //   return Object.keys(err).length === 0;
+  // };
 
-  const handleAddService = async (e) => {
-    e.preventDefault();
-    if (!validateService()) return;
-    try {
-      const res = await axios.post(`${API_URL}/service-types`, {
-        name: newService.name,
-        category: newService.category,
-        basePrice: parseFloat(newService.basePrice),
-        duration: parseInt(newService.duration),
-        isActive: newService.isActive,
-      });
-      setServiceTypes((prev) => [...prev, res.data.serviceType]);
-      setIsAddServiceModalOpen(false);
-      setNewService({
-        name: "",
-        category: "",
-        basePrice: "",
-        duration: "",
-        isActive: true,
-      });
-      setServiceErrors({});
-      toast.success("New service created successfully!");
-    } catch (err) {
-      toast.error(err.response?.data?.message || "Failed to add service");
-    }
-  };
+  // const handleAddService = async (e) => {
+  //   e.preventDefault();
+  //   if (!validateService()) return;
+  //   try {
+  //     const res = await axios.post(`${API_URL}/service-types`, {
+  //       name: newService.name,
+  //       category: newService.category,
+  //       basePrice: parseFloat(newService.basePrice),
+  //       duration: parseInt(newService.duration),
+  //       isActive: newService.isActive,
+  //     });
+  //     setServiceTypes((prev) => [...prev, res.data.serviceType]);
+  //     setIsAddServiceModalOpen(false);
+  //     setNewService({
+  //       name: "",
+  //       category: "",
+  //       basePrice: "",
+  //       duration: "",
+  //       isActive: true,
+  //     });
+  //     setServiceErrors({});
+  //     toast.success("New service created successfully!");
+  //   } catch (err) {
+  //     toast.error(err.response?.data?.message || "Failed to add service");
+  //   }
+  // };
 
   //  Edit Service Functionality
   const handleEditServiceInputChange = (e) => {
@@ -647,6 +650,951 @@ const Settings = () => {
     }
   };
 
+  // Enhanced service management state
+  const [newService, setNewService] = useState({
+    name: "",
+    category: "",
+    vehicleTypes: [],
+    serviceLevels: {
+      normal: {
+        isActive: true,
+        basePrice: "",
+        options: [],
+      },
+      hard: {
+        isActive: false,
+        percentageIncrease: 20,
+        options: [],
+      },
+      heavy: {
+        isActive: false,
+        percentageIncrease: 40,
+        options: [],
+      },
+    },
+    isActive: true,
+  });
+
+  const [vehicleTypes, setVehicleTypes] = useState([]);
+  const [customVehicleType, setCustomVehicleType] = useState("");
+  const [newOption, setNewOption] = useState({ level: "", option: "" });
+
+  // Predefined service options for each level
+  const predefinedOptions = {
+    normal: [
+      "Basic Engine Check",
+      "Oil Level Check",
+      "Visual Inspection",
+      "Basic Cleaning",
+    ],
+    hard: [
+      "Replace Engine Oil",
+      "Clean Air Filter",
+      "Change Spark Plugs",
+      "Battery Water Top-Up",
+      "Brake Fluid Check",
+    ],
+    heavy: [
+      "Complete Engine Overhaul",
+      "Transmission Service",
+      "Full Brake System Check",
+      "Suspension Service",
+      "Electrical System Diagnosis",
+    ],
+  };
+
+  // Fetch vehicle types
+  const fetchVehicleTypes = async () => {
+    try {
+      const res = await axios.get(`${API_URL}/service-types/vehicle-types`);
+      setVehicleTypes(res.data.vehicleTypes);
+    } catch (err) {
+      console.error("Failed to fetch vehicle types:", err);
+    }
+  };
+
+  // Calculate final prices
+  const calculateFinalPrice = (basePrice, percentage) => {
+    return basePrice * (1 + percentage / 100);
+  };
+
+  // Handle vehicle type selection
+  const handleVehicleTypeChange = (vehicleType) => {
+    setNewService((prev) => {
+      const updatedTypes = prev.vehicleTypes.includes(vehicleType)
+        ? prev.vehicleTypes.filter((type) => type !== vehicleType)
+        : [...prev.vehicleTypes, vehicleType];
+
+      return { ...prev, vehicleTypes: updatedTypes };
+    });
+  };
+
+  // Handle service level toggle
+  const handleServiceLevelToggle = (level) => {
+    setNewService((prev) => ({
+      ...prev,
+      serviceLevels: {
+        ...prev.serviceLevels,
+        [level]: {
+          ...prev.serviceLevels[level],
+          isActive: !prev.serviceLevels[level].isActive,
+        },
+      },
+    }));
+  };
+
+  // Handle percentage change
+  const handlePercentageChange = (level, percentage) => {
+    setNewService((prev) => ({
+      ...prev,
+      serviceLevels: {
+        ...prev.serviceLevels,
+        [level]: {
+          ...prev.serviceLevels[level],
+          percentageIncrease: parseInt(percentage) || 0,
+        },
+      },
+    }));
+  };
+
+  // Add custom vehicle type
+  const handleAddCustomVehicleType = () => {
+    if (customVehicleType && !vehicleTypes.includes(customVehicleType)) {
+      setVehicleTypes((prev) => [...prev, customVehicleType]);
+      handleVehicleTypeChange(customVehicleType);
+      setCustomVehicleType("");
+    }
+  };
+
+  // Add option to service level
+  const handleAddOption = (level) => {
+    if (newOption.option && newOption.level === level) {
+      setNewService((prev) => ({
+        ...prev,
+        serviceLevels: {
+          ...prev.serviceLevels,
+          [level]: {
+            ...prev.serviceLevels[level],
+            options: [...prev.serviceLevels[level].options, newOption.option],
+          },
+        },
+      }));
+      setNewOption({ level: "", option: "" });
+    }
+  };
+
+  // Remove option from service level
+  const handleRemoveOption = (level, optionIndex) => {
+    setNewService((prev) => ({
+      ...prev,
+      serviceLevels: {
+        ...prev.serviceLevels,
+        [level]: {
+          ...prev.serviceLevels[level],
+          options: prev.serviceLevels[level].options.filter(
+            (_, index) => index !== optionIndex
+          ),
+        },
+      },
+    }));
+  };
+
+  // Add predefined options
+  const handleAddPredefinedOptions = (level) => {
+    setNewService((prev) => ({
+      ...prev,
+      serviceLevels: {
+        ...prev.serviceLevels,
+        [level]: {
+          ...prev.serviceLevels[level],
+          options: [
+            ...new Set([
+              ...prev.serviceLevels[level].options,
+              ...predefinedOptions[level],
+            ]),
+          ],
+        },
+      },
+    }));
+  };
+
+  // Enhanced validation
+  const validateService = () => {
+    let err = {};
+    if (!newService.name) err.name = "Service name is required";
+    if (!newService.category) err.category = "Category is required";
+    if (newService.vehicleTypes.length === 0)
+      err.vehicleTypes = "Select at least one vehicle type";
+    if (!newService.serviceLevels.normal.basePrice)
+      err.basePrice = "Base price is required";
+
+    setServiceErrors(err);
+    return Object.keys(err).length === 0;
+  };
+
+  // Enhanced add service
+  const handleAddService = async (e) => {
+    e.preventDefault();
+    if (!validateService()) return;
+
+    try {
+      const res = await axios.post(`${API_URL}/service-types`, newService);
+      setServiceTypes((prev) => [...prev, res.data.serviceType]);
+      setIsAddServiceModalOpen(false);
+
+      // Reset form
+      setNewService({
+        name: "",
+        category: "",
+        vehicleTypes: [],
+        serviceLevels: {
+          normal: { isActive: true, basePrice: "", options: [] },
+          hard: { isActive: false, percentageIncrease: 20, options: [] },
+          heavy: { isActive: false, percentageIncrease: 40, options: [] },
+        },
+        isActive: true,
+      });
+
+      setServiceErrors({});
+      toast.success("Service type created successfully!");
+    } catch (err) {
+      toast.error(err.response?.data?.message || "Failed to add service");
+    }
+  };
+
+  // Load vehicle types when component mounts
+  useEffect(() => {
+    fetchVehicleTypes();
+  }, []);
+
+  // Service Configuration UI
+  const renderServiceConfig = () => (
+    <div className="space-y-6">
+      <div className="flex justify-between items-center">
+        <h3 className="text-lg font-semibold text-gray-800">
+          Service Configuration
+        </h3>
+        <button
+          onClick={() => setIsAddServiceModalOpen(true)}
+          className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 flex items-center"
+        >
+          <Plus size={16} className="mr-2" />
+          Add New Service
+        </button>
+      </div>
+
+      {/* Service Types List */}
+      <div className="bg-white border border-gray-200 rounded-lg overflow-hidden">
+        <div className="overflow-x-auto">
+          <table className="min-w-full divide-y divide-gray-200">
+            <thead className="bg-gray-50">
+              <tr>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Service Name
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Vehicle Types
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Service Levels
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Base Price
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Actions
+                </th>
+              </tr>
+            </thead>
+            <tbody className="bg-white divide-y divide-gray-200">
+              {serviceTypes.map((service) => (
+                <tr key={service._id} className="hover:bg-gray-50">
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <div className="text-sm font-medium text-gray-900">
+                      {service.name}
+                    </div>
+                    <div className="text-sm text-gray-500">
+                      {service.category}
+                    </div>
+                  </td>
+                  <td className="px-6 py-4">
+                    <div className="flex flex-wrap gap-1">
+                      {service.vehicleTypes?.map((type, index) => (
+                        <span
+                          key={index}
+                          className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800"
+                        >
+                          {type}
+                        </span>
+                      ))}
+                    </div>
+                  </td>
+                  <td className="px-6 py-4">
+                    <div className="flex flex-wrap gap-1">
+                      {service.serviceLevels?.normal?.isActive && (
+                        <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                          Normal
+                        </span>
+                      )}
+                      {service.serviceLevels?.hard?.isActive && (
+                        <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
+                          Hard
+                        </span>
+                      )}
+                      {service.serviceLevels?.heavy?.isActive && (
+                        <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-red-100 text-red-800">
+                          Heavy
+                        </span>
+                      )}
+                    </div>
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                    LKR {service.serviceLevels?.normal?.basePrice || 0}
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                    <div className="flex items-center space-x-2">
+                      <button
+                        onClick={() => {
+                          setEditService(service);
+                          setIsEditServiceModalOpen(true);
+                        }}
+                        className="text-indigo-600 hover:text-indigo-900"
+                      >
+                        <Edit size={16} />
+                      </button>
+                      <button
+                        onClick={() => handleDeleteService(service._id)}
+                        className="text-red-600 hover:text-red-900"
+                      >
+                        <Trash size={16} />
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      {/* Add Service Modal */}
+      {isAddServiceModalOpen && (
+        <div className="fixed -inset-y-full inset-x-0 bg-black bg-opacity-50 z-40 flex items-center justify-center p-4">
+          <div className="bg-white rounded-lg shadow-xl max-w-4xl w-full max-h-[90vh] overflow-y-auto">
+            <div className="p-6">
+              <div className="flex justify-between items-center mb-6">
+                <h3 className="text-lg font-semibold text-gray-800">
+                  Add New Service
+                </h3>
+                <button
+                  onClick={() => setIsAddServiceModalOpen(false)}
+                  className="text-gray-400 hover:text-gray-600"
+                >
+                  <X size={20} />
+                </button>
+              </div>
+
+              <form onSubmit={handleAddService} className="space-y-6">
+                {/* Basic Information */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Service Name *
+                    </label>
+                    <input
+                      type="text"
+                      value={newService.name}
+                      onChange={(e) =>
+                        setNewService((prev) => ({
+                          ...prev,
+                          name: e.target.value,
+                        }))
+                      }
+                      className="w-full rounded-lg border border-gray-300 py-2 px-3 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      placeholder="Enter service name"
+                    />
+                    {serviceErrors.name && (
+                      <span className="text-red-500 text-xs">
+                        {serviceErrors.name}
+                      </span>
+                    )}
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Category *
+                    </label>
+                    <select
+                      value={newService.category}
+                      onChange={(e) =>
+                        setNewService((prev) => ({
+                          ...prev,
+                          category: e.target.value,
+                        }))
+                      }
+                      className="w-full rounded-lg border border-gray-300 py-2 px-3 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    >
+                      <option value="">Select category</option>
+                      <option value="Engine Service">Engine Service</option>
+                      <option value="Oil Change">Oil Change</option>
+                      <option value="Cleaning">Cleaning</option>
+                      <option value="Brake Service">Brake Service</option>
+                      <option value="Battery Service">Battery Service</option>
+                      <option value="Other">Other</option>
+                    </select>
+                    {serviceErrors.category && (
+                      <span className="text-red-500 text-xs">
+                        {serviceErrors.category}
+                      </span>
+                    )}
+                  </div>
+                </div>
+
+                {/* Vehicle Types Selection */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Select Vehicle Types *
+                  </label>
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-2 mb-3">
+                    {vehicleTypes.map((type) => (
+                      <label key={type} className="flex items-center space-x-2">
+                        <input
+                          type="checkbox"
+                          checked={newService.vehicleTypes.includes(type)}
+                          onChange={() => handleVehicleTypeChange(type)}
+                          className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                        />
+                        <span className="text-sm text-gray-700">{type}</span>
+                      </label>
+                    ))}
+                  </div>
+
+                  {/* Custom Vehicle Type */}
+                  <div className="flex items-center space-x-2">
+                    <input
+                      type="text"
+                      value={customVehicleType}
+                      onChange={(e) => setCustomVehicleType(e.target.value)}
+                      placeholder="Add custom vehicle type"
+                      className="flex-1 rounded-lg border border-gray-300 py-2 px-3 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    />
+                    <button
+                      type="button"
+                      onClick={handleAddCustomVehicleType}
+                      className="px-3 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700"
+                    >
+                      Add
+                    </button>
+                  </div>
+
+                  {serviceErrors.vehicleTypes && (
+                    <span className="text-red-500 text-xs">
+                      {serviceErrors.vehicleTypes}
+                    </span>
+                  )}
+                </div>
+
+                {/* Service Levels Configuration */}
+                <div>
+                  <h4 className="text-md font-medium text-gray-800 mb-3">
+                    Service Levels & Pricing
+                  </h4>
+
+                  {/* Normal Level */}
+                  <div className="bg-green-50 border border-green-200 rounded-lg p-4 mb-4">
+                    <div className="flex items-center justify-between mb-3">
+                      <div className="flex items-center">
+                        <input
+                          type="checkbox"
+                          checked={newService.serviceLevels.normal.isActive}
+                          onChange={() => handleServiceLevelToggle("normal")}
+                          className="rounded border-gray-300 text-green-600 focus:ring-green-500 mr-2"
+                        />
+                        <span className="font-medium text-green-800">
+                          Normal Level
+                        </span>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => handleAddPredefinedOptions("normal")}
+                        className="text-xs px-2 py-1 bg-green-600 text-white rounded hover:bg-green-700"
+                      >
+                        Add Default Options
+                      </button>
+                    </div>
+
+                    {newService.serviceLevels.normal.isActive && (
+                      <>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                          <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">
+                              Base Price (LKR) *
+                            </label>
+                            <input
+                              type="number"
+                              value={newService.serviceLevels.normal.basePrice}
+                              onChange={(e) =>
+                                setNewService((prev) => ({
+                                  ...prev,
+                                  serviceLevels: {
+                                    ...prev.serviceLevels,
+                                    normal: {
+                                      ...prev.serviceLevels.normal,
+                                      basePrice: e.target.value,
+                                    },
+                                  },
+                                }))
+                              }
+                              className="w-full rounded-lg border border-gray-300 py-2 px-3 focus:outline-none focus:ring-2 focus:ring-green-500"
+                              placeholder="Enter base price"
+                            />
+                            {serviceErrors.basePrice && (
+                              <span className="text-red-500 text-xs">
+                                {serviceErrors.basePrice}
+                              </span>
+                            )}
+                          </div>
+                        </div>
+
+                        {/* Options for Normal Level */}
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-2">
+                            Service Options
+                          </label>
+                          <div className="flex items-center space-x-2 mb-2">
+                            <input
+                              type="text"
+                              value={
+                                newOption.level === "normal"
+                                  ? newOption.option
+                                  : ""
+                              }
+                              onChange={(e) =>
+                                setNewOption({
+                                  level: "normal",
+                                  option: e.target.value,
+                                })
+                              }
+                              placeholder="Add service option"
+                              className="flex-1 rounded-lg border border-gray-300 py-2 px-3 focus:outline-none focus:ring-2 focus:ring-green-500"
+                            />
+                            <button
+                              type="button"
+                              onClick={() => handleAddOption("normal")}
+                              className="px-3 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700"
+                            >
+                              Add
+                            </button>
+                          </div>
+                          <div className="flex flex-wrap gap-2">
+                            {newService.serviceLevels.normal.options.map(
+                              (option, index) => (
+                                <span
+                                  key={index}
+                                  className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800"
+                                >
+                                  {option}
+                                  <button
+                                    type="button"
+                                    onClick={() =>
+                                      handleRemoveOption("normal", index)
+                                    }
+                                    className="ml-1 text-green-600 hover:text-green-800"
+                                  >
+                                    <X size={12} />
+                                  </button>
+                                </span>
+                              )
+                            )}
+                          </div>
+                        </div>
+                      </>
+                    )}
+                  </div>
+
+                  {/* Hard Level */}
+                  <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mb-4">
+                    <div className="flex items-center justify-between mb-3">
+                      <div className="flex items-center">
+                        <input
+                          type="checkbox"
+                          checked={newService.serviceLevels.hard.isActive}
+                          onChange={() => handleServiceLevelToggle("hard")}
+                          className="rounded border-gray-300 text-yellow-600 focus:ring-yellow-500 mr-2"
+                        />
+                        <span className="font-medium text-yellow-800">
+                          Hard Level
+                        </span>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => handleAddPredefinedOptions("hard")}
+                        className="text-xs px-2 py-1 bg-yellow-600 text-white rounded hover:bg-yellow-700"
+                      >
+                        Add Default Options
+                      </button>
+                    </div>
+
+                    {newService.serviceLevels.hard.isActive && (
+                      <>
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+                          <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">
+                              Percentage Increase (%)
+                            </label>
+                            <input
+                              type="number"
+                              value={
+                                newService.serviceLevels.hard.percentageIncrease
+                              }
+                              onChange={(e) =>
+                                handlePercentageChange("hard", e.target.value)
+                              }
+                              className="w-full rounded-lg border border-gray-300 py-2 px-3 focus:outline-none focus:ring-2 focus:ring-yellow-500"
+                            />
+                          </div>
+                          <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">
+                              Base Price (LKR)
+                            </label>
+                            <input
+                              type="number"
+                              value={newService.serviceLevels.normal.basePrice}
+                              readOnly
+                              className="w-full rounded-lg border border-gray-300 py-2 px-3 bg-gray-50"
+                            />
+                          </div>
+                          <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">
+                              Final Price (Auto)
+                            </label>
+                            <input
+                              type="number"
+                              value={calculateFinalPrice(
+                                parseFloat(
+                                  newService.serviceLevels.normal.basePrice || 0
+                                ),
+                                newService.serviceLevels.hard.percentageIncrease
+                              ).toFixed(2)}
+                              readOnly
+                              className="w-full rounded-lg border border-gray-300 py-2 px-3 bg-green-50 font-medium"
+                            />
+                          </div>
+                        </div>
+
+                        {/* Options for Hard Level */}
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-2">
+                            Service Options
+                          </label>
+                          <div className="flex items-center space-x-2 mb-2">
+                            <input
+                              type="text"
+                              value={
+                                newOption.level === "hard"
+                                  ? newOption.option
+                                  : ""
+                              }
+                              onChange={(e) =>
+                                setNewOption({
+                                  level: "hard",
+                                  option: e.target.value,
+                                })
+                              }
+                              placeholder="Add service option"
+                              className="flex-1 rounded-lg border border-gray-300 py-2 px-3 focus:outline-none focus:ring-2 focus:ring-yellow-500"
+                            />
+                            <button
+                              type="button"
+                              onClick={() => handleAddOption("hard")}
+                              className="px-3 py-2 bg-yellow-600 text-white rounded-lg hover:bg-yellow-700"
+                            >
+                              Add
+                            </button>
+                          </div>
+                          <div className="flex flex-wrap gap-2">
+                            {newService.serviceLevels.hard.options.map(
+                              (option, index) => (
+                                <span
+                                  key={index}
+                                  className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800"
+                                >
+                                  {option}
+                                  <button
+                                    type="button"
+                                    onClick={() =>
+                                      handleRemoveOption("hard", index)
+                                    }
+                                    className="ml-1 text-yellow-600 hover:text-yellow-800"
+                                  >
+                                    <X size={12} />
+                                  </button>
+                                </span>
+                              )
+                            )}
+                          </div>
+                        </div>
+                      </>
+                    )}
+                  </div>
+
+                  {/* Heavy Level */}
+                  <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-4">
+                    <div className="flex items-center justify-between mb-3">
+                      <div className="flex items-center">
+                        <input
+                          type="checkbox"
+                          checked={newService.serviceLevels.heavy.isActive}
+                          onChange={() => handleServiceLevelToggle("heavy")}
+                          className="rounded border-gray-300 text-red-600 focus:ring-red-500 mr-2"
+                        />
+                        <span className="font-medium text-red-800">
+                          Heavy Level
+                        </span>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => handleAddPredefinedOptions("heavy")}
+                        className="text-xs px-2 py-1 bg-red-600 text-white rounded hover:bg-red-700"
+                      >
+                        Add Default Options
+                      </button>
+                    </div>
+
+                    {newService.serviceLevels.heavy.isActive && (
+                      <>
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+                          <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">
+                              Percentage Increase (%)
+                            </label>
+                            <input
+                              type="number"
+                              value={
+                                newService.serviceLevels.heavy
+                                  .percentageIncrease
+                              }
+                              onChange={(e) =>
+                                handlePercentageChange("heavy", e.target.value)
+                              }
+                              className="w-full rounded-lg border border-gray-300 py-2 px-3 focus:outline-none focus:ring-2 focus:ring-red-500"
+                            />
+                          </div>
+                          <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">
+                              Base Price (LKR)
+                            </label>
+                            <input
+                              type="number"
+                              value={newService.serviceLevels.normal.basePrice}
+                              readOnly
+                              className="w-full rounded-lg border border-gray-300 py-2 px-3 bg-gray-50"
+                            />
+                          </div>
+                          <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">
+                              Final Price (Auto)
+                            </label>
+                            <input
+                              type="number"
+                              value={calculateFinalPrice(
+                                parseFloat(
+                                  newService.serviceLevels.normal.basePrice || 0
+                                ),
+                                newService.serviceLevels.heavy
+                                  .percentageIncrease
+                              ).toFixed(2)}
+                              readOnly
+                              className="w-full rounded-lg border border-gray-300 py-2 px-3 bg-green-50 font-medium"
+                            />
+                          </div>
+                        </div>
+
+                        {/* Options for Heavy Level */}
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-2">
+                            Service Options
+                          </label>
+                          <div className="flex items-center space-x-2 mb-2">
+                            <input
+                              type="text"
+                              value={
+                                newOption.level === "heavy"
+                                  ? newOption.option
+                                  : ""
+                              }
+                              onChange={(e) =>
+                                setNewOption({
+                                  level: "heavy",
+                                  option: e.target.value,
+                                })
+                              }
+                              placeholder="Add service option"
+                              className="flex-1 rounded-lg border border-gray-300 py-2 px-3 focus:outline-none focus:ring-2 focus:ring-red-500"
+                            />
+                            <button
+                              type="button"
+                              onClick={() => handleAddOption("heavy")}
+                              className="px-3 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700"
+                            >
+                              Add
+                            </button>
+                          </div>
+                          <div className="flex flex-wrap gap-2">
+                            {newService.serviceLevels.heavy.options.map(
+                              (option, index) => (
+                                <span
+                                  key={index}
+                                  className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-red-100 text-red-800"
+                                >
+                                  {option}
+                                  <button
+                                    type="button"
+                                    onClick={() =>
+                                      handleRemoveOption("heavy", index)
+                                    }
+                                    className="ml-1 text-red-600 hover:text-red-800"
+                                  >
+                                    <X size={12} />
+                                  </button>
+                                </span>
+                              )
+                            )}
+                          </div>
+                        </div>
+                      </>
+                    )}
+                  </div>
+
+                  {/* Pricing Summary Table */}
+                  {newService.serviceLevels.normal.basePrice && (
+                    <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
+                      <h5 className="font-medium text-gray-800 mb-3">
+                        Pricing Summary
+                      </h5>
+                      <div className="overflow-x-auto">
+                        <table className="min-w-full divide-y divide-gray-200">
+                          <thead className="bg-gray-100">
+                            <tr>
+                              <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">
+                                Service Level
+                              </th>
+                              <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">
+                                Base Price (LKR)
+                              </th>
+                              <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">
+                                % Increase
+                              </th>
+                              <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">
+                                Final Price
+                              </th>
+                            </tr>
+                          </thead>
+                          <tbody className="bg-white divide-y divide-gray-200">
+                            {newService.serviceLevels.normal.isActive && (
+                              <tr>
+                                <td className="px-4 py-2 text-sm font-medium text-green-900">
+                                  Normal
+                                </td>
+                                <td className="px-4 py-2 text-sm text-gray-900">
+                                  {newService.serviceLevels.normal.basePrice}
+                                </td>
+                                <td className="px-4 py-2 text-sm text-gray-900">
+                                  0%
+                                </td>
+                                <td className="px-4 py-2 text-sm font-medium text-green-600">
+                                  {newService.serviceLevels.normal.basePrice}
+                                </td>
+                              </tr>
+                            )}
+                            {newService.serviceLevels.hard.isActive && (
+                              <tr>
+                                <td className="px-4 py-2 text-sm font-medium text-yellow-900">
+                                  Hard
+                                </td>
+                                <td className="px-4 py-2 text-sm text-gray-900">
+                                  {newService.serviceLevels.normal.basePrice}
+                                </td>
+                                <td className="px-4 py-2 text-sm text-gray-900">
+                                  +
+                                  {
+                                    newService.serviceLevels.hard
+                                      .percentageIncrease
+                                  }
+                                  %
+                                </td>
+                                <td className="px-4 py-2 text-sm font-medium text-yellow-600">
+                                  {calculateFinalPrice(
+                                    parseFloat(
+                                      newService.serviceLevels.normal
+                                        .basePrice || 0
+                                    ),
+                                    newService.serviceLevels.hard
+                                      .percentageIncrease
+                                  ).toFixed(2)}
+                                </td>
+                              </tr>
+                            )}
+                            {newService.serviceLevels.heavy.isActive && (
+                              <tr>
+                                <td className="px-4 py-2 text-sm font-medium text-red-900">
+                                  Heavy
+                                </td>
+                                <td className="px-4 py-2 text-sm text-gray-900">
+                                  {newService.serviceLevels.normal.basePrice}
+                                </td>
+                                <td className="px-4 py-2 text-sm text-gray-900">
+                                  +
+                                  {
+                                    newService.serviceLevels.heavy
+                                      .percentageIncrease
+                                  }
+                                  %
+                                </td>
+                                <td className="px-4 py-2 text-sm font-medium text-red-600">
+                                  {calculateFinalPrice(
+                                    parseFloat(
+                                      newService.serviceLevels.normal
+                                        .basePrice || 0
+                                    ),
+                                    newService.serviceLevels.heavy
+                                      .percentageIncrease
+                                  ).toFixed(2)}
+                                </td>
+                              </tr>
+                            )}
+                          </tbody>
+                        </table>
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                {/* Form Actions */}
+                <div className="flex justify-end space-x-3 pt-4 border-t">
+                  <button
+                    type="button"
+                    onClick={() => setIsAddServiceModalOpen(false)}
+                    className="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 flex items-center"
+                  >
+                    <Save size={16} className="mr-2" />
+                    Save Service
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+
   const renderTabContent = () => {
     switch (activeTab) {
       case "user-management":
@@ -665,7 +1613,7 @@ const Settings = () => {
               </button>
             </div>
             {isAddUserModalOpen && (
-              <div className="fixed inset-0 bg-black bg-opacity-40 flex justify-center items-center z-50 p-4">
+              <div className="fixed -inset-y-full inset-x-0 bg-black bg-opacity-50 z-40 flex items-center justify-center p-4">
                 <motion.div
                   initial={{ opacity: 0, scale: 0.95 }}
                   animate={{ opacity: 1, scale: 1 }}
@@ -908,7 +1856,7 @@ const Settings = () => {
 
             {/* // Place this Edit User Modal after your Add User Modal: */}
             {isEditUserModalOpen && editUser && (
-              <div className="fixed inset-0 bg-black bg-opacity-40 flex justify-center items-center z-50 p-4">
+              <div className="fixed -inset-y-full inset-x-0 bg-black bg-opacity-50 z-40 flex items-center justify-center p-4">
                 <motion.div
                   initial={{ opacity: 0, scale: 0.95 }}
                   animate={{ opacity: 1, scale: 1 }}
@@ -1177,449 +2125,7 @@ const Settings = () => {
         );
 
       case "service-config":
-        return (
-          <div className="space-y-6">
-            {/* Service Types */}
-            <div>
-              <div className="flex justify-between items-center mb-4">
-                <h3 className="text-lg font-semibold text-gray-800">
-                  Service Types
-                </h3>
-                <button
-                  onClick={() => setIsAddServiceModalOpen(true)}
-                  className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 flex items-center"
-                >
-                  <Plus size={16} className="mr-2" />
-                  Add Service
-                </button>
-              </div>
-
-              {/*  */}
-              {isAddServiceModalOpen && (
-                <div className="fixed inset-0 bg-black bg-opacity-40 flex justify-center items-center z-50 p-4">
-                  <motion.div
-                    initial={{ opacity: 0, scale: 0.95 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    exit={{ opacity: 0, scale: 0.95 }}
-                    className="bg-white rounded-[5%] shadow-xl p-6 w-full max-w-lg max-h-[90vh]"
-                  >
-                    <div className="flex justify-between items-center mb-6">
-                      <h2 className="text-xl font-bold text-gray-800">
-                        Add New Service
-                      </h2>
-                      <button
-                        onClick={() => setIsAddServiceModalOpen(false)}
-                        className="text-gray-500 hover:text-gray-700"
-                      >
-                        <svg
-                          xmlns="http://www.w3.org/2000/svg"
-                          className="h-6 w-6"
-                          fill="none"
-                          viewBox="0 0 24 24"
-                          stroke="currentColor"
-                        >
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth={2}
-                            d="M6 18L18 6M6 6l12 12"
-                          />
-                        </svg>
-                      </button>
-                    </div>
-                    <form
-                      onSubmit={handleAddService}
-                      className="space-y-6 pl-2 pr-2 overflow-y-auto max-h-[70vh]"
-                    >
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700">
-                          Service Name
-                        </label>
-                        <input
-                          type="text"
-                          name="name"
-                          value={newService.name}
-                          onChange={handleServiceInputChange}
-                          className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                          required
-                        />
-                        {serviceErrors.name && (
-                          <span className="text-red-500 text-xs">
-                            {serviceErrors.name}
-                          </span>
-                        )}
-                      </div>
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700">
-                          Category
-                        </label>
-                        <input
-                          type="text"
-                          name="category"
-                          value={newService.category}
-                          onChange={handleServiceInputChange}
-                          className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                          required
-                        />
-                        {serviceErrors.category && (
-                          <span className="text-red-500 text-xs">
-                            {serviceErrors.category}
-                          </span>
-                        )}
-                      </div>
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700">
-                          Base Price
-                        </label>
-                        <input
-                          type="number"
-                          name="basePrice"
-                          value={newService.basePrice}
-                          onChange={handleServiceInputChange}
-                          className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                          required
-                        />
-                        {serviceErrors.basePrice && (
-                          <span className="text-red-500 text-xs">
-                            {serviceErrors.basePrice}
-                          </span>
-                        )}
-                      </div>
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700">
-                          Duration (minutes)
-                        </label>
-                        <input
-                          type="number"
-                          name="duration"
-                          value={newService.duration}
-                          onChange={handleServiceInputChange}
-                          className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                          required
-                        />
-                        {serviceErrors.duration && (
-                          <span className="text-red-500 text-xs">
-                            {serviceErrors.duration}
-                          </span>
-                        )}
-                      </div>
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700">
-                          Status
-                        </label>
-                        <select
-                          name="isActive"
-                          value={newService.isActive ? "active" : "inactive"}
-                          onChange={(e) =>
-                            setNewService((prev) => ({
-                              ...prev,
-                              isActive: e.target.value === "active",
-                            }))
-                          }
-                          className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                        >
-                          <option value="active">Active</option>
-                          <option value="inactive">Inactive</option>
-                        </select>
-                      </div>
-                      <div className="pt-4 flex justify-end space-x-3">
-                        <button
-                          type="button"
-                          onClick={() => setIsAddServiceModalOpen(false)}
-                          className="px-4 py-2 rounded-md border border-gray-300 text-gray-700 hover:bg-gray-100"
-                        >
-                          Cancel
-                        </button>
-                        <button
-                          type="submit"
-                          className="px-4 py-2 rounded-md bg-blue-600 text-white hover:bg-blue-700"
-                        >
-                          Add Service
-                        </button>
-                      </div>
-                    </form>
-                  </motion.div>
-                </div>
-              )}
-
-              <div className="bg-white overflow-hidden border border-gray-200 rounded-lg">
-                <table className="min-w-full divide-y divide-gray-200">
-                  <thead className="bg-gray-50">
-                    <tr>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Service
-                      </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Category
-                      </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Price
-                      </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Duration
-                      </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Status
-                      </th>
-                      <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Actions
-                      </th>
-                    </tr>
-                  </thead>
-                  <tbody className="bg-white divide-y divide-gray-200">
-                    {serviceTypes.map((service) => (
-                      <tr key={service.id}>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <div className="flex items-center">
-                            <Wrench size={16} className="text-gray-400 mr-3" />
-                            <div className="text-sm font-medium text-gray-900">
-                              {service.name}
-                            </div>
-                          </div>
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                          {service.category}
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                          ${service.basePrice.toFixed(2)}
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                          {service.duration} min
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <button
-                            onClick={() => handleToggleService(service.id)}
-                            className={`px-2 py-1 text-xs font-semibold rounded-full ${
-                              service.isActive
-                                ? "bg-green-100 text-green-800"
-                                : "bg-red-100 text-red-800"
-                            }`}
-                          >
-                            {service.isActive ? "Active" : "Inactive"}
-                          </button>
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                          <div className="flex justify-end space-x-2">
-                            <button
-                              className="text-blue-600 hover:text-blue-900 p-1 rounded hover:bg-blue-50"
-                              onClick={() => {
-                                setEditService(service);
-                                setEditServiceErrors({});
-                                setIsEditServiceModalOpen(true);
-                              }}
-                            >
-                              <Edit2 size={16} />
-                            </button>
-                            <button
-                              onClick={() => handleDeleteService(service._id)}
-                              className="text-red-600 hover:text-red-900 p-1 rounded hover:bg-red-50"
-                            >
-                              <Trash2 size={16} />
-                            </button>
-                          </div>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            </div>
-
-            {isEditServiceModalOpen && editService && (
-              <div className="fixed inset-0 bg-black bg-opacity-40 flex justify-center items-center z-50 p-4">
-                <motion.div
-                  initial={{ opacity: 0, scale: 0.95 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  exit={{ opacity: 0, scale: 0.95 }}
-                  className="bg-white rounded-[5%] shadow-xl p-6 w-full max-w-lg max-h-[90vh]"
-                >
-                  <div className="flex justify-between items-center mb-6">
-                    <h2 className="text-xl font-bold text-gray-800">
-                      Edit Service
-                    </h2>
-                    <button
-                      onClick={() => setIsEditServiceModalOpen(false)}
-                      className="text-gray-500 hover:text-gray-700"
-                    >
-                      <svg
-                        xmlns="http://www.w3.org/2000/svg"
-                        className="h-6 w-6"
-                        fill="none"
-                        viewBox="0 0 24 24"
-                        stroke="currentColor"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M6 18L18 6M6 6l12 12"
-                        />
-                      </svg>
-                    </button>
-                  </div>
-                  <form
-                    onSubmit={handleEditService}
-                    className="space-y-6 pl-2 pr-2 overflow-y-auto max-h-[70vh]"
-                  >
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700">
-                        Service Name
-                      </label>
-                      <input
-                        type="text"
-                        name="name"
-                        value={editService.name}
-                        onChange={handleEditServiceInputChange}
-                        className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                        required
-                      />
-                      {editServiceErrors.name && (
-                        <span className="text-red-500 text-xs">
-                          {editServiceErrors.name}
-                        </span>
-                      )}
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700">
-                        Category
-                      </label>
-                      <input
-                        type="text"
-                        name="category"
-                        value={editService.category}
-                        onChange={handleEditServiceInputChange}
-                        className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                        required
-                      />
-                      {editServiceErrors.category && (
-                        <span className="text-red-500 text-xs">
-                          {editServiceErrors.category}
-                        </span>
-                      )}
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700">
-                        Base Price
-                      </label>
-                      <input
-                        type="number"
-                        name="basePrice"
-                        value={editService.basePrice}
-                        onChange={handleEditServiceInputChange}
-                        className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                        required
-                      />
-                      {editServiceErrors.basePrice && (
-                        <span className="text-red-500 text-xs">
-                          {editServiceErrors.basePrice}
-                        </span>
-                      )}
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700">
-                        Duration (minutes)
-                      </label>
-                      <input
-                        type="number"
-                        name="duration"
-                        value={editService.duration}
-                        onChange={handleEditServiceInputChange}
-                        className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                        required
-                      />
-                      {editServiceErrors.duration && (
-                        <span className="text-red-500 text-xs">
-                          {editServiceErrors.duration}
-                        </span>
-                      )}
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700">
-                        Status
-                      </label>
-                      <select
-                        name="isActive"
-                        value={editService.isActive ? "active" : "inactive"}
-                        onChange={(e) =>
-                          setEditService((prev) => ({
-                            ...prev,
-                            isActive: e.target.value === "active",
-                          }))
-                        }
-                        className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                      >
-                        <option value="active">Active</option>
-                        <option value="inactive">Inactive</option>
-                      </select>
-                    </div>
-                    <div className="pt-4 flex justify-end space-x-3">
-                      <button
-                        type="button"
-                        onClick={() => setIsEditServiceModalOpen(false)}
-                        className="px-4 py-2 rounded-md border border-gray-300 text-gray-700 hover:bg-gray-100"
-                      >
-                        Cancel
-                      </button>
-                      <button
-                        type="submit"
-                        className="px-4 py-2 rounded-md bg-blue-600 text-white hover:bg-blue-700"
-                      >
-                        Save Changes
-                      </button>
-                    </div>
-                  </form>
-                </motion.div>
-              </div>
-            )}
-
-            {/* Service Packages */}
-            {/* <div>
-              <div className="flex justify-between items-center mb-4">
-                <h3 className="text-lg font-semibold text-gray-800">Service Packages</h3>
-                <button 
-                  onClick={handleCreatePackage}
-                  className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 flex items-center"
-                >
-                  <Package size={16} className="mr-2" />
-                  Add Package
-                </button>
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {servicePackages.map((pkg) => (
-                  <div key={pkg.id} className="bg-white border border-gray-200 rounded-lg p-4">
-                    <div className="flex justify-between items-start mb-3">
-                      <h4 className="font-semibold text-gray-800">{pkg.name}</h4>
-                      <span className={`px-2 py-1 text-xs font-semibold rounded-full ${
-                        pkg.isActive ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
-                      }`}>
-                        {pkg.isActive ? 'Active' : 'Inactive'}
-                      </span>
-                    </div>
-                    <p className="text-sm text-gray-600 mb-3">{pkg.description}</p>
-                    <div className="flex justify-between items-center mb-3">
-                      <div>
-                        <span className="text-lg font-bold text-gray-900">${pkg.price.toFixed(2)}</span>
-                        <span className="text-sm text-green-600 ml-2">Save ${pkg.discount.toFixed(2)}</span>
-                      </div>
-                    </div>
-                    <div className="flex justify-end space-x-2">
-                      <button className="text-blue-600 hover:text-blue-900 p-1 rounded hover:bg-blue-50">
-                        <Edit2 size={16} />
-                      </button>
-                      <button 
-                        onClick={() => handleDeletePackage(pkg.id)}
-                        className="text-red-600 hover:text-red-900 p-1 rounded hover:bg-red-50"
-                      >
-                        <Trash2 size={16} />
-                      </button>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div> */}
-          </div>
-        );
+        return renderServiceConfig();
 
       // case "notifications":
       //   return (
