@@ -11,6 +11,10 @@ const jobCardSchema = new mongoose.Schema({
     ref: "Vehicle",
     required: true,
   },
+  vehicleType: { type: String }, // ADD THIS
+  serviceType: { type: String }, // ADD THIS
+  serviceLevel: { type: String }, // ADD THIS
+  serviceOption: { type: String }, // ADD THIS
   date: { type: Date, required: true },
   services: [{ type: String, required: true }],
   status: {

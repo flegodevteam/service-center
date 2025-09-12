@@ -1,84 +1,83 @@
-const ServiceType = require("../models/serviceTypeModel");
+const ServiceTypeConfig = require("../models/serviceTypeModel");
 
-exports.addServiceType = async (req, res, next) => {
-  try {
-    const serviceTypeData = req.body;
-
-    // Check if service already exists
-    const exists = await ServiceType.findOne({ name: serviceTypeData.name });
-    if (exists) {
-      return res.status(400).json({
-        success: false,
-        message: "Service type already exists",
-      });
-    }
-
-    const serviceType = await ServiceType.create(serviceTypeData);
-    res.status(201).json({ success: true, serviceType });
-  } catch (err) {
-    next(err);
+// Get config
+exports.getConfig = async (req, res) => {
+  const config = await ServiceTypeConfig.findOne();
+  if (!config) {
+    // If not exists, create default
+    const newConfig = await ServiceTypeConfig.create({
+      vehicleTypes: [],
+      serviceTypes: [],
+      serviceLevels: ["normal", "hard", "heavy"],
+      serviceLevelOptions: [],
+    });
+    return res.json(newConfig);
   }
+  res.json(config);
 };
 
-exports.getServiceTypes = async (req, res, next) => {
-  try {
-    const serviceTypes = await ServiceType.find();
-    res.json({ success: true, serviceTypes });
-  } catch (err) {
-    next(err);
+// Add vehicle type
+exports.addVehicleType = async (req, res) => {
+  const { type } = req.body;
+  const config = await ServiceTypeConfig.findOne();
+  if (!config) return res.status(404).json({ message: "Config not found" });
+  if (!config.vehicleTypes.includes(type)) {
+    config.vehicleTypes.push(type);
+    await config.save();
   }
+  res.json(config.vehicleTypes);
 };
 
-exports.updateServiceType = async (req, res, next) => {
-  try {
-    const serviceType = await ServiceType.findByIdAndUpdate(
-      req.params.id,
-      req.body,
-      { new: true, runValidators: true }
-    );
-
-    if (!serviceType) {
-      return res.status(404).json({
-        success: false,
-        message: "Service type not found",
-      });
-    }
-
-    res.json({ success: true, serviceType });
-  } catch (err) {
-    next(err);
-  }
+// Delete vehicle type
+exports.deleteVehicleType = async (req, res) => {
+  const { type } = req.params;
+  const config = await ServiceTypeConfig.findOne();
+  if (!config) return res.status(404).json({ message: "Config not found" });
+  config.vehicleTypes = config.vehicleTypes.filter((v) => v !== type);
+  await config.save();
+  res.json(config.vehicleTypes);
 };
 
-exports.deleteServiceType = async (req, res, next) => {
-  try {
-    const serviceType = await ServiceType.findByIdAndDelete(req.params.id);
-    if (!serviceType) {
-      return res.status(404).json({
-        success: false,
-        message: "Service type not found",
-      });
-    }
-    res.json({ success: true, message: "Service type deleted" });
-  } catch (err) {
-    next(err);
+// Add service type
+exports.addServiceType = async (req, res) => {
+  const { type } = req.body;
+  const config = await ServiceTypeConfig.findOne();
+  if (!config) return res.status(404).json({ message: "Config not found" });
+  if (!config.serviceTypes.includes(type)) {
+    config.serviceTypes.push(type);
+    await config.save();
   }
+  res.json(config.serviceTypes);
 };
 
-// Get vehicle types list
-exports.getVehicleTypes = async (req, res, next) => {
-  try {
-    const vehicleTypes = [
-      "Bike",
-      "Three-wheeler",
-      "Car",
-      "Van",
-      "Lorry",
-      "Bus",
-      "Other",
-    ];
-    res.json({ success: true, vehicleTypes });
-  } catch (err) {
-    next(err);
+// Delete service type
+exports.deleteServiceType = async (req, res) => {
+  const { type } = req.params;
+  const config = await ServiceTypeConfig.findOne();
+  if (!config) return res.status(404).json({ message: "Config not found" });
+  config.serviceTypes = config.serviceTypes.filter((v) => v !== type);
+  await config.save();
+  res.json(config.serviceTypes);
+};
+
+// Add service level option
+exports.addServiceLevelOption = async (req, res) => {
+  const { option } = req.body;
+  const config = await ServiceTypeConfig.findOne();
+  if (!config) return res.status(404).json({ message: "Config not found" });
+  if (!config.serviceLevelOptions.includes(option)) {
+    config.serviceLevelOptions.push(option);
+    await config.save();
   }
+  res.json(config.serviceLevelOptions);
+};
+
+// Delete service level option
+exports.deleteServiceLevelOption = async (req, res) => {
+  const { option } = req.params;
+  const config = await ServiceTypeConfig.findOne();
+  if (!config) return res.status(404).json({ message: "Config not found" });
+  config.serviceLevelOptions = config.serviceLevelOptions.filter((v) => v !== option);
+  await config.save();
+  res.json(config.serviceLevelOptions);
 };

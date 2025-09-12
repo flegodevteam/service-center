@@ -27,8 +27,11 @@ const JobCards = () => {
   const [newJobCard, setNewJobCard] = useState({
     customer: "",
     vehicle: "",
+    vehicleType: "",
+    serviceType: "",
+    serviceLevel: "",
+    serviceOption: "",
     date: "",
-    services: "",
     status: "pending",
     technician: "",
     totalAmount: "",
@@ -41,6 +44,12 @@ const JobCards = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const jobCardsPerPage = 5;
   const location = useLocation();
+
+  // Service config states
+  const [serviceTypes, setServiceTypes] = useState([]);
+  const [serviceLevels] = useState(["normal", "hard", "heavy"]);
+  const [serviceLevelOptions, setServiceLevelOptions] = useState([]);
+  const [vehicleTypes, setVehicleTypes] = useState([]);
 
   useEffect(() => {
     const params = new URLSearchParams(location.search);
@@ -61,15 +70,25 @@ const JobCards = () => {
     fetchAllVehicles();
   }, [fetchAllVehicles]);
 
-  // const [isInvoiceModalOpen, setIsInvoiceModalOpen] = useState(false);
+  // Fetch service config for dropdowns
+  useEffect(() => {
+    axios.get(`${API_URL}/service-config`).then((res) => {
+      setServiceTypes(res.data.serviceTypes || []);
+      setServiceLevelOptions(res.data.serviceLevelOptions || []);
+      setVehicleTypes(res.data.vehicleTypes || []);
+    });
+  }, []);
 
   // Validate form
   const validate = () => {
     let err = {};
     if (!newJobCard.customer) err.customer = "Customer thevai";
     if (!newJobCard.vehicle) err.vehicle = "Vehicle thevai";
+    if (!newJobCard.vehicleType) err.vehicleType = "Vehicle Type thevai";
+    if (!newJobCard.serviceType) err.serviceType = "Service Type thevai";
+    if (!newJobCard.serviceLevel) err.serviceLevel = "Service Level thevai";
+    if (!newJobCard.serviceOption) err.serviceOption = "Service Option thevai";
     if (!newJobCard.date) err.date = "Date thevai";
-    if (!newJobCard.services) err.services = "Service thevai";
     if (!newJobCard.technician) err.technician = "Technician thevai";
     if (!newJobCard.totalAmount || isNaN(newJobCard.totalAmount))
       err.totalAmount = "Amount sari illai";
@@ -85,8 +104,11 @@ const JobCards = () => {
     setNewJobCard({
       customer: "",
       vehicle: "",
+      vehicleType: "",
+      serviceType: "",
+      serviceLevel: "",
+      serviceOption: "",
       date: "",
-      services: "",
       status: "pending",
       technician: "",
       totalAmount: "",
@@ -125,7 +147,7 @@ const JobCards = () => {
     }
   };
 
-  // Filter job cards based on search term (without typeof)
+  // Filter job cards based on search term
   const filteredJobCards = jobCards.filter((jobCard) => {
     const customerName = jobCard.customer?.name || jobCard.customer || "";
     const vehicle = jobCard.vehicle || {};
@@ -191,31 +213,6 @@ const JobCards = () => {
     }
   };
 
-  const [serviceOptions, setServiceOptions] = useState([]);
-
-  // Fetch service types from backend
-  useEffect(() => {
-    axios.get(`${API_URL}/service-types`).then((res) => {
-      setServiceOptions(res.data.serviceTypes.map((s) => s.name));
-    });
-  }, []);
-
-  // Multi-select handler
-  const handleServiceSelect = (service) => {
-    let selected = Array.isArray(newJobCard.services)
-      ? [...newJobCard.services]
-      : typeof newJobCard.services === "string" &&
-        newJobCard.services.length > 0
-      ? newJobCard.services.split(",").map((s) => s.trim())
-      : [];
-    if (selected.includes(service)) {
-      selected = selected.filter((s) => s !== service);
-    } else {
-      selected.push(service);
-    }
-    setNewJobCard({ ...newJobCard, services: selected });
-  };
-
   return (
     <div className="space-y-6">
       {/* Modal */}
@@ -245,7 +242,7 @@ const JobCards = () => {
               </button>
             </div>
 
-            <div className="space-y-3">
+            <div className="space-y-3 max-h-[70vh] overflow-y-auto pr-2">
               <div>
                 <label className="block text-sm">Customer</label>
                 <select
@@ -288,6 +285,110 @@ const JobCards = () => {
                   <span className="text-red-500 text-xs">{errors.vehicle}</span>
                 )}
               </div>
+              {/* Vehicle Type Select */}
+              <div>
+                <label className="block text-sm">Vehicle Type</label>
+                <select
+                  className="w-full border rounded px-2 py-1"
+                  value={newJobCard.vehicleType}
+                  onChange={(e) =>
+                    setNewJobCard({
+                      ...newJobCard,
+                      vehicleType: e.target.value,
+                    })
+                  }
+                >
+                  <option value="">Select</option>
+                  {vehicleTypes.map((type) => (
+                    <option key={type} value={type}>
+                      {type}
+                    </option>
+                  ))}
+                </select>
+                {errors.vehicleType && (
+                  <span className="text-red-500 text-xs">
+                    {errors.vehicleType}
+                  </span>
+                )}
+              </div>
+              {/* Add Service Type */}
+              <div>
+                <label className="block text-sm">Service Type</label>
+                <select
+                  className="w-full border rounded px-2 py-1"
+                  value={newJobCard.serviceType}
+                  onChange={(e) =>
+                    setNewJobCard({
+                      ...newJobCard,
+                      serviceType: e.target.value,
+                    })
+                  }
+                >
+                  <option value="">Select</option>
+                  {serviceTypes.map((type) => (
+                    <option key={type} value={type}>
+                      {type}
+                    </option>
+                  ))}
+                </select>
+                {errors.serviceType && (
+                  <span className="text-red-500 text-xs">
+                    {errors.serviceType}
+                  </span>
+                )}
+              </div>
+              {/* Add Service Level */}
+              <div>
+                <label className="block text-sm">Service Level</label>
+                <select
+                  className="w-full border rounded px-2 py-1"
+                  value={newJobCard.serviceLevel}
+                  onChange={(e) =>
+                    setNewJobCard({
+                      ...newJobCard,
+                      serviceLevel: e.target.value,
+                    })
+                  }
+                >
+                  <option value="">Select</option>
+                  {serviceLevels.map((level) => (
+                    <option key={level} value={level}>
+                      {level.charAt(0).toUpperCase() + level.slice(1)}
+                    </option>
+                  ))}
+                </select>
+                {errors.serviceLevel && (
+                  <span className="text-red-500 text-xs">
+                    {errors.serviceLevel}
+                  </span>
+                )}
+              </div>
+              {/* Add Service Option */}
+              <div>
+                <label className="block text-sm">Service Option</label>
+                <select
+                  className="w-full border rounded px-2 py-1"
+                  value={newJobCard.serviceOption}
+                  onChange={(e) =>
+                    setNewJobCard({
+                      ...newJobCard,
+                      serviceOption: e.target.value,
+                    })
+                  }
+                >
+                  <option value="">Select</option>
+                  {serviceLevelOptions.map((option) => (
+                    <option key={option} value={option}>
+                      {option}
+                    </option>
+                  ))}
+                </select>
+                {errors.serviceOption && (
+                  <span className="text-red-500 text-xs">
+                    {errors.serviceOption}
+                  </span>
+                )}
+              </div>
               <div>
                 <label className="block text-sm">Date</label>
                 <input
@@ -300,46 +401,6 @@ const JobCards = () => {
                 />
                 {errors.date && (
                   <span className="text-red-500 text-xs">{errors.date}</span>
-                )}
-              </div>
-              <div>
-                <label className="block text-sm font-medium mb-1">
-                  Services
-                </label>
-                <div className="border rounded px-2 py-2 bg-white max-h-40 overflow-y-auto">
-                  {serviceOptions.length === 0 && (
-                    <div className="text-gray-400 text-sm">
-                      No services found
-                    </div>
-                  )}
-                  {serviceOptions.map((service) => (
-                    <label
-                      key={service}
-                      className="flex items-center space-x-2 mb-1"
-                    >
-                      <input
-                        type="checkbox"
-                        checked={
-                          Array.isArray(newJobCard.services)
-                            ? newJobCard.services.includes(service)
-                            : typeof newJobCard.services === "string"
-                            ? newJobCard.services
-                                .split(",")
-                                .map((s) => s.trim())
-                                .includes(service)
-                            : false
-                        }
-                        onChange={() => handleServiceSelect(service)}
-                        className="accent-blue-600"
-                      />
-                      <span>{service}</span>
-                    </label>
-                  ))}
-                </div>
-                {errors.services && (
-                  <span className="text-red-500 text-xs">
-                    {errors.services}
-                  </span>
                 )}
               </div>
               <div>
@@ -454,12 +515,7 @@ const JobCards = () => {
                     >
                       Customer & Vehicle
                     </th>
-                    <th
-                      scope="col"
-                      className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
-                    >
-                      Services
-                    </th>
+
                     <th
                       scope="col"
                       className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
@@ -522,18 +578,6 @@ const JobCards = () => {
                         </div>
                       </td>
 
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="flex flex-wrap gap-1">
-                          {jobCard.services.map((service, index) => (
-                            <span
-                              key={index}
-                              className="px-2 py-1 text-xs rounded-full bg-gray-100 text-gray-800"
-                            >
-                              {service}
-                            </span>
-                          ))}
-                        </div>
-                      </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <span
                           className={`px-2 py-1 inline-flex items-center text-xs leading-5 font-semibold rounded-full ${getStatusColor(
@@ -619,12 +663,12 @@ const JobCards = () => {
                     Job Card Information
                   </h3>
                   <div className="bg-gray-50 rounded-lg p-4">
-                    <div className="flex items-center mb-2">
+                    {/* <div className="flex items-center mb-2">
                       <Clipboard size={16} className="text-gray-400 mr-2" />
                       <span className="text-sm font-medium text-gray-700">
                         {selectedJobCardData.id}
                       </span>
-                    </div>
+                    </div> */}
                     <div className="flex items-center">
                       <Calendar size={16} className="text-gray-400 mr-2" />
                       <span className="text-sm text-gray-700">
@@ -663,27 +707,52 @@ const JobCards = () => {
                   </div>
                 </div>
 
+                {/* Service Information */}
                 <div>
                   <h3 className="text-sm font-medium text-gray-500 mb-2">
-                    Services Performed
+                    Service Information
                   </h3>
-                  <div className="bg-gray-50 rounded-lg p-4">
-                    <ul className="space-y-2">
-                      {selectedJobCardData.services.map((service, index) => (
-                        <li key={index} className="flex items-start">
-                          <CheckCircle
-                            size={16}
-                            className="text-green-500 mr-2 mt-0.5"
-                          />
-                          <span className="text-sm text-gray-700">
-                            {service}
-                          </span>
-                        </li>
-                      ))}
-                    </ul>
+                  <div className="bg-gray-50 rounded-lg p-4 space-y-2">
+                    <div>
+                      <span className="text-sm text-gray-600">
+                        Vehicle Type:
+                      </span>{" "}
+                      <span className="text-sm text-gray-800 font-medium">
+                        {selectedJobCardData.vehicleType}
+                      </span>
+                    </div>
+                    <div>
+                      <span className="text-sm text-gray-600">
+                        Service Type:
+                      </span>{" "}
+                      <span className="text-sm text-gray-800 font-medium">
+                        {selectedJobCardData.serviceType}
+                      </span>
+                    </div>
+                    <div>
+                      <span className="text-sm text-gray-600">
+                        Service Level:
+                      </span>{" "}
+                      <span className="text-sm text-gray-800 font-medium">
+                        {selectedJobCardData.serviceLevel &&
+                          selectedJobCardData.serviceLevel
+                            .charAt(0)
+                            .toUpperCase() +
+                            selectedJobCardData.serviceLevel.slice(1)}
+                      </span>
+                    </div>
+                    <div>
+                      <span className="text-sm text-gray-600">
+                        Service Option:
+                      </span>{" "}
+                      <span className="text-sm text-gray-800 font-medium">
+                        {selectedJobCardData.serviceOption}
+                      </span>
+                    </div>
                   </div>
                 </div>
 
+                {/* Technician Information */}
                 <div>
                   <h3 className="text-sm font-medium text-gray-500 mb-2">
                     Technician

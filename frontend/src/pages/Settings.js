@@ -42,6 +42,7 @@ import axios from "axios";
 import { API_URL } from "../api/api";
 
 const Settings = () => {
+  const SERVICE_CONFIG_API = `${API_URL}/service-config`;
   const [activeTab, setActiveTab] = useState("user-management");
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -64,261 +65,19 @@ const Settings = () => {
 
   // service management state
   const [isAddServiceModalOpen, setIsAddServiceModalOpen] = useState(false);
-  // const [newService, setNewService] = useState({
-  //   name: "",
-  //   category: "",
-  //   basePrice: "",
-  //   duration: "",
-  //   isActive: true,
-  // });
   const [serviceErrors, setServiceErrors] = useState({});
   const [isEditServiceModalOpen, setIsEditServiceModalOpen] = useState(false);
   const [editService, setEditService] = useState(null);
   const [editServiceErrors, setEditServiceErrors] = useState({});
-
-  // Service Configuration State
-  const handleServiceInputChange = (e) => {
-    const { name, value } = e.target;
-    setNewService((prev) => ({
-      ...prev,
-      [name]: value,
-    }));
-  };
-
-  // const validateService = () => {
-  //   let err = {};
-  //   if (!newService.name) err.name = "Service name is required";
-  //   if (!newService.category) err.category = "Category is required";
-  //   if (!newService.basePrice) err.basePrice = "Base price is required";
-  //   if (!newService.duration) err.duration = "Duration is required";
-  //   setServiceErrors(err);
-  //   return Object.keys(err).length === 0;
-  // };
-
-  // const handleAddService = async (e) => {
-  //   e.preventDefault();
-  //   if (!validateService()) return;
-  //   try {
-  //     const res = await axios.post(`${API_URL}/service-types`, {
-  //       name: newService.name,
-  //       category: newService.category,
-  //       basePrice: parseFloat(newService.basePrice),
-  //       duration: parseInt(newService.duration),
-  //       isActive: newService.isActive,
-  //     });
-  //     setServiceTypes((prev) => [...prev, res.data.serviceType]);
-  //     setIsAddServiceModalOpen(false);
-  //     setNewService({
-  //       name: "",
-  //       category: "",
-  //       basePrice: "",
-  //       duration: "",
-  //       isActive: true,
-  //     });
-  //     setServiceErrors({});
-  //     toast.success("New service created successfully!");
-  //   } catch (err) {
-  //     toast.error(err.response?.data?.message || "Failed to add service");
-  //   }
-  // };
-
-  //  Edit Service Functionality
-  const handleEditServiceInputChange = (e) => {
-    const { name, value } = e.target;
-    setEditService((prev) => ({
-      ...prev,
-      [name]: value,
-    }));
-  };
-
-  const validateEditService = () => {
-    let err = {};
-    if (!editService.name) err.name = "Service name is required";
-    if (!editService.category) err.category = "Category is required";
-    if (!editService.basePrice) err.basePrice = "Base price is required";
-    if (!editService.duration) err.duration = "Duration is required";
-    setEditServiceErrors(err);
-    return Object.keys(err).length === 0;
-  };
-
-  const handleEditService = async (e) => {
-    e.preventDefault();
-    if (!validateEditService()) return;
-    try {
-      const res = await axios.put(
-        `${API_URL}/service-types/${editService._id}`,
-        {
-          name: editService.name,
-          category: editService.category,
-          basePrice: parseFloat(editService.basePrice),
-          duration: parseInt(editService.duration),
-          isActive: editService.isActive,
-        }
-      );
-      setServiceTypes((prev) =>
-        prev.map((service) =>
-          service._id === editService._id ? res.data.serviceType : service
-        )
-      );
-      setIsEditServiceModalOpen(false);
-      setEditService(null);
-      setEditServiceErrors({});
-      toast.success("Service updated successfully!");
-    } catch (err) {
-      toast.error(err.response?.data?.message || "Failed to update service");
-    }
-  };
-
-  // Service Types State
-  const [serviceTypes, setServiceTypes] = useState([]);
-
-  // Fetch all service types
-  const fetchServiceTypes = async () => {
-    try {
-      const res = await axios.get(`${API_URL}/service-types`);
-      setServiceTypes(res.data.serviceTypes);
-    } catch (err) {
-      toast.error("Failed to fetch service types");
-    }
-  };
-
-  // Add new service type
-  const handleAddServiceType = async (e) => {
-    e.preventDefault();
-    try {
-      const res = await axios.post(`${API_URL}/service-types`, {
-        name: newService.name,
-      });
-      setServiceTypes((prev) => [...prev, res.data.serviceType]);
-      setIsAddServiceModalOpen(false);
-      setNewService({ name: "" });
-      toast.success("Service type added!");
-    } catch (err) {
-      toast.error(err.response?.data?.message || "Failed to add service type");
-    }
-  };
-
-  // Edit service type
-  const handleEditServiceType = async (e) => {
-    e.preventDefault();
-    try {
-      const res = await axios.put(
-        `${API_URL}/service-types/${editService._id}`,
-        { name: editService.name }
-      );
-      setServiceTypes((prev) =>
-        prev.map((s) => (s._id === editService._id ? res.data.serviceType : s))
-      );
-      setIsEditServiceModalOpen(false);
-      setEditService(null);
-      toast.success("Service type updated!");
-    } catch (err) {
-      toast.error(
-        err.response?.data?.message || "Failed to update service type"
-      );
-    }
-  };
-
-  // Delete service type
-  const handleDeleteServiceType = async (id) => {
-    if (window.confirm("Are you sure you want to delete this service type?")) {
-      try {
-        await axios.delete(`${API_URL}/service-types/${id}`);
-        setServiceTypes((prev) => prev.filter((s) => s._id !== id));
-        toast.success("Service type deleted!");
-      } catch (err) {
-        toast.error(
-          err.response?.data?.message || "Failed to delete service type"
-        );
-      }
-    }
-  };
-
-  const [servicePackages, setServicePackages] = useState([
-    {
-      id: 1,
-      name: "Basic Maintenance",
-      description: "Oil change + tire rotation",
-      price: 75.0,
-      discount: 5.0,
-      isActive: true,
-    },
-    {
-      id: 2,
-      name: "Full Service",
-      description: "Complete vehicle checkup",
-      price: 200.0,
-      discount: 25.0,
-      isActive: true,
-    },
+  const [serviceTypesList, setServiceTypesList] = useState([
+    "Engine Service",
+    "Oil Change",
+    "Full Body Wash",
+    "Interior Cleaning",
+    "Brake Check",
+    "Battery Service",
   ]);
-
-  // Notification Settings State
-  const [notificationSettings, setNotificationSettings] = useState({
-    emailEnabled: true,
-    smsEnabled: true,
-    appointmentReminders: true,
-    serviceCompletion: true,
-    inventoryAlerts: true,
-    paymentReminders: true,
-    emailTemplate: {
-      appointmentConfirmation:
-        "Dear {customerName}, your appointment for {serviceName} is confirmed for {date} at {time}.",
-      serviceCompletion:
-        "Dear {customerName}, your {vehicleName} service is complete. Total: ${amount}",
-      paymentReminder:
-        "Dear {customerName}, payment of ${amount} is due for invoice #{invoiceNumber}.",
-    },
-    smsTemplate: {
-      appointmentReminder:
-        "Reminder: Your appointment is tomorrow at {time} for {serviceName}.",
-      serviceReady: "Your {vehicleName} is ready for pickup. Total: ${amount}",
-    },
-  });
-
-  // Audit Logs State
-  const [auditLogs, setAuditLogs] = useState([
-    {
-      id: 1,
-      timestamp: "2024-06-15 10:30:15",
-      user: "admin",
-      action: "User Created",
-      details: "Created new technician account: tech2",
-      severity: "info",
-    },
-    {
-      id: 2,
-      timestamp: "2024-06-15 09:45:22",
-      user: "manager1",
-      action: "Service Updated",
-      details: "Updated Oil Change price from $40 to $45",
-      severity: "warning",
-    },
-    {
-      id: 3,
-      timestamp: "2024-06-15 08:15:33",
-      user: "admin",
-      action: "System Backup",
-      details: "Database backup completed successfully",
-      severity: "success",
-    },
-    {
-      id: 4,
-      timestamp: "2024-06-14 16:20:44",
-      user: "tech1",
-      action: "Login Failed",
-      details: "Failed login attempt from IP: 192.168.1.100",
-      severity: "error",
-    },
-    {
-      id: 5,
-      timestamp: "2024-06-14 14:30:55",
-      user: "frontdesk",
-      action: "Data Export",
-      details: "Exported customer data (CSV format)",
-      severity: "info",
-    },
-  ]);
+  const [customServiceType, setCustomServiceType] = useState("");
 
   const tabs = [
     {
@@ -331,31 +90,12 @@ const Settings = () => {
       label: "Service Configuration",
       icon: <Wrench size={18} />,
     },
-    // { id: "notifications", label: "Notifications", icon: <Bell size={18} /> },
-    // {
-    //   id: "backup-restore",
-    //   label: "Backup & Restore",
-    //   icon: <Database size={18} />,
-    // },
-    // { id: "audit-logs", label: "Audit Logs", icon: <History size={18} /> },
-    // {
-    //   id: "system-config",
-    //   label: "System Config",
-    //   icon: <SettingsIcon size={18} />,
-    // },
   ];
 
   // Fetch all users from backend
   useEffect(() => {
     if (activeTab === "user-management") {
       fetchUsers();
-    }
-  }, [activeTab]);
-
-  // Fetch service types when service config tab is active
-  useEffect(() => {
-    if (activeTab === "service-config") {
-      fetchServiceTypes();
     }
   }, [activeTab]);
 
@@ -499,157 +239,6 @@ const Settings = () => {
     toast.success("User status updated!");
   };
 
-  const handleCreateService = () => {
-    const newService = {
-      id: serviceTypes.length + 1,
-      name: "New Service",
-      category: "General",
-      basePrice: 50.0,
-      duration: 60,
-      isActive: true,
-    };
-    setServiceTypes((prev) => [...prev, newService]);
-    toast.success("New service created successfully!");
-  };
-
-  const handleDeleteService = async (serviceId) => {
-    if (window.confirm("Are you sure you want to delete this service?")) {
-      try {
-        await axios.delete(`${API_URL}/service-types/${serviceId}`);
-        setServiceTypes((prev) =>
-          prev.filter((service) => service._id !== serviceId)
-        );
-        toast.success("Service deleted successfully!");
-      } catch (err) {
-        toast.error(err.response?.data?.message || "Failed to delete service");
-      }
-    }
-  };
-
-  const handleToggleService = (serviceId) => {
-    setServiceTypes((prev) =>
-      prev.map((service) =>
-        service.id === serviceId
-          ? { ...service, isActive: !service.isActive }
-          : service
-      )
-    );
-    toast.success("Service status updated!");
-  };
-
-  const handleCreatePackage = () => {
-    const newPackage = {
-      id: servicePackages.length + 1,
-      name: "New Package",
-      description: "Package description",
-      price: 100.0,
-      discount: 10.0,
-      isActive: true,
-    };
-    setServicePackages((prev) => [...prev, newPackage]);
-    toast.success("New package created successfully!");
-  };
-
-  const handleDeletePackage = (packageId) => {
-    if (window.confirm("Are you sure you want to delete this package?")) {
-      setServicePackages((prev) => prev.filter((pkg) => pkg.id !== packageId));
-      toast.success("Package deleted successfully!");
-    }
-  };
-
-  const handleSaveNotifications = () => {
-    setLoading(true);
-    setTimeout(() => {
-      setLoading(false);
-      toast.success("Notification settings saved successfully!");
-    }, 1000);
-  };
-
-  const handleCreateBackup = () => {
-    setLoading(true);
-    setTimeout(() => {
-      setLoading(false);
-      const backupFile = new Blob(["Database backup data"], {
-        type: "application/sql",
-      });
-      const url = URL.createObjectURL(backupFile);
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = `backup-${new Date().toISOString().split("T")[0]}.sql`;
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      URL.revokeObjectURL(url);
-      toast.success("Database backup created and downloaded!");
-    }, 2000);
-  };
-
-  const handleRestoreBackup = () => {
-    if (
-      window.confirm(
-        "Are you sure you want to restore from backup? This will overwrite current data."
-      )
-    ) {
-      setLoading(true);
-      setTimeout(() => {
-        setLoading(false);
-        toast.success("Database restored successfully!");
-      }, 3000);
-    }
-  };
-
-  const handleExportLogs = () => {
-    const csvContent = [
-      ["Timestamp", "User", "Action", "Details", "Severity"],
-      ...auditLogs.map((log) => [
-        log.timestamp,
-        log.user,
-        log.action,
-        log.details,
-        log.severity,
-      ]),
-    ]
-      .map((row) => row.join(","))
-      .join("\n");
-
-    const blob = new Blob([csvContent], { type: "text/csv" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = `audit-logs-${new Date().toISOString().split("T")[0]}.csv`;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
-    toast.success("Audit logs exported successfully!");
-  };
-
-  const getSeverityColor = (severity) => {
-    switch (severity) {
-      case "success":
-        return "bg-green-100 text-green-800";
-      case "warning":
-        return "bg-yellow-100 text-yellow-800";
-      case "error":
-        return "bg-red-100 text-red-800";
-      default:
-        return "bg-blue-100 text-blue-800";
-    }
-  };
-
-  const getSeverityIcon = (severity) => {
-    switch (severity) {
-      case "success":
-        return <CheckCircle size={16} />;
-      case "warning":
-        return <AlertTriangle size={16} />;
-      case "error":
-        return <XCircle size={16} />;
-      default:
-        return <FileText size={16} />;
-    }
-  };
-
   // Enhanced service management state
   const [newService, setNewService] = useState({
     name: "",
@@ -679,919 +268,333 @@ const Settings = () => {
   const [customVehicleType, setCustomVehicleType] = useState("");
   const [newOption, setNewOption] = useState({ level: "", option: "" });
 
-  // Predefined service options for each level
-  const predefinedOptions = {
-    normal: [
-      "Basic Engine Check",
-      "Oil Level Check",
-      "Visual Inspection",
-      "Basic Cleaning",
-    ],
-    hard: [
-      "Replace Engine Oil",
-      "Clean Air Filter",
-      "Change Spark Plugs",
-      "Battery Water Top-Up",
-      "Brake Fluid Check",
-    ],
-    heavy: [
-      "Complete Engine Overhaul",
-      "Transmission Service",
-      "Full Brake System Check",
-      "Suspension Service",
-      "Electrical System Diagnosis",
-    ],
+  const fetchServiceConfig = async () => {
+    const res = await axios.get(SERVICE_CONFIG_API);
+    const config = res.data;
+    setVehicleTypes(config.vehicleTypes || []);
+    setServiceTypesList(config.serviceTypes || []);
+    setNewService((prev) => ({
+      ...prev,
+      serviceLevelOptions: config.serviceLevelOptions || [],
+    }));
   };
 
-  // Fetch vehicle types
-  const fetchVehicleTypes = async () => {
-    try {
-      const res = await axios.get(`${API_URL}/service-types/vehicle-types`);
-      setVehicleTypes(res.data.vehicleTypes);
-    } catch (err) {
-      console.error("Failed to fetch vehicle types:", err);
+  useEffect(() => {
+    if (activeTab === "service-config") {
+      fetchServiceConfig();
     }
-  };
+  }, [activeTab]);
 
-  // Calculate final prices
-  const calculateFinalPrice = (basePrice, percentage) => {
-    return basePrice * (1 + percentage / 100);
-  };
-
-  // Handle vehicle type selection
-  const handleVehicleTypeChange = (vehicleType) => {
-    setNewService((prev) => {
-      const updatedTypes = prev.vehicleTypes.includes(vehicleType)
-        ? prev.vehicleTypes.filter((type) => type !== vehicleType)
-        : [...prev.vehicleTypes, vehicleType];
-
-      return { ...prev, vehicleTypes: updatedTypes };
-    });
-  };
-
-  // Handle service level toggle
-  const handleServiceLevelToggle = (level) => {
-    setNewService((prev) => ({
-      ...prev,
-      serviceLevels: {
-        ...prev.serviceLevels,
-        [level]: {
-          ...prev.serviceLevels[level],
-          isActive: !prev.serviceLevels[level].isActive,
-        },
-      },
-    }));
-  };
-
-  // Handle percentage change
-  const handlePercentageChange = (level, percentage) => {
-    setNewService((prev) => ({
-      ...prev,
-      serviceLevels: {
-        ...prev.serviceLevels,
-        [level]: {
-          ...prev.serviceLevels[level],
-          percentageIncrease: parseInt(percentage) || 0,
-        },
-      },
-    }));
-  };
-
-  // Add custom vehicle type
-  const handleAddCustomVehicleType = () => {
-    if (customVehicleType && !vehicleTypes.includes(customVehicleType)) {
-      setVehicleTypes((prev) => [...prev, customVehicleType]);
-      handleVehicleTypeChange(customVehicleType);
+  // Add vehicle type
+  const handleAddVehicleType = async () => {
+    if (customVehicleType) {
+      await axios.post(`${SERVICE_CONFIG_API}/vehicle-type`, {
+        type: customVehicleType,
+      });
+      fetchServiceConfig();
       setCustomVehicleType("");
     }
   };
 
-  // Add option to service level
-  const handleAddOption = (level) => {
-    if (newOption.option && newOption.level === level) {
-      setNewService((prev) => ({
-        ...prev,
-        serviceLevels: {
-          ...prev.serviceLevels,
-          [level]: {
-            ...prev.serviceLevels[level],
-            options: [...prev.serviceLevels[level].options, newOption.option],
-          },
-        },
-      }));
-      setNewOption({ level: "", option: "" });
-    }
+  // Delete vehicle type
+  const handleDeleteVehicleType = async (type) => {
+    await axios.delete(`${SERVICE_CONFIG_API}/vehicle-type/${type}`);
+    fetchServiceConfig();
   };
 
-  // Remove option from service level
-  const handleRemoveOption = (level, optionIndex) => {
-    setNewService((prev) => ({
-      ...prev,
-      serviceLevels: {
-        ...prev.serviceLevels,
-        [level]: {
-          ...prev.serviceLevels[level],
-          options: prev.serviceLevels[level].options.filter(
-            (_, index) => index !== optionIndex
-          ),
-        },
-      },
-    }));
-  };
-
-  // Add predefined options
-  const handleAddPredefinedOptions = (level) => {
-    setNewService((prev) => ({
-      ...prev,
-      serviceLevels: {
-        ...prev.serviceLevels,
-        [level]: {
-          ...prev.serviceLevels[level],
-          options: [
-            ...new Set([
-              ...prev.serviceLevels[level].options,
-              ...predefinedOptions[level],
-            ]),
-          ],
-        },
-      },
-    }));
-  };
-
-  // Enhanced validation
-  const validateService = () => {
-    let err = {};
-    if (!newService.name) err.name = "Service name is required";
-    if (!newService.category) err.category = "Category is required";
-    if (newService.vehicleTypes.length === 0)
-      err.vehicleTypes = "Select at least one vehicle type";
-    if (!newService.serviceLevels.normal.basePrice)
-      err.basePrice = "Base price is required";
-
-    setServiceErrors(err);
-    return Object.keys(err).length === 0;
-  };
-
-  // Enhanced add service
-  const handleAddService = async (e) => {
-    e.preventDefault();
-    if (!validateService()) return;
-
-    try {
-      const res = await axios.post(`${API_URL}/service-types`, newService);
-      setServiceTypes((prev) => [...prev, res.data.serviceType]);
-      setIsAddServiceModalOpen(false);
-
-      // Reset form
-      setNewService({
-        name: "",
-        category: "",
-        vehicleTypes: [],
-        serviceLevels: {
-          normal: { isActive: true, basePrice: "", options: [] },
-          hard: { isActive: false, percentageIncrease: 20, options: [] },
-          heavy: { isActive: false, percentageIncrease: 40, options: [] },
-        },
-        isActive: true,
+  // Add service type
+  const handleAddServiceType = async () => {
+    if (customServiceType) {
+      await axios.post(`${SERVICE_CONFIG_API}/service-type`, {
+        type: customServiceType,
       });
-
-      setServiceErrors({});
-      toast.success("Service type created successfully!");
-    } catch (err) {
-      toast.error(err.response?.data?.message || "Failed to add service");
+      fetchServiceConfig();
+      setCustomServiceType("");
     }
   };
 
-  // Load vehicle types when component mounts
-  useEffect(() => {
-    fetchVehicleTypes();
-  }, []);
+  // Delete service type
+  const handleDeleteServiceType = async (type) => {
+    await axios.delete(`${SERVICE_CONFIG_API}/service-type/${type}`);
+    fetchServiceConfig();
+  };
+
+  // Add service level option
+  const handleAddServiceLevelOption = async () => {
+    if (newOption.option) {
+      await axios.post(`${SERVICE_CONFIG_API}/service-level-option`, {
+        option: newOption.option,
+      });
+      fetchServiceConfig();
+      setNewOption({ option: "" });
+    }
+  };
+
+  // Delete service level option
+  const handleDeleteServiceLevelOption = async (option) => {
+    await axios.delete(`${SERVICE_CONFIG_API}/service-level-option/${option}`);
+    fetchServiceConfig();
+  };
 
   // Service Configuration UI
   const renderServiceConfig = () => (
-    <div className="space-y-6">
-      <div className="flex justify-between items-center">
-        <h3 className="text-lg font-semibold text-gray-800">
-          Service Configuration
-        </h3>
-        <button
-          onClick={() => setIsAddServiceModalOpen(true)}
-          className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 flex items-center"
-        >
-          <Plus size={16} className="mr-2" />
-          Add New Service
-        </button>
+    <div className="space-y-8">
+      {/* 1. Vehicle Type Section */}
+      <div className="bg-white border rounded-lg p-6">
+        <h4 className="font-semibold text-gray-800 mb-3">
+          1. Add Vehicle Type
+        </h4>
+        <div className="flex items-center space-x-2 mb-3">
+          <input
+            type="text"
+            value={customVehicleType}
+            onChange={(e) => setCustomVehicleType(e.target.value)}
+            placeholder="Enter vehicle type"
+            className="flex-1 rounded-lg border border-gray-300 py-2 px-3"
+          />
+          <button
+            type="button"
+            onClick={handleAddVehicleType}
+            className="px-3 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700"
+          >
+            Add
+          </button>
+        </div>
+        {/* Show all vehicle types as tags with remove button */}
+        <div className="flex flex-wrap gap-2">
+          {vehicleTypes.map((type, idx) => (
+            <span
+              key={type}
+              className="inline-flex items-center px-3 py-1 rounded-full bg-blue-100 text-blue-800 text-sm font-medium"
+            >
+              {type}
+              <button
+                type="button"
+                onClick={() => handleDeleteVehicleType(type)}
+                className="ml-2 text-blue-600 hover:text-blue-900"
+              >
+                <X size={14} />
+              </button>
+            </span>
+          ))}
+        </div>
+        {serviceErrors.vehicleTypes && (
+          <span className="text-red-500 text-xs">
+            {serviceErrors.vehicleTypes}
+          </span>
+        )}
       </div>
 
-      {/* Service Types List */}
-      <div className="bg-white border border-gray-200 rounded-lg overflow-hidden">
+      {/* 2. Service Type Section */}
+      <div className="bg-white border rounded-lg p-6">
+        <h4 className="font-semibold text-gray-800 mb-3">
+          2. Add Service Type
+        </h4>
+        <div className="flex items-center space-x-2 mb-3">
+          <input
+            type="text"
+            value={customServiceType}
+            onChange={(e) => setCustomServiceType(e.target.value)}
+            placeholder="Enter service type"
+            className="flex-1 rounded-lg border border-gray-300 py-2 px-3"
+          />
+          <button
+            type="button"
+            onClick={handleAddServiceType}
+            className="px-3 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700"
+          >
+            Add
+          </button>
+        </div>
+        {/* Show all service types as tags with remove button */}
+        <div className="flex flex-wrap gap-2">
+          {serviceTypesList.map((type, idx) => (
+            <span
+              key={type}
+              className="inline-flex items-center px-3 py-1 rounded-full bg-blue-100 text-blue-800 text-sm font-medium"
+            >
+              {type}
+              <button
+                type="button"
+                onClick={() => handleDeleteServiceType(type)}
+                className="ml-2 text-blue-600 hover:text-blue-900"
+              >
+                <X size={14} />
+              </button>
+            </span>
+          ))}
+        </div>
+        {serviceErrors.category && (
+          <span className="text-red-500 text-xs">{serviceErrors.category}</span>
+        )}
+      </div>
+
+      {/* 3. Service Level Section */}
+      <div className="bg-white border rounded-lg p-6">
+        <h4 className="font-semibold text-gray-800 mb-3">
+          3. Add Service Level
+        </h4>
+        <div className="flex flex-wrap gap-2">
+          {["normal", "hard", "heavy"].map((level) => (
+            <span
+              key={level}
+              className={`inline-flex items-center px-3 py-1 rounded-full bg-${
+                level === "normal"
+                  ? "green"
+                  : level === "hard"
+                  ? "yellow"
+                  : "red"
+              }-100 text-${
+                level === "normal"
+                  ? "green"
+                  : level === "hard"
+                  ? "yellow"
+                  : "red"
+              }-800 text-sm font-medium`}
+            >
+              {level.charAt(0).toUpperCase() + level.slice(1)}
+            </span>
+          ))}
+        </div>
+      </div>
+
+      {/* 4. Service Level Options Section */}
+      <div className="bg-white border rounded-lg p-6">
+        <h4 className="font-semibold text-gray-800 mb-3">
+          4. Service Level Options
+        </h4>
+        <div className="flex items-center space-x-2 mb-3">
+          <input
+            type="text"
+            value={newOption.option}
+            onChange={(e) => setNewOption({ option: e.target.value })}
+            placeholder="Enter service level option"
+            className="flex-1 rounded-lg border border-gray-300 py-2 px-3"
+          />
+          <button
+            type="button"
+            onClick={handleAddServiceLevelOption}
+            className="px-3 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700"
+          >
+            Add
+          </button>
+        </div>
+        {/* Show all service level options as tags with remove button */}
+        <div className="flex flex-wrap gap-2">
+          {(newService.serviceLevelOptions || []).map((option, idx) => (
+            <span
+              key={idx}
+              className="inline-flex items-center px-3 py-1 rounded-full bg-blue-100 text-blue-800 text-xs font-medium"
+            >
+              {option}
+              <button
+                type="button"
+                onClick={() => handleDeleteServiceLevelOption(option)}
+                className="ml-2 text-blue-600 hover:text-blue-900"
+              >
+                <X size={12} />
+              </button>
+            </span>
+          ))}
+        </div>
+      </div>
+
+      {/* 5. Pricing Configuration Section */}
+      {/* <div className="bg-white border rounded-lg p-6">
+        <h4 className="font-semibold text-gray-800 mb-3">
+          5. Pricing Configuration
+        </h4>
         <div className="overflow-x-auto">
-          <table className="min-w-full divide-y divide-gray-200">
-            <thead className="bg-gray-50">
-              <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Service Name
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Vehicle Types
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Service Levels
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Base Price
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Actions
-                </th>
+          <table className="min-w-full text-sm">
+            <thead>
+              <tr className="border-b">
+                <th className="py-2 px-4 text-left">Service Level</th>
+                <th className="py-2 px-4 text-left">Base Price (LKR)</th>
+                <th className="py-2 px-4 text-left">% Increase</th>
+                <th className="py-2 px-4 text-left">Final Price</th>
               </tr>
             </thead>
-            <tbody className="bg-white divide-y divide-gray-200">
-              {serviceTypes.map((service) => (
-                <tr key={service._id} className="hover:bg-gray-50">
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="text-sm font-medium text-gray-900">
-                      {service.name}
-                    </div>
-                    <div className="text-sm text-gray-500">
-                      {service.category}
-                    </div>
-                  </td>
-                  <td className="px-6 py-4">
-                    <div className="flex flex-wrap gap-1">
-                      {service.vehicleTypes?.map((type, index) => (
-                        <span
-                          key={index}
-                          className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800"
-                        >
-                          {type}
-                        </span>
-                      ))}
-                    </div>
-                  </td>
-                  <td className="px-6 py-4">
-                    <div className="flex flex-wrap gap-1">
-                      {service.serviceLevels?.normal?.isActive && (
-                        <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
-                          Normal
-                        </span>
+            <tbody>
+              {["normal", "hard", "heavy"].map((level) => {
+                const basePrice =
+                  Number(newService.serviceLevels.normal.basePrice) || 0;
+                const percentage =
+                  level === "normal"
+                    ? 0
+                    : Number(
+                        newService.serviceLevels[level].percentageIncrease
+                      ) || 0;
+                const finalPrice =
+                  level === "normal"
+                    ? basePrice
+                    : Math.round(basePrice + (basePrice * percentage) / 100);
+
+                return (
+                  <tr key={level} className="border-b">
+                    <td className="py-2 px-4 font-medium capitalize">
+                      {level}
+                    </td>
+                    <td className="py-2 px-4">
+                      {level === "normal" ? (
+                        <input
+                          type="number"
+                          min="0"
+                          value={newService.serviceLevels.normal.basePrice}
+                          onChange={(e) =>
+                            setNewService((prev) => ({
+                              ...prev,
+                              serviceLevels: {
+                                ...prev.serviceLevels,
+                                normal: {
+                                  ...prev.serviceLevels.normal,
+                                  basePrice: e.target.value,
+                                },
+                              },
+                            }))
+                          }
+                          className="w-24 border rounded px-2 py-1"
+                        />
+                      ) : (
+                        basePrice
                       )}
-                      {service.serviceLevels?.hard?.isActive && (
-                        <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
-                          Hard
-                        </span>
+                    </td>
+                    <td className="py-2 px-4">
+                      {level === "normal" ? (
+                        "0%"
+                      ) : (
+                        <input
+                          type="number"
+                          min="0"
+                          max="100"
+                          value={
+                            newService.serviceLevels[level].percentageIncrease
+                          }
+                          onChange={(e) =>
+                            setNewService((prev) => ({
+                              ...prev,
+                              serviceLevels: {
+                                ...prev.serviceLevels,
+                                [level]: {
+                                  ...prev.serviceLevels[level],
+                                  percentageIncrease: e.target.value,
+                                },
+                              },
+                            }))
+                          }
+                          className="w-16 border rounded px-2 py-1"
+                        />
                       )}
-                      {service.serviceLevels?.heavy?.isActive && (
-                        <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-red-100 text-red-800">
-                          Heavy
-                        </span>
-                      )}
-                    </div>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                    LKR {service.serviceLevels?.normal?.basePrice || 0}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                    <div className="flex items-center space-x-2">
-                      <button
-                        onClick={() => {
-                          setEditService(service);
-                          setIsEditServiceModalOpen(true);
-                        }}
-                        className="text-indigo-600 hover:text-indigo-900"
-                      >
-                        <Edit size={16} />
-                      </button>
-                      <button
-                        onClick={() => handleDeleteService(service._id)}
-                        className="text-red-600 hover:text-red-900"
-                      >
-                        <Trash size={16} />
-                      </button>
-                    </div>
-                  </td>
-                </tr>
-              ))}
+                    </td>
+                    <td className="py-2 px-4 font-semibold">
+                      {finalPrice} LKR
+                    </td>
+                  </tr>
+                );
+              })}
             </tbody>
           </table>
         </div>
-      </div>
-
-      {/* Add Service Modal */}
-      {isAddServiceModalOpen && (
-        <div className="fixed -inset-y-full inset-x-0 bg-black bg-opacity-50 z-40 flex items-center justify-center p-4">
-          <div className="bg-white rounded-lg shadow-xl max-w-4xl w-full max-h-[90vh] overflow-y-auto">
-            <div className="p-6">
-              <div className="flex justify-between items-center mb-6">
-                <h3 className="text-lg font-semibold text-gray-800">
-                  Add New Service
-                </h3>
-                <button
-                  onClick={() => setIsAddServiceModalOpen(false)}
-                  className="text-gray-400 hover:text-gray-600"
-                >
-                  <X size={20} />
-                </button>
-              </div>
-
-              <form onSubmit={handleAddService} className="space-y-6">
-                {/* Basic Information */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Service Name *
-                    </label>
-                    <input
-                      type="text"
-                      value={newService.name}
-                      onChange={(e) =>
-                        setNewService((prev) => ({
-                          ...prev,
-                          name: e.target.value,
-                        }))
-                      }
-                      className="w-full rounded-lg border border-gray-300 py-2 px-3 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                      placeholder="Enter service name"
-                    />
-                    {serviceErrors.name && (
-                      <span className="text-red-500 text-xs">
-                        {serviceErrors.name}
-                      </span>
-                    )}
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Category *
-                    </label>
-                    <select
-                      value={newService.category}
-                      onChange={(e) =>
-                        setNewService((prev) => ({
-                          ...prev,
-                          category: e.target.value,
-                        }))
-                      }
-                      className="w-full rounded-lg border border-gray-300 py-2 px-3 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    >
-                      <option value="">Select category</option>
-                      <option value="Engine Service">Engine Service</option>
-                      <option value="Oil Change">Oil Change</option>
-                      <option value="Cleaning">Cleaning</option>
-                      <option value="Brake Service">Brake Service</option>
-                      <option value="Battery Service">Battery Service</option>
-                      <option value="Other">Other</option>
-                    </select>
-                    {serviceErrors.category && (
-                      <span className="text-red-500 text-xs">
-                        {serviceErrors.category}
-                      </span>
-                    )}
-                  </div>
-                </div>
-
-                {/* Vehicle Types Selection */}
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Select Vehicle Types *
-                  </label>
-                  <div className="grid grid-cols-2 md:grid-cols-4 gap-2 mb-3">
-                    {vehicleTypes.map((type) => (
-                      <label key={type} className="flex items-center space-x-2">
-                        <input
-                          type="checkbox"
-                          checked={newService.vehicleTypes.includes(type)}
-                          onChange={() => handleVehicleTypeChange(type)}
-                          className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
-                        />
-                        <span className="text-sm text-gray-700">{type}</span>
-                      </label>
-                    ))}
-                  </div>
-
-                  {/* Custom Vehicle Type */}
-                  <div className="flex items-center space-x-2">
-                    <input
-                      type="text"
-                      value={customVehicleType}
-                      onChange={(e) => setCustomVehicleType(e.target.value)}
-                      placeholder="Add custom vehicle type"
-                      className="flex-1 rounded-lg border border-gray-300 py-2 px-3 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    />
-                    <button
-                      type="button"
-                      onClick={handleAddCustomVehicleType}
-                      className="px-3 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700"
-                    >
-                      Add
-                    </button>
-                  </div>
-
-                  {serviceErrors.vehicleTypes && (
-                    <span className="text-red-500 text-xs">
-                      {serviceErrors.vehicleTypes}
-                    </span>
-                  )}
-                </div>
-
-                {/* Service Levels Configuration */}
-                <div>
-                  <h4 className="text-md font-medium text-gray-800 mb-3">
-                    Service Levels & Pricing
-                  </h4>
-
-                  {/* Normal Level */}
-                  <div className="bg-green-50 border border-green-200 rounded-lg p-4 mb-4">
-                    <div className="flex items-center justify-between mb-3">
-                      <div className="flex items-center">
-                        <input
-                          type="checkbox"
-                          checked={newService.serviceLevels.normal.isActive}
-                          onChange={() => handleServiceLevelToggle("normal")}
-                          className="rounded border-gray-300 text-green-600 focus:ring-green-500 mr-2"
-                        />
-                        <span className="font-medium text-green-800">
-                          Normal Level
-                        </span>
-                      </div>
-                      <button
-                        type="button"
-                        onClick={() => handleAddPredefinedOptions("normal")}
-                        className="text-xs px-2 py-1 bg-green-600 text-white rounded hover:bg-green-700"
-                      >
-                        Add Default Options
-                      </button>
-                    </div>
-
-                    {newService.serviceLevels.normal.isActive && (
-                      <>
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-                          <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1">
-                              Base Price (LKR) *
-                            </label>
-                            <input
-                              type="number"
-                              value={newService.serviceLevels.normal.basePrice}
-                              onChange={(e) =>
-                                setNewService((prev) => ({
-                                  ...prev,
-                                  serviceLevels: {
-                                    ...prev.serviceLevels,
-                                    normal: {
-                                      ...prev.serviceLevels.normal,
-                                      basePrice: e.target.value,
-                                    },
-                                  },
-                                }))
-                              }
-                              className="w-full rounded-lg border border-gray-300 py-2 px-3 focus:outline-none focus:ring-2 focus:ring-green-500"
-                              placeholder="Enter base price"
-                            />
-                            {serviceErrors.basePrice && (
-                              <span className="text-red-500 text-xs">
-                                {serviceErrors.basePrice}
-                              </span>
-                            )}
-                          </div>
-                        </div>
-
-                        {/* Options for Normal Level */}
-                        <div>
-                          <label className="block text-sm font-medium text-gray-700 mb-2">
-                            Service Options
-                          </label>
-                          <div className="flex items-center space-x-2 mb-2">
-                            <input
-                              type="text"
-                              value={
-                                newOption.level === "normal"
-                                  ? newOption.option
-                                  : ""
-                              }
-                              onChange={(e) =>
-                                setNewOption({
-                                  level: "normal",
-                                  option: e.target.value,
-                                })
-                              }
-                              placeholder="Add service option"
-                              className="flex-1 rounded-lg border border-gray-300 py-2 px-3 focus:outline-none focus:ring-2 focus:ring-green-500"
-                            />
-                            <button
-                              type="button"
-                              onClick={() => handleAddOption("normal")}
-                              className="px-3 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700"
-                            >
-                              Add
-                            </button>
-                          </div>
-                          <div className="flex flex-wrap gap-2">
-                            {newService.serviceLevels.normal.options.map(
-                              (option, index) => (
-                                <span
-                                  key={index}
-                                  className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800"
-                                >
-                                  {option}
-                                  <button
-                                    type="button"
-                                    onClick={() =>
-                                      handleRemoveOption("normal", index)
-                                    }
-                                    className="ml-1 text-green-600 hover:text-green-800"
-                                  >
-                                    <X size={12} />
-                                  </button>
-                                </span>
-                              )
-                            )}
-                          </div>
-                        </div>
-                      </>
-                    )}
-                  </div>
-
-                  {/* Hard Level */}
-                  <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mb-4">
-                    <div className="flex items-center justify-between mb-3">
-                      <div className="flex items-center">
-                        <input
-                          type="checkbox"
-                          checked={newService.serviceLevels.hard.isActive}
-                          onChange={() => handleServiceLevelToggle("hard")}
-                          className="rounded border-gray-300 text-yellow-600 focus:ring-yellow-500 mr-2"
-                        />
-                        <span className="font-medium text-yellow-800">
-                          Hard Level
-                        </span>
-                      </div>
-                      <button
-                        type="button"
-                        onClick={() => handleAddPredefinedOptions("hard")}
-                        className="text-xs px-2 py-1 bg-yellow-600 text-white rounded hover:bg-yellow-700"
-                      >
-                        Add Default Options
-                      </button>
-                    </div>
-
-                    {newService.serviceLevels.hard.isActive && (
-                      <>
-                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
-                          <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1">
-                              Percentage Increase (%)
-                            </label>
-                            <input
-                              type="number"
-                              value={
-                                newService.serviceLevels.hard.percentageIncrease
-                              }
-                              onChange={(e) =>
-                                handlePercentageChange("hard", e.target.value)
-                              }
-                              className="w-full rounded-lg border border-gray-300 py-2 px-3 focus:outline-none focus:ring-2 focus:ring-yellow-500"
-                            />
-                          </div>
-                          <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1">
-                              Base Price (LKR)
-                            </label>
-                            <input
-                              type="number"
-                              value={newService.serviceLevels.normal.basePrice}
-                              readOnly
-                              className="w-full rounded-lg border border-gray-300 py-2 px-3 bg-gray-50"
-                            />
-                          </div>
-                          <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1">
-                              Final Price (Auto)
-                            </label>
-                            <input
-                              type="number"
-                              value={calculateFinalPrice(
-                                parseFloat(
-                                  newService.serviceLevels.normal.basePrice || 0
-                                ),
-                                newService.serviceLevels.hard.percentageIncrease
-                              ).toFixed(2)}
-                              readOnly
-                              className="w-full rounded-lg border border-gray-300 py-2 px-3 bg-green-50 font-medium"
-                            />
-                          </div>
-                        </div>
-
-                        {/* Options for Hard Level */}
-                        <div>
-                          <label className="block text-sm font-medium text-gray-700 mb-2">
-                            Service Options
-                          </label>
-                          <div className="flex items-center space-x-2 mb-2">
-                            <input
-                              type="text"
-                              value={
-                                newOption.level === "hard"
-                                  ? newOption.option
-                                  : ""
-                              }
-                              onChange={(e) =>
-                                setNewOption({
-                                  level: "hard",
-                                  option: e.target.value,
-                                })
-                              }
-                              placeholder="Add service option"
-                              className="flex-1 rounded-lg border border-gray-300 py-2 px-3 focus:outline-none focus:ring-2 focus:ring-yellow-500"
-                            />
-                            <button
-                              type="button"
-                              onClick={() => handleAddOption("hard")}
-                              className="px-3 py-2 bg-yellow-600 text-white rounded-lg hover:bg-yellow-700"
-                            >
-                              Add
-                            </button>
-                          </div>
-                          <div className="flex flex-wrap gap-2">
-                            {newService.serviceLevels.hard.options.map(
-                              (option, index) => (
-                                <span
-                                  key={index}
-                                  className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800"
-                                >
-                                  {option}
-                                  <button
-                                    type="button"
-                                    onClick={() =>
-                                      handleRemoveOption("hard", index)
-                                    }
-                                    className="ml-1 text-yellow-600 hover:text-yellow-800"
-                                  >
-                                    <X size={12} />
-                                  </button>
-                                </span>
-                              )
-                            )}
-                          </div>
-                        </div>
-                      </>
-                    )}
-                  </div>
-
-                  {/* Heavy Level */}
-                  <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-4">
-                    <div className="flex items-center justify-between mb-3">
-                      <div className="flex items-center">
-                        <input
-                          type="checkbox"
-                          checked={newService.serviceLevels.heavy.isActive}
-                          onChange={() => handleServiceLevelToggle("heavy")}
-                          className="rounded border-gray-300 text-red-600 focus:ring-red-500 mr-2"
-                        />
-                        <span className="font-medium text-red-800">
-                          Heavy Level
-                        </span>
-                      </div>
-                      <button
-                        type="button"
-                        onClick={() => handleAddPredefinedOptions("heavy")}
-                        className="text-xs px-2 py-1 bg-red-600 text-white rounded hover:bg-red-700"
-                      >
-                        Add Default Options
-                      </button>
-                    </div>
-
-                    {newService.serviceLevels.heavy.isActive && (
-                      <>
-                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
-                          <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1">
-                              Percentage Increase (%)
-                            </label>
-                            <input
-                              type="number"
-                              value={
-                                newService.serviceLevels.heavy
-                                  .percentageIncrease
-                              }
-                              onChange={(e) =>
-                                handlePercentageChange("heavy", e.target.value)
-                              }
-                              className="w-full rounded-lg border border-gray-300 py-2 px-3 focus:outline-none focus:ring-2 focus:ring-red-500"
-                            />
-                          </div>
-                          <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1">
-                              Base Price (LKR)
-                            </label>
-                            <input
-                              type="number"
-                              value={newService.serviceLevels.normal.basePrice}
-                              readOnly
-                              className="w-full rounded-lg border border-gray-300 py-2 px-3 bg-gray-50"
-                            />
-                          </div>
-                          <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1">
-                              Final Price (Auto)
-                            </label>
-                            <input
-                              type="number"
-                              value={calculateFinalPrice(
-                                parseFloat(
-                                  newService.serviceLevels.normal.basePrice || 0
-                                ),
-                                newService.serviceLevels.heavy
-                                  .percentageIncrease
-                              ).toFixed(2)}
-                              readOnly
-                              className="w-full rounded-lg border border-gray-300 py-2 px-3 bg-green-50 font-medium"
-                            />
-                          </div>
-                        </div>
-
-                        {/* Options for Heavy Level */}
-                        <div>
-                          <label className="block text-sm font-medium text-gray-700 mb-2">
-                            Service Options
-                          </label>
-                          <div className="flex items-center space-x-2 mb-2">
-                            <input
-                              type="text"
-                              value={
-                                newOption.level === "heavy"
-                                  ? newOption.option
-                                  : ""
-                              }
-                              onChange={(e) =>
-                                setNewOption({
-                                  level: "heavy",
-                                  option: e.target.value,
-                                })
-                              }
-                              placeholder="Add service option"
-                              className="flex-1 rounded-lg border border-gray-300 py-2 px-3 focus:outline-none focus:ring-2 focus:ring-red-500"
-                            />
-                            <button
-                              type="button"
-                              onClick={() => handleAddOption("heavy")}
-                              className="px-3 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700"
-                            >
-                              Add
-                            </button>
-                          </div>
-                          <div className="flex flex-wrap gap-2">
-                            {newService.serviceLevels.heavy.options.map(
-                              (option, index) => (
-                                <span
-                                  key={index}
-                                  className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-red-100 text-red-800"
-                                >
-                                  {option}
-                                  <button
-                                    type="button"
-                                    onClick={() =>
-                                      handleRemoveOption("heavy", index)
-                                    }
-                                    className="ml-1 text-red-600 hover:text-red-800"
-                                  >
-                                    <X size={12} />
-                                  </button>
-                                </span>
-                              )
-                            )}
-                          </div>
-                        </div>
-                      </>
-                    )}
-                  </div>
-
-                  {/* Pricing Summary Table */}
-                  {newService.serviceLevels.normal.basePrice && (
-                    <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
-                      <h5 className="font-medium text-gray-800 mb-3">
-                        Pricing Summary
-                      </h5>
-                      <div className="overflow-x-auto">
-                        <table className="min-w-full divide-y divide-gray-200">
-                          <thead className="bg-gray-100">
-                            <tr>
-                              <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">
-                                Service Level
-                              </th>
-                              <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">
-                                Base Price (LKR)
-                              </th>
-                              <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">
-                                % Increase
-                              </th>
-                              <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">
-                                Final Price
-                              </th>
-                            </tr>
-                          </thead>
-                          <tbody className="bg-white divide-y divide-gray-200">
-                            {newService.serviceLevels.normal.isActive && (
-                              <tr>
-                                <td className="px-4 py-2 text-sm font-medium text-green-900">
-                                  Normal
-                                </td>
-                                <td className="px-4 py-2 text-sm text-gray-900">
-                                  {newService.serviceLevels.normal.basePrice}
-                                </td>
-                                <td className="px-4 py-2 text-sm text-gray-900">
-                                  0%
-                                </td>
-                                <td className="px-4 py-2 text-sm font-medium text-green-600">
-                                  {newService.serviceLevels.normal.basePrice}
-                                </td>
-                              </tr>
-                            )}
-                            {newService.serviceLevels.hard.isActive && (
-                              <tr>
-                                <td className="px-4 py-2 text-sm font-medium text-yellow-900">
-                                  Hard
-                                </td>
-                                <td className="px-4 py-2 text-sm text-gray-900">
-                                  {newService.serviceLevels.normal.basePrice}
-                                </td>
-                                <td className="px-4 py-2 text-sm text-gray-900">
-                                  +
-                                  {
-                                    newService.serviceLevels.hard
-                                      .percentageIncrease
-                                  }
-                                  %
-                                </td>
-                                <td className="px-4 py-2 text-sm font-medium text-yellow-600">
-                                  {calculateFinalPrice(
-                                    parseFloat(
-                                      newService.serviceLevels.normal
-                                        .basePrice || 0
-                                    ),
-                                    newService.serviceLevels.hard
-                                      .percentageIncrease
-                                  ).toFixed(2)}
-                                </td>
-                              </tr>
-                            )}
-                            {newService.serviceLevels.heavy.isActive && (
-                              <tr>
-                                <td className="px-4 py-2 text-sm font-medium text-red-900">
-                                  Heavy
-                                </td>
-                                <td className="px-4 py-2 text-sm text-gray-900">
-                                  {newService.serviceLevels.normal.basePrice}
-                                </td>
-                                <td className="px-4 py-2 text-sm text-gray-900">
-                                  +
-                                  {
-                                    newService.serviceLevels.heavy
-                                      .percentageIncrease
-                                  }
-                                  %
-                                </td>
-                                <td className="px-4 py-2 text-sm font-medium text-red-600">
-                                  {calculateFinalPrice(
-                                    parseFloat(
-                                      newService.serviceLevels.normal
-                                        .basePrice || 0
-                                    ),
-                                    newService.serviceLevels.heavy
-                                      .percentageIncrease
-                                  ).toFixed(2)}
-                                </td>
-                              </tr>
-                            )}
-                          </tbody>
-                        </table>
-                      </div>
-                    </div>
-                  )}
-                </div>
-
-                {/* Form Actions */}
-                <div className="flex justify-end space-x-3 pt-4 border-t">
-                  <button
-                    type="button"
-                    onClick={() => setIsAddServiceModalOpen(false)}
-                    className="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50"
-                  >
-                    Cancel
-                  </button>
-                  <button
-                    type="submit"
-                    className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 flex items-center"
-                  >
-                    <Save size={16} className="mr-2" />
-                    Save Service
-                  </button>
-                </div>
-              </form>
-            </div>
-          </div>
-        </div>
-      )}
+      </div> */}
     </div>
   );
 
@@ -2126,824 +1129,6 @@ const Settings = () => {
 
       case "service-config":
         return renderServiceConfig();
-
-      // case "notifications":
-      //   return (
-      //     <div className="space-y-6">
-      //       <div className="flex justify-between items-center">
-      //         <h3 className="text-lg font-semibold text-gray-800">
-      //           Notification Settings
-      //         </h3>
-      //         <button
-      //           onClick={handleSaveNotifications}
-      //           disabled={loading}
-      //           className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 flex items-center disabled:opacity-50"
-      //         >
-      //           {loading ? (
-      //             <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-      //           ) : (
-      //             <Save size={16} className="mr-2" />
-      //           )}
-      //           Save Settings
-      //         </button>
-      //       </div>
-
-      //       {/* Notification Channels */}
-      //       <div className="bg-white border border-gray-200 rounded-lg p-6">
-      //         <h4 className="text-md font-semibold text-gray-800 mb-4">
-      //           Notification Channels
-      //         </h4>
-      //         <div className="space-y-4">
-      //           <div className="flex items-center justify-between">
-      //             <div className="flex items-center">
-      //               <Mail size={20} className="text-gray-500 mr-3" />
-      //               <div>
-      //                 <p className="text-sm font-medium text-gray-900">
-      //                   Email Notifications
-      //                 </p>
-      //                 <p className="text-xs text-gray-500">
-      //                   Send notifications via email
-      //                 </p>
-      //               </div>
-      //             </div>
-      //             <label className="relative inline-flex items-center cursor-pointer">
-      //               <input
-      //                 type="checkbox"
-      //                 checked={notificationSettings.emailEnabled}
-      //                 onChange={(e) =>
-      //                   setNotificationSettings((prev) => ({
-      //                     ...prev,
-      //                     emailEnabled: e.target.checked,
-      //                   }))
-      //                 }
-      //                 className="sr-only peer"
-      //               />
-      //               <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
-      //             </label>
-      //           </div>
-
-      //           <div className="flex items-center justify-between">
-      //             <div className="flex items-center">
-      //               <Smartphone size={20} className="text-gray-500 mr-3" />
-      //               <div>
-      //                 <p className="text-sm font-medium text-gray-900">
-      //                   SMS Notifications
-      //                 </p>
-      //                 <p className="text-xs text-gray-500">
-      //                   Send notifications via SMS
-      //                 </p>
-      //               </div>
-      //             </div>
-      //             <label className="relative inline-flex items-center cursor-pointer">
-      //               <input
-      //                 type="checkbox"
-      //                 checked={notificationSettings.smsEnabled}
-      //                 onChange={(e) =>
-      //                   setNotificationSettings((prev) => ({
-      //                     ...prev,
-      //                     smsEnabled: e.target.checked,
-      //                   }))
-      //                 }
-      //                 className="sr-only peer"
-      //               />
-      //               <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
-      //             </label>
-      //           </div>
-      //         </div>
-      //       </div>
-
-      //       {/* Notification Types */}
-      //       <div className="bg-white border border-gray-200 rounded-lg p-6">
-      //         <h4 className="text-md font-semibold text-gray-800 mb-4">
-      //           Notification Types
-      //         </h4>
-      //         <div className="space-y-4">
-      //           {[
-      //             {
-      //               key: "appointmentReminders",
-      //               label: "Appointment Reminders",
-      //               desc: "Send reminders before scheduled appointments",
-      //             },
-      //             {
-      //               key: "serviceCompletion",
-      //               label: "Service Completion",
-      //               desc: "Notify when a service job is completed",
-      //             },
-      //             {
-      //               key: "inventoryAlerts",
-      //               label: "Inventory Alerts",
-      //               desc: "Notify when inventory items are low in stock",
-      //             },
-      //             {
-      //               key: "paymentReminders",
-      //               label: "Payment Reminders",
-      //               desc: "Send payment due reminders",
-      //             },
-      //           ].map((item) => (
-      //             <div
-      //               key={item.key}
-      //               className="flex items-center justify-between"
-      //             >
-      //               <div className="flex items-center">
-      //                 <Bell size={20} className="text-gray-500 mr-3" />
-      //                 <div>
-      //                   <p className="text-sm font-medium text-gray-900">
-      //                     {item.label}
-      //                   </p>
-      //                   <p className="text-xs text-gray-500">{item.desc}</p>
-      //                 </div>
-      //               </div>
-      //               <label className="relative inline-flex items-center cursor-pointer">
-      //                 <input
-      //                   type="checkbox"
-      //                   checked={notificationSettings[item.key]}
-      //                   onChange={(e) =>
-      //                     setNotificationSettings((prev) => ({
-      //                       ...prev,
-      //                       [item.key]: e.target.checked,
-      //                     }))
-      //                   }
-      //                   className="sr-only peer"
-      //                 />
-      //                 <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
-      //               </label>
-      //             </div>
-      //           ))}
-      //         </div>
-      //       </div>
-
-      //       {/* Email Templates */}
-      //       <div className="bg-white border border-gray-200 rounded-lg p-6">
-      //         <h4 className="text-md font-semibold text-gray-800 mb-4">
-      //           Email Templates
-      //         </h4>
-      //         <div className="space-y-4">
-      //           <div>
-      //             <label className="block text-sm font-medium text-gray-700 mb-1">
-      //               Appointment Confirmation
-      //             </label>
-      //             <textarea
-      //               value={
-      //                 notificationSettings.emailTemplate.appointmentConfirmation
-      //               }
-      //               onChange={(e) =>
-      //                 setNotificationSettings((prev) => ({
-      //                   ...prev,
-      //                   emailTemplate: {
-      //                     ...prev.emailTemplate,
-      //                     appointmentConfirmation: e.target.value,
-      //                   },
-      //                 }))
-      //               }
-      //               className="w-full rounded-lg border border-gray-300 py-2 px-3 focus:outline-none focus:ring-2 focus:ring-blue-500"
-      //               rows={3}
-      //             />
-      //           </div>
-      //           <div>
-      //             <label className="block text-sm font-medium text-gray-700 mb-1">
-      //               Service Completion
-      //             </label>
-      //             <textarea
-      //               value={notificationSettings.emailTemplate.serviceCompletion}
-      //               onChange={(e) =>
-      //                 setNotificationSettings((prev) => ({
-      //                   ...prev,
-      //                   emailTemplate: {
-      //                     ...prev.emailTemplate,
-      //                     serviceCompletion: e.target.value,
-      //                   },
-      //                 }))
-      //               }
-      //               className="w-full rounded-lg border border-gray-300 py-2 px-3 focus:outline-none focus:ring-2 focus:ring-blue-500"
-      //               rows={3}
-      //             />
-      //           </div>
-      //         </div>
-      //       </div>
-      //     </div>
-      //   );
-
-      // case "backup-restore":
-      //   return (
-      //     <div className="space-y-6">
-      //       <h3 className="text-lg font-semibold text-gray-800">
-      //         Backup & Restore
-      //       </h3>
-
-      //       {/* Database Backup */}
-      //       <div className="bg-white border border-gray-200 rounded-lg p-6">
-      //         <div className="flex items-center justify-between mb-4">
-      //           <div>
-      //             <h4 className="text-md font-semibold text-gray-800">
-      //               Database Backup
-      //             </h4>
-      //             <p className="text-sm text-gray-600">
-      //               Create a backup of your database to protect your data
-      //             </p>
-      //           </div>
-      //           <Database size={32} className="text-blue-600" />
-      //         </div>
-
-      //         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-      //           <div className="bg-gray-50 p-4 rounded-lg">
-      //             <div className="text-2xl font-bold text-gray-800">2.4 GB</div>
-      //             <div className="text-sm text-gray-600">Database Size</div>
-      //           </div>
-      //           <div className="bg-gray-50 p-4 rounded-lg">
-      //             <div className="text-2xl font-bold text-gray-800">15,847</div>
-      //             <div className="text-sm text-gray-600">Total Records</div>
-      //           </div>
-      //           <div className="bg-gray-50 p-4 rounded-lg">
-      //             <div className="text-2xl font-bold text-gray-800">
-      //               June 14
-      //             </div>
-      //             <div className="text-sm text-gray-600">Last Backup</div>
-      //           </div>
-      //         </div>
-
-      //         <div className="flex space-x-3">
-      //           <button
-      //             onClick={handleCreateBackup}
-      //             disabled={loading}
-      //             className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 flex items-center disabled:opacity-50"
-      //           >
-      //             {loading ? (
-      //               <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-      //             ) : (
-      //               <Download size={16} className="mr-2" />
-      //             )}
-      //             Create Backup
-      //           </button>
-      //           <button
-      //             onClick={handleRestoreBackup}
-      //             disabled={loading}
-      //             className="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 flex items-center disabled:opacity-50"
-      //           >
-      //             {loading ? (
-      //               <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-gray-700 mr-2"></div>
-      //             ) : (
-      //               <Upload size={16} className="mr-2" />
-      //             )}
-      //             Restore Backup
-      //           </button>
-      //         </div>
-      //       </div>
-
-      //       {/* Backup Schedule */}
-      //       <div className="bg-white border border-gray-200 rounded-lg p-6">
-      //         <h4 className="text-md font-semibold text-gray-800 mb-4">
-      //           Automatic Backup Schedule
-      //         </h4>
-      //         <div className="space-y-4">
-      //           <div className="flex items-center justify-between">
-      //             <div>
-      //               <p className="text-sm font-medium text-gray-900">
-      //                 Enable Automatic Backups
-      //               </p>
-      //               <p className="text-xs text-gray-500">
-      //                 Automatically create backups on a schedule
-      //               </p>
-      //             </div>
-      //             <label className="relative inline-flex items-center cursor-pointer">
-      //               <input
-      //                 type="checkbox"
-      //                 defaultChecked
-      //                 className="sr-only peer"
-      //               />
-      //               <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
-      //             </label>
-      //           </div>
-
-      //           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-      //             <div>
-      //               <label className="block text-sm font-medium text-gray-700 mb-1">
-      //                 Frequency
-      //               </label>
-      //               <select className="w-full rounded-lg border border-gray-300 py-2 px-3 focus:outline-none focus:ring-2 focus:ring-blue-500">
-      //                 <option>Daily</option>
-      //                 <option>Weekly</option>
-      //                 <option>Monthly</option>
-      //               </select>
-      //             </div>
-      //             <div>
-      //               <label className="block text-sm font-medium text-gray-700 mb-1">
-      //                 Time
-      //               </label>
-      //               <input
-      //                 type="time"
-      //                 defaultValue="02:00"
-      //                 className="w-full rounded-lg border border-gray-300 py-2 px-3 focus:outline-none focus:ring-2 focus:ring-blue-500"
-      //               />
-      //             </div>
-      //           </div>
-      //         </div>
-      //       </div>
-
-      //       {/* Recent Backups */}
-      //       <div className="bg-white border border-gray-200 rounded-lg p-6">
-      //         <h4 className="text-md font-semibold text-gray-800 mb-4">
-      //           Recent Backups
-      //         </h4>
-      //         <div className="space-y-3">
-      //           {[
-      //             {
-      //               date: "2024-06-15 02:00:00",
-      //               size: "2.4 GB",
-      //               status: "Success",
-      //               type: "Automatic",
-      //             },
-      //             {
-      //               date: "2024-06-14 02:00:00",
-      //               size: "2.3 GB",
-      //               status: "Success",
-      //               type: "Automatic",
-      //             },
-      //             {
-      //               date: "2024-06-13 14:30:00",
-      //               size: "2.3 GB",
-      //               status: "Success",
-      //               type: "Manual",
-      //             },
-      //             {
-      //               date: "2024-06-13 02:00:00",
-      //               size: "2.3 GB",
-      //               status: "Failed",
-      //               type: "Automatic",
-      //             },
-      //           ].map((backup, index) => (
-      //             <div
-      //               key={index}
-      //               className="flex items-center justify-between p-3 bg-gray-50 rounded-lg"
-      //             >
-      //               <div className="flex items-center">
-      //                 <div
-      //                   className={`w-3 h-3 rounded-full mr-3 ${
-      //                     backup.status === "Success"
-      //                       ? "bg-green-500"
-      //                       : "bg-red-500"
-      //                   }`}
-      //                 ></div>
-      //                 <div>
-      //                   <div className="text-sm font-medium text-gray-900">
-      //                     {backup.date}
-      //                   </div>
-      //                   <div className="text-xs text-gray-500">
-      //                     {backup.size} • {backup.type}
-      //                   </div>
-      //                 </div>
-      //               </div>
-      //               <div className="flex items-center space-x-2">
-      //                 <span
-      //                   className={`px-2 py-1 text-xs font-semibold rounded-full ${
-      //                     backup.status === "Success"
-      //                       ? "bg-green-100 text-green-800"
-      //                       : "bg-red-100 text-red-800"
-      //                   }`}
-      //                 >
-      //                   {backup.status}
-      //                 </span>
-      //                 {backup.status === "Success" && (
-      //                   <button className="text-blue-600 hover:text-blue-900 p-1 rounded hover:bg-blue-50">
-      //                     <Download size={16} />
-      //                   </button>
-      //                 )}
-      //               </div>
-      //             </div>
-      //           ))}
-      //         </div>
-      //       </div>
-      //     </div>
-      //   );
-
-      // case "audit-logs":
-      //   return (
-      //     <div className="space-y-6">
-      //       <div className="flex justify-between items-center">
-      //         <h3 className="text-lg font-semibold text-gray-800">
-      //           Audit Logs
-      //         </h3>
-      //         <button
-      //           onClick={handleExportLogs}
-      //           className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 flex items-center"
-      //         >
-      //           <Download size={16} className="mr-2" />
-      //           Export Logs
-      //         </button>
-      //       </div>
-
-      //       {/* Log Filters */}
-      //       <div className="bg-white border border-gray-200 rounded-lg p-4">
-      //         <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-      //           <div>
-      //             <label className="block text-sm font-medium text-gray-700 mb-1">
-      //               Date From
-      //             </label>
-      //             <input
-      //               type="date"
-      //               className="w-full rounded-lg border border-gray-300 py-2 px-3 focus:outline-none focus:ring-2 focus:ring-blue-500"
-      //             />
-      //           </div>
-      //           <div>
-      //             <label className="block text-sm font-medium text-gray-700 mb-1">
-      //               Date To
-      //             </label>
-      //             <input
-      //               type="date"
-      //               className="w-full rounded-lg border border-gray-300 py-2 px-3 focus:outline-none focus:ring-2 focus:ring-blue-500"
-      //             />
-      //           </div>
-      //           <div>
-      //             <label className="block text-sm font-medium text-gray-700 mb-1">
-      //               User
-      //             </label>
-      //             <select className="w-full rounded-lg border border-gray-300 py-2 px-3 focus:outline-none focus:ring-2 focus:ring-blue-500">
-      //               <option value="">All Users</option>
-      //               <option value="admin">Admin</option>
-      //               <option value="manager1">Manager</option>
-      //               <option value="tech1">Technician</option>
-      //             </select>
-      //           </div>
-      //           <div>
-      //             <label className="block text-sm font-medium text-gray-700 mb-1">
-      //               Severity
-      //             </label>
-      //             <select className="w-full rounded-lg border border-gray-300 py-2 px-3 focus:outline-none focus:ring-2 focus:ring-blue-500">
-      //               <option value="">All Levels</option>
-      //               <option value="info">Info</option>
-      //               <option value="warning">Warning</option>
-      //               <option value="error">Error</option>
-      //               <option value="success">Success</option>
-      //             </select>
-      //           </div>
-      //         </div>
-      //       </div>
-
-      //       {/* Audit Log Entries */}
-      //       <div className="bg-white border border-gray-200 rounded-lg overflow-hidden">
-      //         <div className="overflow-x-auto">
-      //           <table className="min-w-full divide-y divide-gray-200">
-      //             <thead className="bg-gray-50">
-      //               <tr>
-      //                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-      //                   Timestamp
-      //                 </th>
-      //                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-      //                   User
-      //                 </th>
-      //                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-      //                   Action
-      //                 </th>
-      //                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-      //                   Details
-      //                 </th>
-      //                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-      //                   Severity
-      //                 </th>
-      //               </tr>
-      //             </thead>
-      //             <tbody className="bg-white divide-y divide-gray-200">
-      //               {auditLogs.map((log) => (
-      //                 <tr key={log.id} className="hover:bg-gray-50">
-      //                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-      //                     {log.timestamp}
-      //                   </td>
-      //                   <td className="px-6 py-4 whitespace-nowrap">
-      //                     <div className="flex items-center">
-      //                       <User size={16} className="text-gray-400 mr-2" />
-      //                       <span className="text-sm font-medium text-gray-900">
-      //                         {log.user}
-      //                       </span>
-      //                     </div>
-      //                   </td>
-      //                   <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-      //                     {log.action}
-      //                   </td>
-      //                   <td className="px-6 py-4 text-sm text-gray-500 max-w-xs truncate">
-      //                     {log.details}
-      //                   </td>
-      //                   <td className="px-6 py-4 whitespace-nowrap">
-      //                     <span
-      //                       className={`px-2 py-1 inline-flex items-center text-xs leading-5 font-semibold rounded-full ${getSeverityColor(
-      //                         log.severity
-      //                       )}`}
-      //                     >
-      //                       <span className="mr-1">
-      //                         {getSeverityIcon(log.severity)}
-      //                       </span>
-      //                       {log.severity}
-      //                     </span>
-      //                   </td>
-      //                 </tr>
-      //               ))}
-      //             </tbody>
-      //           </table>
-      //         </div>
-      //       </div>
-
-      //       {/* Log Statistics */}
-      //       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-      //         <div className="bg-white border border-gray-200 rounded-lg p-4">
-      //           <div className="flex items-center">
-      //             <div className="flex-shrink-0">
-      //               <FileText size={24} className="text-blue-600" />
-      //             </div>
-      //             <div className="ml-3">
-      //               <div className="text-lg font-semibold text-gray-900">
-      //                 1,247
-      //               </div>
-      //               <div className="text-sm text-gray-500">Total Logs</div>
-      //             </div>
-      //           </div>
-      //         </div>
-      //         <div className="bg-white border border-gray-200 rounded-lg p-4">
-      //           <div className="flex items-center">
-      //             <div className="flex-shrink-0">
-      //               <CheckCircle size={24} className="text-green-600" />
-      //             </div>
-      //             <div className="ml-3">
-      //               <div className="text-lg font-semibold text-gray-900">
-      //                 1,156
-      //               </div>
-      //               <div className="text-sm text-gray-500">Success</div>
-      //             </div>
-      //           </div>
-      //         </div>
-      //         <div className="bg-white border border-gray-200 rounded-lg p-4">
-      //           <div className="flex items-center">
-      //             <div className="flex-shrink-0">
-      //               <AlertTriangle size={24} className="text-yellow-600" />
-      //             </div>
-      //             <div className="ml-3">
-      //               <div className="text-lg font-semibold text-gray-900">
-      //                 78
-      //               </div>
-      //               <div className="text-sm text-gray-500">Warnings</div>
-      //             </div>
-      //           </div>
-      //         </div>
-      //         <div className="bg-white border border-gray-200 rounded-lg p-4">
-      //           <div className="flex items-center">
-      //             <div className="flex-shrink-0">
-      //               <XCircle size={24} className="text-red-600" />
-      //             </div>
-      //             <div className="ml-3">
-      //               <div className="text-lg font-semibold text-gray-900">
-      //                 13
-      //               </div>
-      //               <div className="text-sm text-gray-500">Errors</div>
-      //             </div>
-      //           </div>
-      //         </div>
-      //       </div>
-      //     </div>
-      //   );
-
-      // case "system-config":
-      //   return (
-      //     <div className="space-y-6">
-      //       <h3 className="text-lg font-semibold text-gray-800">
-      //         System Configuration
-      //       </h3>
-
-      //       {/* General Settings */}
-      //       <div className="bg-white border border-gray-200 rounded-lg p-6">
-      //         <h4 className="text-md font-semibold text-gray-800 mb-4">
-      //           General Settings
-      //         </h4>
-      //         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-      //           <div>
-      //             <label className="block text-sm font-medium text-gray-700 mb-1">
-      //               System Name
-      //             </label>
-      //             <input
-      //               type="text"
-      //               defaultValue="AutoService Center Management"
-      //               className="w-full rounded-lg border border-gray-300 py-2 px-3 focus:outline-none focus:ring-2 focus:ring-blue-500"
-      //             />
-      //           </div>
-      //           <div>
-      //             <label className="block text-sm font-medium text-gray-700 mb-1">
-      //               Time Zone
-      //             </label>
-      //             <select className="w-full rounded-lg border border-gray-300 py-2 px-3 focus:outline-none focus:ring-2 focus:ring-blue-500">
-      //               <option>UTC-5 (Eastern Time)</option>
-      //               <option>UTC-6 (Central Time)</option>
-      //               <option>UTC-7 (Mountain Time)</option>
-      //               <option>UTC-8 (Pacific Time)</option>
-      //             </select>
-      //           </div>
-      //           <div>
-      //             <label className="block text-sm font-medium text-gray-700 mb-1">
-      //               Date Format
-      //             </label>
-      //             <select className="w-full rounded-lg border border-gray-300 py-2 px-3 focus:outline-none focus:ring-2 focus:ring-blue-500">
-      //               <option>MM/DD/YYYY</option>
-      //               <option>DD/MM/YYYY</option>
-      //               <option>YYYY-MM-DD</option>
-      //             </select>
-      //           </div>
-      //           <div>
-      //             <label className="block text-sm font-medium text-gray-700 mb-1">
-      //               Currency
-      //             </label>
-      //             <select className="w-full rounded-lg border border-gray-300 py-2 px-3 focus:outline-none focus:ring-2 focus:ring-blue-500">
-      //               <option>USD ($)</option>
-      //               <option>EUR (€)</option>
-      //               <option>GBP (£)</option>
-      //               <option>CAD ($)</option>
-      //             </select>
-      //           </div>
-      //         </div>
-      //       </div>
-
-      //       {/* Security Settings */}
-      //       <div className="bg-white border border-gray-200 rounded-lg p-6">
-      //         <h4 className="text-md font-semibold text-gray-800 mb-4">
-      //           Security Settings
-      //         </h4>
-      //         <div className="space-y-4">
-      //           <div className="flex items-center justify-between">
-      //             <div>
-      //               <p className="text-sm font-medium text-gray-900">
-      //                 Require Strong Passwords
-      //               </p>
-      //               <p className="text-xs text-gray-500">
-      //                 Enforce minimum 8 characters with mixed case and numbers
-      //               </p>
-      //             </div>
-      //             <label className="relative inline-flex items-center cursor-pointer">
-      //               <input
-      //                 type="checkbox"
-      //                 defaultChecked
-      //                 className="sr-only peer"
-      //               />
-      //               <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
-      //             </label>
-      //           </div>
-
-      //           <div className="flex items-center justify-between">
-      //             <div>
-      //               <p className="text-sm font-medium text-gray-900">
-      //                 Session Timeout
-      //               </p>
-      //               <p className="text-xs text-gray-500">
-      //                 Automatically log out inactive users
-      //               </p>
-      //             </div>
-      //             <select className="rounded-lg border border-gray-300 py-2 px-3 focus:outline-none focus:ring-2 focus:ring-blue-500">
-      //               <option>30 minutes</option>
-      //               <option>1 hour</option>
-      //               <option>2 hours</option>
-      //               <option>4 hours</option>
-      //             </select>
-      //           </div>
-
-      //           <div className="flex items-center justify-between">
-      //             <div>
-      //               <p className="text-sm font-medium text-gray-900">
-      //                 Two-Factor Authentication
-      //               </p>
-      //               <p className="text-xs text-gray-500">
-      //                 Require 2FA for admin accounts
-      //               </p>
-      //             </div>
-      //             <label className="relative inline-flex items-center cursor-pointer">
-      //               <input type="checkbox" className="sr-only peer" />
-      //               <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
-      //             </label>
-      //           </div>
-      //         </div>
-      //       </div>
-
-      //       {/* Performance Settings */}
-      //       <div className="bg-white border border-gray-200 rounded-lg p-6">
-      //         <h4 className="text-md font-semibold text-gray-800 mb-4">
-      //           Performance Settings
-      //         </h4>
-      //         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-      //           <div>
-      //             <label className="block text-sm font-medium text-gray-700 mb-1">
-      //               Cache Duration (minutes)
-      //             </label>
-      //             <input
-      //               type="number"
-      //               defaultValue="30"
-      //               className="w-full rounded-lg border border-gray-300 py-2 px-3 focus:outline-none focus:ring-2 focus:ring-blue-500"
-      //             />
-      //           </div>
-      //           <div>
-      //             <label className="block text-sm font-medium text-gray-700 mb-1">
-      //               Max File Upload Size (MB)
-      //             </label>
-      //             <input
-      //               type="number"
-      //               defaultValue="10"
-      //               className="w-full rounded-lg border border-gray-300 py-2 px-3 focus:outline-none focus:ring-2 focus:ring-blue-500"
-      //             />
-      //           </div>
-      //           <div>
-      //             <label className="block text-sm font-medium text-gray-700 mb-1">
-      //               Records Per Page
-      //             </label>
-      //             <select className="w-full rounded-lg border border-gray-300 py-2 px-3 focus:outline-none focus:ring-2 focus:ring-blue-500">
-      //               <option>10</option>
-      //               <option>25</option>
-      //               <option>50</option>
-      //               <option>100</option>
-      //             </select>
-      //           </div>
-      //           <div>
-      //             <label className="block text-sm font-medium text-gray-700 mb-1">
-      //               Log Retention (days)
-      //             </label>
-      //             <input
-      //               type="number"
-      //               defaultValue="90"
-      //               className="w-full rounded-lg border border-gray-300 py-2 px-3 focus:outline-none focus:ring-2 focus:ring-blue-500"
-      //             />
-      //           </div>
-      //         </div>
-      //       </div>
-
-      //       {/* System Information */}
-      //       <div className="bg-white border border-gray-200 rounded-lg p-6">
-      //         <h4 className="text-md font-semibold text-gray-800 mb-4">
-      //           System Information
-      //         </h4>
-      //         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-      //           <div className="space-y-3">
-      //             <div className="flex justify-between">
-      //               <span className="text-sm text-gray-600">Version</span>
-      //               <span className="text-sm font-medium text-gray-900">
-      //                 v2.1.0
-      //               </span>
-      //             </div>
-      //             <div className="flex justify-between">
-      //               <span className="text-sm text-gray-600">Last Updated</span>
-      //               <span className="text-sm font-medium text-gray-900">
-      //                 June 15, 2024
-      //               </span>
-      //             </div>
-      //             <div className="flex justify-between">
-      //               <span className="text-sm text-gray-600">
-      //                 Database Version
-      //               </span>
-      //               <span className="text-sm font-medium text-gray-900">
-      //                 PostgreSQL 14.2
-      //               </span>
-      //             </div>
-      //             <div className="flex justify-between">
-      //               <span className="text-sm text-gray-600">Server Uptime</span>
-      //               <span className="text-sm font-medium text-gray-900">
-      //                 15 days, 8 hours
-      //               </span>
-      //             </div>
-      //           </div>
-      //           <div className="space-y-3">
-      //             <div className="flex justify-between">
-      //               <span className="text-sm text-gray-600">Total Users</span>
-      //               <span className="text-sm font-medium text-gray-900">
-      //                 24
-      //               </span>
-      //             </div>
-      //             <div className="flex justify-between">
-      //               <span className="text-sm text-gray-600">
-      //                 Active Sessions
-      //               </span>
-      //               <span className="text-sm font-medium text-gray-900">8</span>
-      //             </div>
-      //             <div className="flex justify-between">
-      //               <span className="text-sm text-gray-600">Storage Used</span>
-      //               <span className="text-sm font-medium text-gray-900">
-      //                 2.4 GB / 10 GB
-      //               </span>
-      //             </div>
-      //             <div className="flex justify-between">
-      //               <span className="text-sm text-gray-600">
-      //                 License Status
-      //               </span>
-      //               <span className="text-sm font-medium text-green-600">
-      //                 Active (Pro Plan)
-      //               </span>
-      //             </div>
-      //           </div>
-      //         </div>
-      //       </div>
-
-      //       {/* Save Button */}
-      //       <div className="flex justify-end">
-      //         <button
-      //           onClick={() =>
-      //             toast.success("System configuration saved successfully!")
-      //           }
-      //           className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 flex items-center"
-      //         >
-      //           <Save size={16} className="mr-2" />
-      //           Save Configuration
-      //         </button>
-      //       </div>
-      //     </div>
-      //   );
 
       default:
         return null;
