@@ -23,7 +23,7 @@ const connectDB = async () => {
     console.error("MongoDB Connection Error:", err.message);
     // In serverless environment, don't throw error immediately
     // Let the application continue without DB connection
-    if (process.env.NODE_ENV === 'production') {
+    if (process.env.NODE_ENV === "production") {
       console.log("Continuing without database connection in production");
       return;
     }

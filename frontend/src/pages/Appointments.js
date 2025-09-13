@@ -39,6 +39,12 @@ const Appointments = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const appointmentsPerPage = 5;
 
+  // Service config states
+  const [vehicleTypes, setVehicleTypes] = useState([]);
+  const [serviceTypes, setServiceTypes] = useState([]);
+  const [serviceLevels] = useState(["normal", "hard", "heavy"]);
+  const [serviceLevelOptions, setServiceLevelOptions] = useState([]);
+
   useEffect(() => {
     fetchAppointments(currentPage, appointmentsPerPage);
   }, [currentPage, appointmentsPerPage, fetchAppointments]);
@@ -46,7 +52,10 @@ const Appointments = () => {
   const [appointmentForm, setAppointmentForm] = useState({
     customer: "",
     vehicle: "",
-    service: "",
+    vehicleType: "",
+    serviceType: "",
+    serviceLevel: "",
+    serviceOption: "",
     date: "",
     time: "",
     technician: "",
@@ -65,11 +74,35 @@ const Appointments = () => {
     }
   }, [location.search]);
 
+  // Fetch service config for dropdowns
+  useEffect(() => {
+    axios.get(`${API_URL}/service-config`).then((res) => {
+      setVehicleTypes(res.data.vehicleTypes || []);
+      setServiceTypes(res.data.serviceTypes || []);
+      setServiceLevelOptions(res.data.serviceLevelOptions || []);
+    });
+  }, []);
+
+  useEffect(() => {
+    fetchAllCustomers();
+  }, [fetchAllCustomers]);
+
+  useEffect(() => {
+    fetchAllVehicles();
+  }, [fetchAllVehicles]);
+
   const validateAppointment = () => {
     const errors = {};
     if (!appointmentForm.customer) errors.customer = "Customer is required";
     if (!appointmentForm.vehicle) errors.vehicle = "Vehicle is required";
-    if (!appointmentForm.service) errors.service = "Service type is required";
+    if (!appointmentForm.vehicleType)
+      errors.vehicleType = "Vehicle Type is required";
+    if (!appointmentForm.serviceType)
+      errors.serviceType = "Service Type is required";
+    if (!appointmentForm.serviceLevel)
+      errors.serviceLevel = "Service Level is required";
+    if (!appointmentForm.serviceOption)
+      errors.serviceOption = "Service Option is required";
     if (!appointmentForm.date) errors.date = "Date is required";
     if (!appointmentForm.time) errors.time = "Time is required";
     if (!appointmentForm.technician)
@@ -83,7 +116,10 @@ const Appointments = () => {
     addAppointment({
       customer: appointmentForm.customer,
       vehicle: appointmentForm.vehicle,
-      service: appointmentForm.service,
+      vehicleType: appointmentForm.vehicleType,
+      serviceType: appointmentForm.serviceType,
+      serviceLevel: appointmentForm.serviceLevel,
+      serviceOption: appointmentForm.serviceOption,
       date: appointmentForm.date,
       time: appointmentForm.time,
       technician: appointmentForm.technician,
@@ -93,7 +129,10 @@ const Appointments = () => {
     setAppointmentForm({
       customer: "",
       vehicle: "",
-      service: "",
+      vehicleType: "",
+      serviceType: "",
+      serviceLevel: "",
+      serviceOption: "",
       date: "",
       time: "",
       technician: "",
@@ -129,7 +168,7 @@ const Appointments = () => {
     return (
       customerName.toLowerCase().includes(searchTerm.toLowerCase()) ||
       vehicleName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      (appointment.service || "")
+      (appointment.serviceType || "")
         .toLowerCase()
         .includes(searchTerm.toLowerCase())
     );
@@ -150,43 +189,9 @@ const Appointments = () => {
 
   // Job Card button click (for now, just alert or navigate)
   const handleJobCard = async (id) => {
-    // Appointment status update to "completed"
     await updateAppointmentStatus(id, "completed");
     fetchAppointments(currentPage, appointmentsPerPage); // Refresh list
   };
-
-  const [serviceOptions, setServiceOptions] = useState([]);
-  const [showAddServiceInput, setShowAddServiceInput] = useState(false);
-  const [newServiceOption, setNewServiceOption] = useState("");
-
-  // Fetch service types from backend
-  useEffect(() => {
-    axios.get(`${API_URL}/service-types`).then((res) => {
-      setServiceOptions(res.data.serviceTypes.map((s) => s.name));
-    });
-  }, []);
-
-  // Add new service type to backend
-  // const handleAddServiceType = async () => {
-  //   if (newServiceOption && !serviceOptions.includes(newServiceOption)) {
-  //     await axios.post(`${API_URL}/service-types`, { name: newServiceOption });
-  //     setServiceOptions([...serviceOptions, newServiceOption]);
-  //     setAppointmentForm({
-  //       ...appointmentForm,
-  //       service: newServiceOption,
-  //     });
-  //   }
-  //   setShowAddServiceInput(false);
-  //   setNewServiceOption("");
-  // };
-
-  useEffect(() => {
-    fetchAllCustomers();
-  }, [fetchAllCustomers]);
-
-  useEffect(() => {
-    fetchAllVehicles();
-  }, [fetchAllVehicles]);
 
   return (
     <div className="space-y-6">
@@ -351,9 +356,33 @@ const Appointments = () => {
                     </td>
 
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="flex items-center text-sm text-gray-900">
-                        <Wrench size={14} className="text-gray-400 mr-1" />
-                        <span>{appointment.service}</span>
+                      <div className="flex flex-col text-sm text-gray-900">
+                        <div className="flex items-center">
+                          <Wrench size={14} className="text-gray-400 mr-1" />
+                          <span>
+                            {appointment.vehicleType}
+                            {appointment.vehicleType &&
+                            (appointment.serviceType ||
+                              appointment.serviceLevel ||
+                              appointment.serviceOption)
+                              ? " | "
+                              : ""}
+                            {appointment.serviceType}
+                            {appointment.serviceType &&
+                            (appointment.serviceLevel ||
+                              appointment.serviceOption)
+                              ? " | "
+                              : ""}
+                            {appointment.serviceLevel &&
+                              appointment.serviceLevel.charAt(0).toUpperCase() +
+                                appointment.serviceLevel.slice(1)}
+                            {appointment.serviceLevel &&
+                            appointment.serviceOption
+                              ? " | "
+                              : ""}
+                            {appointment.serviceOption}
+                          </span>
+                        </div>
                       </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
@@ -465,8 +494,28 @@ const Appointments = () => {
                       : ""}
                   </div>
                   <div>
-                    <span className="font-medium text-gray-700">Service:</span>{" "}
-                    {appointmentDetails.service}
+                    <span className="font-medium text-gray-700">Service:</span>
+                    <div className="ml-2 mt-1 flex flex-col text-gray-800 text-sm">
+                      <span>
+                        Vehicle Type: {appointmentDetails.vehicleType || "-"}
+                      </span>
+                      <span>
+                        Service Type: {appointmentDetails.serviceType || "-"}
+                      </span>
+                      <span>
+                        Service Level:{" "}
+                        {appointmentDetails.serviceLevel
+                          ? appointmentDetails.serviceLevel
+                              .charAt(0)
+                              .toUpperCase() +
+                            appointmentDetails.serviceLevel.slice(1)
+                          : "-"}
+                      </span>
+                      <span>
+                        Service Option:{" "}
+                        {appointmentDetails.serviceOption || "-"}
+                      </span>
+                    </div>
                   </div>
                   <div>
                     <span className="font-medium text-gray-700">
@@ -667,13 +716,14 @@ const Appointments = () => {
                 handleAddAppointment();
               }}
             >
-              {" "}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div>
+              <div className="flex flex-col space-y-3 max-h-[60vh] overflow-y-auto pr-2">
+                {/* Customer */}
+                <div className="flex flex-col gap-2">
                   <label className="block text-sm font-medium text-gray-700 mb-1">
                     Customer
                   </label>
                   <select
+                    className="w-full border rounded px-2 py-1"
                     value={appointmentForm.customer}
                     onChange={(e) =>
                       setAppointmentForm({
@@ -696,11 +746,13 @@ const Appointments = () => {
                   )}
                 </div>
 
-                <div>
+                {/* Vehicle */}
+                <div className="flex flex-col gap-2">
                   <label className="block text-sm font-medium text-gray-700 mb-1">
                     Vehicle
                   </label>
                   <select
+                    className="w-full border rounded px-2 py-1"
                     value={appointmentForm.vehicle}
                     onChange={(e) =>
                       setAppointmentForm({
@@ -723,151 +775,214 @@ const Appointments = () => {
                   )}
                 </div>
 
-                <div>
+                {/* Vehicle Type */}
+                <div className="flex flex-col gap-2">
                   <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Date
+                    Vehicle Type
                   </label>
-                  <input
-                    type="date"
-                    className="w-full rounded-lg border border-gray-300 py-2 px-3 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                    value={appointmentForm.date}
+                  <select
+                    className="w-full border rounded px-2 py-1"
+                    value={appointmentForm.vehicleType}
                     onChange={(e) =>
                       setAppointmentForm({
                         ...appointmentForm,
-                        date: e.target.value,
+                        vehicleType: e.target.value,
                       })
                     }
-                  />
-                  {appointmentErrors.date && (
+                  >
+                    <option value="">Select vehicle type</option>
+                    {vehicleTypes.map((type) => (
+                      <option key={type} value={type}>
+                        {type}
+                      </option>
+                    ))}
+                  </select>
+                  {appointmentErrors.vehicleType && (
                     <span className="text-red-500 text-xs">
-                      {appointmentErrors.date}
+                      {appointmentErrors.vehicleType}
                     </span>
                   )}
                 </div>
 
-                <div>
+                {/* Service Type */}
+                <div className="flex flex-col gap-2">
                   <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Time
+                    Service Type
                   </label>
-                  <input
-                    type="time"
-                    className="w-full rounded-lg border border-gray-300 py-2 px-3 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                    value={appointmentForm.time}
+                  <select
+                    className="w-full border rounded px-2 py-1"
+                    value={appointmentForm.serviceType}
                     onChange={(e) =>
                       setAppointmentForm({
                         ...appointmentForm,
-                        time: e.target.value,
+                        serviceType: e.target.value,
                       })
                     }
-                  />
-                  {appointmentErrors.time && (
+                  >
+                    <option value="">Select service type</option>
+                    {serviceTypes.map((type) => (
+                      <option key={type} value={type}>
+                        {type}
+                      </option>
+                    ))}
+                  </select>
+                  {appointmentErrors.serviceType && (
                     <span className="text-red-500 text-xs">
-                      {appointmentErrors.time}
+                      {appointmentErrors.serviceType}
                     </span>
                   )}
                 </div>
-              </div>
-              {/* Service Type input */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Service Type
-                </label>
-                <select
-                  className="w-full rounded-lg border border-gray-300 py-2 px-3 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  value={appointmentForm.service}
-                  onChange={(e) => {
-                    if (e.target.value === "__add_new__") {
-                      setShowAddServiceInput(true);
-                    } else {
+
+                {/* Service Level */}
+                <div className="flex flex-col gap-2">
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Service Level
+                  </label>
+                  <select
+                    className="w-full border rounded px-2 py-1"
+                    value={appointmentForm.serviceLevel}
+                    onChange={(e) =>
                       setAppointmentForm({
                         ...appointmentForm,
-                        service: e.target.value,
-                      });
+                        serviceLevel: e.target.value,
+                      })
                     }
-                  }}
-                >
-                  <option value="">Select service type</option>
-                  {serviceOptions.map((opt) => (
-                    <option key={opt} value={opt}>
-                      {opt}
-                    </option>
-                  ))}
-                </select>
-                {appointmentErrors.service && (
-                  <span className="text-red-500 text-xs">
-                    {appointmentErrors.service}
-                  </span>
-                )}
+                  >
+                    <option value="">Select service level</option>
+                    {serviceLevels.map((level) => (
+                      <option key={level} value={level}>
+                        {level.charAt(0).toUpperCase() + level.slice(1)}
+                      </option>
+                    ))}
+                  </select>
+                  {appointmentErrors.serviceLevel && (
+                    <span className="text-red-500 text-xs">
+                      {appointmentErrors.serviceLevel}
+                    </span>
+                  )}
+                </div>
 
-                {/* {showAddServiceInput && (
-                  <div className="flex mt-2 space-x-2">
+                {/* Service Option */}
+                <div className="flex flex-col gap-2">
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Service Option
+                  </label>
+                  <select
+                    className="w-full border rounded px-2 py-1"
+                    value={appointmentForm.serviceOption}
+                    onChange={(e) =>
+                      setAppointmentForm({
+                        ...appointmentForm,
+                        serviceOption: e.target.value,
+                      })
+                    }
+                  >
+                    <option value="">Select service option</option>
+                    {serviceLevelOptions.map((option) => (
+                      <option key={option} value={option}>
+                        {option}
+                      </option>
+                    ))}
+                  </select>
+                  {appointmentErrors.serviceOption && (
+                    <span className="text-red-500 text-xs">
+                      {appointmentErrors.serviceOption}
+                    </span>
+                  )}
+                </div>
+
+                <div className="flex justify-between gap-4 ">
+                  {" "}
+                  {/* Date */}
+                  <div className="w-1/2">
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Date
+                    </label>
                     <input
-                      type="text"
-                      className="flex-1 rounded-lg border border-gray-300 py-2 px-3 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                      placeholder="Enter new service type"
-                      value={newServiceOption}
-                      onChange={(e) => setNewServiceOption(e.target.value)}
+                      type="date"
+                      className="w-full rounded-lg border border-gray-300 py-2 px-3 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      value={appointmentForm.date}
+                      onChange={(e) =>
+                        setAppointmentForm({
+                          ...appointmentForm,
+                          date: e.target.value,
+                        })
+                      }
                     />
-                    <button
-                      type="button"
-                      className="px-3 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
-                      onClick={handleAddServiceType}
-                    >
-                      Add
-                    </button>
-                    <button
-                      type="button"
-                      className="px-3 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50"
-                      onClick={() => {
-                        setShowAddServiceInput(false);
-                        setNewServiceOption("");
-                      }}
-                    >
-                      Cancel
-                    </button>
+                    {appointmentErrors.date && (
+                      <span className="text-red-500 text-xs">
+                        {appointmentErrors.date}
+                      </span>
+                    )}
                   </div>
-                )} */}
+                  {/* Time */}
+                  <div className="w-1/2">
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Time
+                    </label>
+                    <input
+                      type="time"
+                      className="w-full rounded-lg border border-gray-300 py-2 px-3 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      value={appointmentForm.time}
+                      onChange={(e) =>
+                        setAppointmentForm({
+                          ...appointmentForm,
+                          time: e.target.value,
+                        })
+                      }
+                    />
+                    {appointmentErrors.time && (
+                      <span className="text-red-500 text-xs">
+                        {appointmentErrors.time}
+                      </span>
+                    )}
+                  </div>
+                </div>
+
+                {/* Technician input */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Assign Technician
+                  </label>
+                  <input
+                    type="text"
+                    className="w-full rounded-lg border border-gray-300 py-2 px-3 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    placeholder="Enter technician name"
+                    value={appointmentForm.technician}
+                    onChange={(e) =>
+                      setAppointmentForm({
+                        ...appointmentForm,
+                        technician: e.target.value,
+                      })
+                    }
+                  />
+                  {appointmentErrors.technician && (
+                    <span className="text-red-500 text-xs">
+                      {appointmentErrors.technician}
+                    </span>
+                  )}
+                </div>
+
+                {/* Notes */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Notes
+                  </label>
+                  <textarea
+                    className="w-full rounded-lg border border-gray-300 py-2 px-3 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    rows={3}
+                    placeholder="Additional details or special instructions..."
+                    value={appointmentForm.notes}
+                    onChange={(e) =>
+                      setAppointmentForm({
+                        ...appointmentForm,
+                        notes: e.target.value,
+                      })
+                    }
+                  ></textarea>
+                </div>
               </div>
-              {/* Technician input */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Assign Technician
-                </label>
-                <input
-                  type="text"
-                  className="w-full rounded-lg border border-gray-300 py-2 px-3 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  placeholder="Enter technician name"
-                  value={appointmentForm.technician}
-                  onChange={(e) =>
-                    setAppointmentForm({
-                      ...appointmentForm,
-                      technician: e.target.value,
-                    })
-                  }
-                />
-                {appointmentErrors.technician && (
-                  <span className="text-red-500 text-xs">
-                    {appointmentErrors.technician}
-                  </span>
-                )}
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Notes
-                </label>
-                <textarea
-                  className="w-full rounded-lg border border-gray-300 py-2 px-3 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  rows={3}
-                  placeholder="Additional details or special instructions..."
-                  value={appointmentForm.notes}
-                  onChange={(e) =>
-                    setAppointmentForm({
-                      ...appointmentForm,
-                      notes: e.target.value,
-                    })
-                  }
-                ></textarea>
-              </div>
+
               <div className="flex justify-end space-x-3 pt-4">
                 <button
                   type="button"
