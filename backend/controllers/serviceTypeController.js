@@ -77,7 +77,30 @@ exports.deleteServiceLevelOption = async (req, res) => {
   const { option } = req.params;
   const config = await ServiceTypeConfig.findOne();
   if (!config) return res.status(404).json({ message: "Config not found" });
-  config.serviceLevelOptions = config.serviceLevelOptions.filter((v) => v !== option);
+  config.serviceLevelOptions = config.serviceLevelOptions.filter(
+    (v) => v !== option
+  );
   await config.save();
   res.json(config.serviceLevelOptions);
+};
+
+// Save pricing config
+exports.savePricingConfig = async (req, res) => {
+  const { basePrice, hardIncrease, heavyIncrease } = req.body;
+  const config = await ServiceTypeConfig.findOne();
+  if (!config) return res.status(404).json({ message: "Config not found" });
+  config.pricingConfig = {
+    basePrice: Number(basePrice) || 0,
+    hardIncrease: Number(hardIncrease) || 0,
+    heavyIncrease: Number(heavyIncrease) || 0,
+  };
+  await config.save();
+  res.json({ success: true, pricingConfig: config.pricingConfig });
+};
+
+// Get pricing config (optional)
+exports.getPricingConfig = async (req, res) => {
+  const config = await ServiceTypeConfig.findOne();
+  if (!config) return res.status(404).json({ message: "Config not found" });
+  res.json(config.pricingConfig || {});
 };

@@ -7,6 +7,13 @@ const ServiceTypeSchema = new mongoose.Schema({
     { type: String, enum: ["normal", "hard", "heavy"], required: true },
   ],
   serviceLevelOptions: [{ type: String }],
+
+  
+   pricingConfig: {
+    basePrice: { type: Number, default: 0 },
+    hardIncrease: { type: Number, default: 20 },
+    heavyIncrease: { type: Number, default: 40 },
+  },
 });
 
 module.exports = mongoose.model("ServiceTypeConfig", ServiceTypeSchema);

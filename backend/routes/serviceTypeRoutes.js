@@ -13,4 +13,8 @@ router.delete("/service-type/:type", ctrl.deleteServiceType);
 router.post("/service-level-option", ctrl.addServiceLevelOption);
 router.delete("/service-level-option/:option", ctrl.deleteServiceLevelOption);
 
+// Pricing config endpoints
+router.post("/pricing", ctrl.savePricingConfig);
+router.get("/pricing", ctrl.getPricingConfig);
+
 module.exports = router;

@@ -500,101 +500,170 @@ const Settings = () => {
       </div>
 
       {/* 5. Pricing Configuration Section */}
-      {/* <div className="bg-white border rounded-lg p-6">
+      <div className="bg-white border rounded-lg p-6">
         <h4 className="font-semibold text-gray-800 mb-3">
           5. Pricing Configuration
         </h4>
         <div className="overflow-x-auto">
-          <table className="min-w-full text-sm">
+          <table className="min-w-full text-sm border">
             <thead>
-              <tr className="border-b">
-                <th className="py-2 px-4 text-left">Service Level</th>
-                <th className="py-2 px-4 text-left">Base Price (LKR)</th>
-                <th className="py-2 px-4 text-left">% Increase</th>
-                <th className="py-2 px-4 text-left">Final Price</th>
+              <tr className="bg-gray-50">
+                <th className="py-2 px-4 border">Service Level</th>
+                <th className="py-2 px-4 border">Base Price (LKR)</th>
+                <th className="py-2 px-4 border">% Increase</th>
+                <th className="py-2 px-4 border">Final Price</th>
               </tr>
             </thead>
             <tbody>
-              {["normal", "hard", "heavy"].map((level) => {
-                const basePrice =
-                  Number(newService.serviceLevels.normal.basePrice) || 0;
-                const percentage =
-                  level === "normal"
-                    ? 0
-                    : Number(
-                        newService.serviceLevels[level].percentageIncrease
-                      ) || 0;
-                const finalPrice =
-                  level === "normal"
-                    ? basePrice
-                    : Math.round(basePrice + (basePrice * percentage) / 100);
-
-                return (
-                  <tr key={level} className="border-b">
-                    <td className="py-2 px-4 font-medium capitalize">
-                      {level}
-                    </td>
-                    <td className="py-2 px-4">
-                      {level === "normal" ? (
-                        <input
-                          type="number"
-                          min="0"
-                          value={newService.serviceLevels.normal.basePrice}
-                          onChange={(e) =>
-                            setNewService((prev) => ({
-                              ...prev,
-                              serviceLevels: {
-                                ...prev.serviceLevels,
-                                normal: {
-                                  ...prev.serviceLevels.normal,
-                                  basePrice: e.target.value,
-                                },
-                              },
-                            }))
-                          }
-                          className="w-24 border rounded px-2 py-1"
-                        />
-                      ) : (
-                        basePrice
-                      )}
-                    </td>
-                    <td className="py-2 px-4">
-                      {level === "normal" ? (
-                        "0%"
-                      ) : (
-                        <input
-                          type="number"
-                          min="0"
-                          max="100"
-                          value={
-                            newService.serviceLevels[level].percentageIncrease
-                          }
-                          onChange={(e) =>
-                            setNewService((prev) => ({
-                              ...prev,
-                              serviceLevels: {
-                                ...prev.serviceLevels,
-                                [level]: {
-                                  ...prev.serviceLevels[level],
-                                  percentageIncrease: e.target.value,
-                                },
-                              },
-                            }))
-                          }
-                          className="w-16 border rounded px-2 py-1"
-                        />
-                      )}
-                    </td>
-                    <td className="py-2 px-4 font-semibold">
-                      {finalPrice} LKR
-                    </td>
-                  </tr>
-                );
-              })}
+              {/* Normal */}
+              <tr>
+                <td className="py-2 px-4 border font-medium">Normal</td>
+                <td className="py-2 px-4 border">
+                  <input
+                    type="number"
+                    min="0"
+                    value={newService.serviceLevels.normal.basePrice}
+                    onChange={(e) =>
+                      setNewService((prev) => ({
+                        ...prev,
+                        serviceLevels: {
+                          ...prev.serviceLevels,
+                          normal: {
+                            ...prev.serviceLevels.normal,
+                            basePrice: e.target.value,
+                          },
+                        },
+                      }))
+                    }
+                    className="w-24 border rounded px-2 py-1"
+                    placeholder="0"
+                  />
+                </td>
+                <td className="py-2 px-4 border text-center">0%</td>
+                <td className="py-2 px-4 border font-semibold">
+                  {newService.serviceLevels.normal.basePrice
+                    ? Number(
+                        newService.serviceLevels.normal.basePrice
+                      ).toLocaleString()
+                    : "0"}
+                </td>
+              </tr>
+              {/* Hard */}
+              <tr>
+                <td className="py-2 px-4 border font-medium">Hard</td>
+                <td className="py-2 px-4 border">
+                  {newService.serviceLevels.normal.basePrice
+                    ? Number(
+                        newService.serviceLevels.normal.basePrice
+                      ).toLocaleString()
+                    : "0"}
+                </td>
+                <td className="py-2 px-4 border">
+                  <input
+                    type="number"
+                    min="0"
+                    value={newService.serviceLevels.hard.percentageIncrease}
+                    onChange={(e) =>
+                      setNewService((prev) => ({
+                        ...prev,
+                        serviceLevels: {
+                          ...prev.serviceLevels,
+                          hard: {
+                            ...prev.serviceLevels.hard,
+                            percentageIncrease: e.target.value,
+                          },
+                        },
+                      }))
+                    }
+                    className="w-16 border rounded px-2 py-1"
+                    placeholder="20"
+                  />
+                  %
+                </td>
+                <td className="py-2 px-4 border font-semibold">
+                  {newService.serviceLevels.normal.basePrice
+                    ? (
+                        Number(newService.serviceLevels.normal.basePrice) *
+                        (1 +
+                          Number(
+                            newService.serviceLevels.hard.percentageIncrease ||
+                              0
+                          ) /
+                            100)
+                      ).toLocaleString(undefined, { maximumFractionDigits: 2 })
+                    : "0"}
+                </td>
+              </tr>
+              {/* Heavy */}
+              <tr>
+                <td className="py-2 px-4 border font-medium">Heavy</td>
+                <td className="py-2 px-4 border">
+                  {newService.serviceLevels.normal.basePrice
+                    ? Number(
+                        newService.serviceLevels.normal.basePrice
+                      ).toLocaleString()
+                    : "0"}
+                </td>
+                <td className="py-2 px-4 border">
+                  <input
+                    type="number"
+                    min="0"
+                    value={newService.serviceLevels.heavy.percentageIncrease}
+                    onChange={(e) =>
+                      setNewService((prev) => ({
+                        ...prev,
+                        serviceLevels: {
+                          ...prev.serviceLevels,
+                          heavy: {
+                            ...prev.serviceLevels.heavy,
+                            percentageIncrease: e.target.value,
+                          },
+                        },
+                      }))
+                    }
+                    className="w-16 border rounded px-2 py-1"
+                    placeholder="40"
+                  />
+                  %
+                </td>
+                <td className="py-2 px-4 border font-semibold">
+                  {newService.serviceLevels.normal.basePrice
+                    ? (
+                        Number(newService.serviceLevels.normal.basePrice) *
+                        (1 +
+                          Number(
+                            newService.serviceLevels.heavy.percentageIncrease ||
+                              0
+                          ) /
+                            100)
+                      ).toLocaleString(undefined, { maximumFractionDigits: 2 })
+                    : "0"}
+                </td>
+              </tr>
             </tbody>
           </table>
         </div>
-      </div> */}
+        <div className="mt-4 flex justify-end">
+          <button
+            className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+            onClick={() => {
+              // Save pricing config to backend (implement as needed)
+              axios
+                .post(`${SERVICE_CONFIG_API}/pricing`, {
+                  basePrice: newService.serviceLevels.normal.basePrice,
+                  hardIncrease:
+                    newService.serviceLevels.hard.percentageIncrease,
+                  heavyIncrease:
+                    newService.serviceLevels.heavy.percentageIncrease,
+                })
+                .then(() => toast.success("Pricing configuration saved!"))
+                .catch(() => toast.error("Failed to save pricing config"));
+            }}
+          >
+            Save Pricing
+          </button>
+        </div>
+      </div>
     </div>
   );
 
