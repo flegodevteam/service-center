@@ -213,6 +213,34 @@ const JobCards = () => {
     }
   };
 
+  useEffect(() => {
+    // Service Type & Level இரண்டும் select பண்ணும்போது price fetch பண்ணும் logic
+    if (newJobCard.serviceType && newJobCard.serviceLevel) {
+      axios
+        .get(`${API_URL}/service-config/pricing`)
+        .then((res) => {
+          const { basePrice, hardIncrease, heavyIncrease } = res.data;
+          let price = Number(basePrice) || 0;
+          if (newJobCard.serviceLevel === "hard") {
+            price = price * (1 + (Number(hardIncrease) || 0) / 100);
+          } else if (newJobCard.serviceLevel === "heavy") {
+            price = price * (1 + (Number(heavyIncrease) || 0) / 100);
+          }
+          setNewJobCard((prev) => ({
+            ...prev,
+            totalAmount: price ? price.toFixed(2) : "",
+          }));
+        })
+        .catch(() => {
+          setNewJobCard((prev) => ({
+            ...prev,
+            totalAmount: "",
+          }));
+        });
+    }
+    // eslint-disable-next-line
+  }, [newJobCard.serviceType, newJobCard.serviceLevel]);
+
   return (
     <div className="space-y-6">
       {/* Modal */}
