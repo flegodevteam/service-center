@@ -8,16 +8,7 @@ const app = express();
 // Connect to MongoDB
 // connectDB();
 
-// Middleware
-app.use(
-  cors({
-    origin:
-      process.env.NODE_ENV === "production"
-        ? ["https://your-frontend-domain.vercel.app"]
-        : ["http://localhost:3000"],
-    credentials: true,
-  })
-);
+// Middleware - CORS will be configured in server.js
 app.use(express.json({ limit: "10mb" }));
 app.use(express.urlencoded({ extended: true, limit: "10mb" }));
 
