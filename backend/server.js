@@ -6,6 +6,23 @@ dotenv.config();
 
 connectDB();
 
+const allowedOrigins = [
+  "https://service-center-xi.vercel.app",
+  "http://localhost:5173"
+];
+
+app.use(cors({
+  origin: function (origin, callback) {
+    if (!origin || allowedOrigins.includes(origin)) {
+      callback(null, true);
+    } else {
+      callback(new Error("Not allowed by CORS"));
+    }
+  },
+  methods: ["GET", "POST", "PUT", "DELETE"],
+  allowedHeaders: ["Content-Type", "Authorization"]
+}));
+
 const server = app.listen(process.env.PORT, () => {
   console.log(
     `Server listening to the port: ${process.env.PORT} in ${process.env.NODE_ENV}`
