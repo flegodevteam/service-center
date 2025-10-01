@@ -1,1 +1,1 @@
-export const API_URL = "https://goldfish-app-7yruc.ondigitalocean.app/api";
+export const API_URL = "https://service-center-app-backend-2ulqs.ondigitalocean.app/api";
