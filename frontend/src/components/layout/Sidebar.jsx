@@ -72,7 +72,7 @@ const Sidebar = ({ isOpen, toggleSidebar }) => {
       to: "/payroll",
       icon: <DollarSign size={20} />,
       label: "Payroll",
-      roles: ["admin", "manager"],
+      roles: ["admin", "manager", "technician", "front-desk"],
     },
 
     // {

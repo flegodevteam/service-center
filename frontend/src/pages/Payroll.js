@@ -26,6 +26,7 @@ import { Loader } from "lucide-react";
 import axios from "axios";
 import { API_URL } from "../api/api";
 import { useEffect } from "react";
+import { useAuth } from "../context/AuthContext";
 
 const attendanceData = [
   {
@@ -203,7 +204,36 @@ const Select = ({ label, error, options, className = "", ...props }) => (
 );
 
 const Payroll = () => {
-  const [activeTab, setActiveTab] = useState("employees");
+  const { user } = useAuth(); // Get the authenticated user
+  const allTabs = [
+    {
+      id: "employees",
+      label: "Employees",
+      icon: <Users size={20} />,
+      roles: ["admin"], // Only admin
+    },
+    {
+      id: "attendance",
+      label: "Attendance",
+      icon: <Clock size={20} />,
+      roles: ["admin"], // Only admin
+    },
+    {
+      id: "leaves",
+      label: "Leave Management",
+      icon: <Calendar size={20} />,
+      roles: ["admin", "manager", "technician", "front-desk"], // All
+    },
+    {
+      id: "payroll",
+      label: "Payroll",
+      icon: <DollarSign size={20} />,
+      roles: ["admin"], // Only admin
+    },
+  ];
+
+  const tabs = allTabs.filter((tab) => user && tab.roles.includes(user.role));
+  const [activeTab, setActiveTab] = useState(tabs[0]?.id || "");
 
   const [searchTerm, setSearchTerm] = useState("");
   const [isAddEmployeeModalOpen, setIsAddEmployeeModalOpen] = useState(false);
@@ -236,6 +266,12 @@ const Payroll = () => {
 
   const [attendanceData, setAttendanceData] = useState([]);
 
+  useEffect(() => {
+    if (tabs.length > 0) {
+      setActiveTab(tabs[0].id);
+    }
+  }, [user, tabs.length]);
+
   // Fetch employees from backend
   useEffect(() => {
     const fetchEmployees = async () => {
@@ -260,6 +296,19 @@ const Payroll = () => {
       }
     };
     fetchAttendance();
+  }, []);
+
+  // Fetch leaves for employees
+  useEffect(() => {
+    const fetchLeaves = async () => {
+      try {
+        const res = await axios.get(`${API_URL}/leaves`);
+        setLeaves(res.data);
+      } catch (error) {
+        toast.error("Failed to load leaves");
+      }
+    };
+    fetchLeaves();
   }, []);
 
   // Edit Employee form state
@@ -353,7 +402,6 @@ const Payroll = () => {
 
   const handleAddLeave = async () => {
     try {
-      const employee = employees.find((emp) => emp.id === leaveForm.employeeId);
       const startDate = new Date(leaveForm.startDate);
       const endDate = new Date(leaveForm.endDate);
       const days =
@@ -361,18 +409,18 @@ const Payroll = () => {
           (endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24)
         ) + 1;
 
-      const newLeave = {
-        id: (leaves.length + 1).toString(),
+      const payload = {
         ...leaveForm,
-        employeeName: employee
-          ? `${employee.firstName} ${employee.lastName}`
-          : "",
         days,
-        status: "pending",
         appliedDate: new Date().toISOString().split("T")[0],
+        otherLeaveType:
+          leaveForm.leaveType === "other"
+            ? leaveForm.otherLeaveType
+            : undefined,
       };
 
-      setLeaves((prev) => [...prev, newLeave]);
+      const res = await axios.post(`${API_URL}/leaves`, payload);
+      setLeaves((prev) => [...prev, res.data]);
       setIsAddLeaveModalOpen(false);
       setLeaveForm({
         employeeId: "",
@@ -380,29 +428,38 @@ const Payroll = () => {
         startDate: "",
         endDate: "",
         reason: "",
+        otherLeaveType: "",
       });
       toast.success("Leave application submitted!");
     } catch (error) {
-      toast.error("Failed to submit leave application");
+      toast.error(
+        error.response?.data?.message || "Failed to submit leave application"
+      );
     }
   };
 
-  const handleApproveLeave = (leaveId) => {
-    setLeaves((prev) =>
-      prev.map((leave) =>
-        leave.id === leaveId ? { ...leave, status: "approved" } : leave
-      )
-    );
-    toast.success("Leave approved!");
+  const handleApproveLeave = async (leaveId) => {
+    try {
+      const res = await axios.put(`${API_URL}/leaves/${leaveId}/approve`);
+      setLeaves((prev) =>
+        prev.map((leave) => (leave._id === leaveId ? res.data : leave))
+      );
+      toast.success("Leave approved!");
+    } catch (error) {
+      toast.error("Failed to approve leave");
+    }
   };
 
-  const handleRejectLeave = (leaveId) => {
-    setLeaves((prev) =>
-      prev.map((leave) =>
-        leave.id === leaveId ? { ...leave, status: "rejected" } : leave
-      )
-    );
-    toast.success("Leave rejected!");
+  const handleRejectLeave = async (leaveId) => {
+    try {
+      const res = await axios.put(`${API_URL}/leaves/${leaveId}/reject`);
+      setLeaves((prev) =>
+        prev.map((leave) => (leave._id === leaveId ? res.data : leave))
+      );
+      toast.success("Leave rejected!");
+    } catch (error) {
+      toast.error("Failed to reject leave");
+    }
   };
 
   const getStatusColor = (status) => {
@@ -592,28 +649,7 @@ const Payroll = () => {
       <div className="bg-white rounded-xl shadow-sm">
         <div className="border-b border-gray-200">
           <nav className="flex gap-5 flex-wrap md:flex-nowrap space-x-0 md:space-x-8 space-y-2 md:space-y-0 px-2 md:px-6 overflow-x-auto">
-            {[
-              {
-                id: "employees",
-                label: "Employees",
-                icon: <Users size={20} />,
-              },
-              {
-                id: "attendance",
-                label: "Attendance",
-                icon: <Clock size={20} />,
-              },
-              {
-                id: "leaves",
-                label: "Leave Management",
-                icon: <Calendar size={20} />,
-              },
-              {
-                id: "payroll",
-                label: "Payroll",
-                icon: <DollarSign size={20} />,
-              },
-            ].map((tab) => (
+            {tabs.map((tab) => (
               <button
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id)}
@@ -1156,16 +1192,19 @@ const Payroll = () => {
                         Status
                       </th>
                       <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Actions
+                        {user?.role === "admin" && "Actions"}
                       </th>
                     </tr>
                   </thead>
                   <tbody className="bg-white divide-y divide-gray-200">
                     {leaves.map((leave) => (
-                      <tr key={leave.id} className="hover:bg-gray-50">
+                      <tr key={leave._id} className="hover:bg-gray-50">
                         <td className="px-6 py-4 whitespace-nowrap">
                           <div className="text-sm font-medium text-gray-900">
-                            {leave.employeeName}
+                            {leave.employeeId &&
+                            typeof leave.employeeId === "object"
+                              ? `${leave.employeeId.firstName} ${leave.employeeId.lastName}`
+                              : "Unknown"}
                           </div>
                           <div className="text-sm text-gray-500">
                             Applied: {leave.appliedDate}
@@ -1202,22 +1241,23 @@ const Payroll = () => {
                           </span>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                          {leave.status === "pending" && (
-                            <div className="flex items-center justify-end space-x-2">
-                              <button
-                                onClick={() => handleApproveLeave(leave.id)}
-                                className="text-green-600 hover:text-green-900 px-2 py-1 rounded border border-green-200 hover:bg-green-50"
-                              >
-                                Approve
-                              </button>
-                              <button
-                                onClick={() => handleRejectLeave(leave.id)}
-                                className="text-red-600 hover:text-red-900 px-2 py-1 rounded border border-red-200 hover:bg-red-50"
-                              >
-                                Reject
-                              </button>
-                            </div>
-                          )}
+                          {user?.role === "admin" &&
+                            leave.status === "pending" && (
+                              <div className="flex items-center justify-end space-x-2">
+                                <button
+                                  onClick={() => handleApproveLeave(leave._id)}
+                                  className="text-green-600 hover:text-green-900 px-2 py-1 rounded border border-green-200 hover:bg-green-50"
+                                >
+                                  Approve
+                                </button>
+                                <button
+                                  onClick={() => handleRejectLeave(leave._id)}
+                                  className="text-red-600 hover:text-red-900 px-2 py-1 rounded border border-red-200 hover:bg-red-50"
+                                >
+                                  Reject
+                                </button>
+                              </div>
+                            )}
                         </td>
                       </tr>
                     ))}
@@ -1491,7 +1531,7 @@ const Payroll = () => {
             options={[
               { value: "", label: "Select Employee" },
               ...employees.map((emp) => ({
-                value: emp.id,
+                value: emp._id || emp.id,
                 label: `${emp.firstName} ${emp.lastName}`,
               })),
             ]}
@@ -1501,9 +1541,15 @@ const Payroll = () => {
           <Select
             label="Leave Type"
             value={leaveForm.leaveType}
-            onChange={(e) =>
-              setLeaveForm((prev) => ({ ...prev, leaveType: e.target.value }))
-            }
+            onChange={(e) => {
+              const value = e.target.value;
+              setLeaveForm((prev) => ({
+                ...prev,
+                leaveType: value,
+                otherLeaveType:
+                  value === "other" ? prev.otherLeaveType || "" : "", // "other" select பண்ணும்போது மட்டும் field வைத்திருக்கும்
+              }));
+            }}
             options={[
               { value: "", label: "Select Leave Type" },
               { value: "sick", label: "Sick Leave" },
@@ -1511,10 +1557,24 @@ const Payroll = () => {
               { value: "annual", label: "Annual Leave" },
               { value: "maternity", label: "Maternity Leave" },
               { value: "emergency", label: "Emergency Leave" },
+              { value: "other", label: "Other" }, // புதிய option
             ]}
             required
           />
-
+          {leaveForm.leaveType === "other" && (
+            <Input
+              label="Specify Other Leave Type"
+              value={leaveForm.otherLeaveType || ""}
+              onChange={(e) =>
+                setLeaveForm((prev) => ({
+                  ...prev,
+                  otherLeaveType: e.target.value,
+                }))
+              }
+              placeholder="Enter leave type"
+              required
+            />
+          )}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <Input
               label="Start Date"
