@@ -23,49 +23,9 @@ import {
 // import Select from '../components/ui/Select';
 import toast from "react-hot-toast";
 import { Loader } from "lucide-react";
-
-// Sample data
-const employeesData = [
-  {
-    id: "1",
-    firstName: "Robert",
-    lastName: "Smith",
-    email: "robert@autoservice.com",
-    phone: "(555) 123-4567",
-    role: "Senior Technician",
-    department: "Service",
-    basicSalary: 4500,
-    hireDate: "2022-01-15",
-    isActive: true,
-    bankAccount: "****1234",
-  },
-  {
-    id: "2",
-    firstName: "James",
-    lastName: "Wilson",
-    email: "james@autoservice.com",
-    phone: "(555) 234-5678",
-    role: "Technician",
-    department: "Service",
-    basicSalary: 3800,
-    hireDate: "2022-03-20",
-    isActive: true,
-    bankAccount: "****5678",
-  },
-  {
-    id: "3",
-    firstName: "Lisa",
-    lastName: "Brown",
-    email: "lisa@autoservice.com",
-    phone: "(555) 345-6789",
-    role: "Front Desk",
-    department: "Customer Service",
-    basicSalary: 3200,
-    hireDate: "2021-11-10",
-    isActive: true,
-    bankAccount: "****9012",
-  },
-];
+import axios from "axios";
+import { API_URL } from "../api/api";
+import { useEffect } from "react";
 
 const attendanceData = [
   {
@@ -249,7 +209,7 @@ const Payroll = () => {
   const [isAddEmployeeModalOpen, setIsAddEmployeeModalOpen] = useState(false);
   const [isAddLeaveModalOpen, setIsAddLeaveModalOpen] = useState(false);
   // const [selectedEmployee, setSelectedEmployee] = useState(null); // removed unused state
-  const [employees, setEmployees] = useState(employeesData);
+  const [employees, setEmployees] = useState([]); // Initial value is empty array
   const [leaves, setLeaves] = useState(leaveData);
 
   const [employeeForm, setEmployeeForm] = useState({
@@ -273,6 +233,34 @@ const Payroll = () => {
 
   const [viewEmployee, setViewEmployee] = useState(null);
   const [editEmployee, setEditEmployee] = useState(null);
+
+  const [attendanceData, setAttendanceData] = useState([]);
+
+  // Fetch employees from backend
+  useEffect(() => {
+    const fetchEmployees = async () => {
+      try {
+        const res = await axios.get(`${API_URL}/employees`);
+        setEmployees(res.data);
+      } catch (error) {
+        console.error("Error fetching employees:", error);
+      }
+    };
+    fetchEmployees();
+  }, []);
+
+  // Fetch attendance records for employees
+  useEffect(() => {
+    const fetchAttendance = async () => {
+      try {
+        const res = await axios.get(`${API_URL}/attendance`);
+        setAttendanceData(res.data);
+      } catch (error) {
+        toast.error("Failed to load attendance");
+      }
+    };
+    fetchAttendance();
+  }, []);
 
   // Edit Employee form state
   const [editForm, setEditForm] = useState({
@@ -301,42 +289,51 @@ const Payroll = () => {
     });
   };
 
-  // Handle Edit Save
-  const handleEditSave = () => {
-    setEmployees((prev) =>
-      prev.map((emp) =>
-        emp.id === editEmployee.id
-          ? {
-              ...emp,
-              ...editForm,
-              basicSalary: parseFloat(editForm.basicSalary),
-            }
-          : emp
-      )
-    );
-    setEditEmployee(null);
-    toast.success("Employee updated successfully!");
+  // Handle Edit Save (PUT API call)
+  const handleEditSave = async () => {
+    try {
+      const res = await axios.put(
+        `${API_URL}/employees/${editEmployee._id || editEmployee.id}`,
+        {
+          ...editForm,
+          basicSalary: parseFloat(editForm.basicSalary),
+        }
+      );
+      setEmployees((prev) =>
+        prev.map((emp) =>
+          (emp._id || emp.id) === (editEmployee._id || editEmployee.id)
+            ? res.data
+            : emp
+        )
+      );
+      setEditEmployee(null);
+      toast.success("Employee updated successfully!");
+    } catch (error) {
+      toast.error(error.response?.data?.message || "Failed to update employee");
+    }
   };
 
-  // Handle Delete
-  const handleDeleteEmployee = (id) => {
+  // Handle Delete (DELETE API call)
+  const handleDeleteEmployee = async (id) => {
     if (window.confirm("Are you sure you want to delete this employee?")) {
-      setEmployees((prev) => prev.filter((emp) => emp.id !== id));
-      toast.success("Employee deleted successfully!");
+      try {
+        await axios.delete(`${API_URL}/employees/${id}`);
+        setEmployees((prev) =>
+          prev.filter((emp) => (emp._id || emp.id) !== id)
+        );
+        toast.success("Employee deleted successfully!");
+      } catch (error) {
+        toast.error(
+          error.response?.data?.message || "Failed to delete employee"
+        );
+      }
     }
   };
 
   const handleAddEmployee = async () => {
     try {
-      const newEmployee = {
-        id: (employees.length + 1).toString(),
-        ...employeeForm,
-        basicSalary: parseFloat(employeeForm.basicSalary),
-        hireDate: new Date().toISOString().split("T")[0],
-        isActive: true,
-      };
-
-      setEmployees((prev) => [...prev, newEmployee]);
+      const res = await axios.post(`${API_URL}/employees`, employeeForm);
+      setEmployees((prev) => [...prev, res.data]);
       setIsAddEmployeeModalOpen(false);
       setEmployeeForm({
         firstName: "",
@@ -350,7 +347,7 @@ const Payroll = () => {
       });
       toast.success("Employee added successfully!");
     } catch (error) {
-      toast.error("Failed to add employee");
+      toast.error(error.response?.data?.message || "Failed to add employee");
     }
   };
 
@@ -463,27 +460,32 @@ const Payroll = () => {
     return errors;
   };
 
-  const handleMarkAttendance = () => {
+  const handleMarkAttendance = async () => {
     const errors = validateAttendance();
     setAttendanceErrors(errors);
     if (Object.keys(errors).length > 0) return;
 
-    // Add to attendanceData (if using state, else update your backend here)
-    attendanceData.push({
-      id: (attendanceData.length + 1).toString(),
-      ...attendanceForm,
-      hoursWorked: 0, // You can calculate based on checkIn/checkOut
-      overtimeHours: 0,
-    });
-    setIsMarkAttendanceModalOpen(false);
-    setAttendanceForm({
-      employeeId: "",
-      date: new Date().toISOString().slice(0, 10),
-      checkIn: "",
-      checkOut: "",
-      status: "",
-    });
-    toast.success("Attendance marked successfully!");
+    try {
+      // Optional: calculate hoursWorked, overtimeHours here if needed
+      const payload = {
+        ...attendanceForm,
+        hoursWorked: 0, // You can calculate based on checkIn/checkOut
+        overtimeHours: 0,
+      };
+      const res = await axios.post(`${API_URL}/attendance`, payload);
+      setAttendanceData((prev) => [...prev, res.data]);
+      setIsMarkAttendanceModalOpen(false);
+      setAttendanceForm({
+        employeeId: "",
+        date: new Date().toISOString().slice(0, 10),
+        checkIn: "",
+        checkOut: "",
+        status: "",
+      });
+      toast.success("Attendance marked successfully!");
+    } catch (error) {
+      toast.error(error.response?.data?.message || "Failed to mark attendance");
+    }
   };
 
   return (
@@ -734,7 +736,11 @@ const Payroll = () => {
                             </button>
                             <button
                               className="text-red-600 hover:text-red-900 p-1 rounded hover:bg-red-50"
-                              onClick={() => handleDeleteEmployee(employee.id)}
+                              onClick={() =>
+                                handleDeleteEmployee(
+                                  employee._id || employee.id
+                                )
+                              }
                               title="Delete"
                             >
                               <Trash2 size={16} />
@@ -918,6 +924,7 @@ const Payroll = () => {
                   </Button>
                 </div>
 
+                {/* Mark Attendance Modal */}
                 <Modal
                   isOpen={isMarkAttendanceModalOpen}
                   onClose={() => setIsMarkAttendanceModalOpen(false)}
@@ -936,7 +943,7 @@ const Payroll = () => {
                       options={[
                         { value: "", label: "Select Employee" },
                         ...employees.map((emp) => ({
-                          value: emp.id,
+                          value: emp._id || emp.id,
                           label: `${emp.firstName} ${emp.lastName}`,
                         })),
                       ]}
@@ -1067,7 +1074,11 @@ const Payroll = () => {
                   <tbody className="bg-white divide-y divide-gray-200">
                     {attendanceData.map((attendance) => {
                       const employee = employees.find(
-                        (emp) => emp.id === attendance.employeeId
+                        (emp) =>
+                          (emp._id || emp.id) ===
+                          (attendance.employeeId._id ||
+                            attendance.employeeId ||
+                            attendance.employeeId.id)
                       );
                       return (
                         <tr key={attendance.id} className="hover:bg-gray-50">
