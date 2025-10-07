@@ -3,7 +3,7 @@ import { NavLink } from "react-router-dom";
 import { LayoutDashboard, Users, Car, Calendar, Menu } from "lucide-react";
 import { useAuth } from "../../context/AuthContext";
 
-const MobileNavigation = () => {
+const MobileNavigation = ({ toggleSidebar }) => {
   const { user } = useAuth();
 
   // Define navigation items with their required roles
@@ -50,17 +50,28 @@ const MobileNavigation = () => {
       <ul className="flex justify-around">
         {navItems.map((item) => (
           <li key={item.to}>
-            <NavLink
-              to={item.to}
-              className={({ isActive }) =>
-                `flex flex-col items-center py-2 px-3 ${
-                  isActive ? "text-blue-700" : "text-gray-600"
-                }`
-              }
-            >
-              {item.icon}
-              <span className="text-xs mt-1">{item.label}</span>
-            </NavLink>
+            {item.to === "/more" ? (
+              <button
+                onClick={toggleSidebar}
+                className="flex flex-col items-center py-2 px-3 text-gray-600"
+                type="button"
+              >
+                {item.icon}
+                <span className="text-xs mt-1">{item.label}</span>
+              </button>
+            ) : (
+              <NavLink
+                to={item.to}
+                className={({ isActive }) =>
+                  `flex flex-col items-center py-2 px-3 ${
+                    isActive ? "text-blue-700" : "text-gray-600"
+                  }`
+                }
+              >
+                {item.icon}
+                <span className="text-xs mt-1">{item.label}</span>
+              </NavLink>
+            )}
           </li>
         ))}
       </ul>

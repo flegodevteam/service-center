@@ -8,7 +8,7 @@ const Header = ({ toggleSidebar }) => {
   const [showMenu, setShowMenu] = useState(false);
   const menuRef = useRef(null);
 
-  // Dropdown வெளியே கிளிக் செய்தால் மூட
+  // Dropdown
   useEffect(() => {
     const handleClickOutside = (e) => {
       if (menuRef.current && !menuRef.current.contains(e.target)) {

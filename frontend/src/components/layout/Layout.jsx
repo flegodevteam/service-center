@@ -28,7 +28,7 @@ const Layout = () => {
           <Outlet />
         </motion.main>
 
-        <MobileNavigation />
+        <MobileNavigation toggleSidebar={toggleSidebar} />
       </div>
     </div>
   );
