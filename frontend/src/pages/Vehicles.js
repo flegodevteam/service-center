@@ -17,6 +17,7 @@ import { useContext } from "react";
 import { CustomerContext } from "../context/CustomerContext";
 import { VehicleContext } from "../context/VehicleContext";
 import { useLocation } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 
 const Vehicles = () => {
   const [searchTerm, setSearchTerm] = useState("");
@@ -53,6 +54,7 @@ const Vehicles = () => {
   const vehiclesPerPage = 5;
   const currentVehicles = vehicles;
   const location = useLocation();
+  const navigate = useNavigate();
 
   useEffect(() => {
     const params = new URLSearchParams(location.search);
@@ -739,12 +741,16 @@ const Vehicles = () => {
                     )}
                     <p className="mt-2 text-sm text-gray-500">
                       Can't find the customer?{" "}
-                      <a
-                        href="#add-customer"
+                      <button
+                        type="button"
                         className="text-blue-600 hover:text-blue-500"
+                        onClick={() => {
+                          setIsAddVehicleModalOpen(false);
+                          navigate("/customers?add=true");
+                        }}
                       >
                         Add a new customer
-                      </a>
+                      </button>
                     </p>
                   </div>
                 </div>

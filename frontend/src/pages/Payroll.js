@@ -23,49 +23,9 @@ import {
 // import Select from '../components/ui/Select';
 import toast from "react-hot-toast";
 import { Loader } from "lucide-react";
-
-// Sample data
-const employeesData = [
-  {
-    id: "1",
-    firstName: "Robert",
-    lastName: "Smith",
-    email: "robert@autoservice.com",
-    phone: "(555) 123-4567",
-    role: "Senior Technician",
-    department: "Service",
-    basicSalary: 4500,
-    hireDate: "2022-01-15",
-    isActive: true,
-    bankAccount: "****1234",
-  },
-  {
-    id: "2",
-    firstName: "James",
-    lastName: "Wilson",
-    email: "james@autoservice.com",
-    phone: "(555) 234-5678",
-    role: "Technician",
-    department: "Service",
-    basicSalary: 3800,
-    hireDate: "2022-03-20",
-    isActive: true,
-    bankAccount: "****5678",
-  },
-  {
-    id: "3",
-    firstName: "Lisa",
-    lastName: "Brown",
-    email: "lisa@autoservice.com",
-    phone: "(555) 345-6789",
-    role: "Front Desk",
-    department: "Customer Service",
-    basicSalary: 3200,
-    hireDate: "2021-11-10",
-    isActive: true,
-    bankAccount: "****9012",
-  },
-];
+import axios from "axios";
+import { API_URL } from "../api/api";
+import { useEffect } from "react";
 
 const attendanceData = [
   {
@@ -249,7 +209,7 @@ const Payroll = () => {
   const [isAddEmployeeModalOpen, setIsAddEmployeeModalOpen] = useState(false);
   const [isAddLeaveModalOpen, setIsAddLeaveModalOpen] = useState(false);
   // const [selectedEmployee, setSelectedEmployee] = useState(null); // removed unused state
-  const [employees, setEmployees] = useState(employeesData);
+  const [employees, setEmployees] = useState([]); // Initial value is empty array
   const [leaves, setLeaves] = useState(leaveData);
 
   const [employeeForm, setEmployeeForm] = useState({
@@ -271,17 +231,109 @@ const Payroll = () => {
     reason: "",
   });
 
+  const [viewEmployee, setViewEmployee] = useState(null);
+  const [editEmployee, setEditEmployee] = useState(null);
+
+  const [attendanceData, setAttendanceData] = useState([]);
+
+  // Fetch employees from backend
+  useEffect(() => {
+    const fetchEmployees = async () => {
+      try {
+        const res = await axios.get(`${API_URL}/employees`);
+        setEmployees(res.data);
+      } catch (error) {
+        console.error("Error fetching employees:", error);
+      }
+    };
+    fetchEmployees();
+  }, []);
+
+  // Fetch attendance records for employees
+  useEffect(() => {
+    const fetchAttendance = async () => {
+      try {
+        const res = await axios.get(`${API_URL}/attendance`);
+        setAttendanceData(res.data);
+      } catch (error) {
+        toast.error("Failed to load attendance");
+      }
+    };
+    fetchAttendance();
+  }, []);
+
+  // Edit Employee form state
+  const [editForm, setEditForm] = useState({
+    firstName: "",
+    lastName: "",
+    email: "",
+    phone: "",
+    role: "",
+    department: "",
+    basicSalary: "",
+    bankAccount: "",
+  });
+
+  // Handle Edit button click
+  const handleEditClick = (employee) => {
+    setEditEmployee(employee);
+    setEditForm({
+      firstName: employee.firstName,
+      lastName: employee.lastName,
+      email: employee.email,
+      phone: employee.phone,
+      role: employee.role,
+      department: employee.department,
+      basicSalary: employee.basicSalary,
+      bankAccount: employee.bankAccount,
+    });
+  };
+
+  // Handle Edit Save (PUT API call)
+  const handleEditSave = async () => {
+    try {
+      const res = await axios.put(
+        `${API_URL}/employees/${editEmployee._id || editEmployee.id}`,
+        {
+          ...editForm,
+          basicSalary: parseFloat(editForm.basicSalary),
+        }
+      );
+      setEmployees((prev) =>
+        prev.map((emp) =>
+          (emp._id || emp.id) === (editEmployee._id || editEmployee.id)
+            ? res.data
+            : emp
+        )
+      );
+      setEditEmployee(null);
+      toast.success("Employee updated successfully!");
+    } catch (error) {
+      toast.error(error.response?.data?.message || "Failed to update employee");
+    }
+  };
+
+  // Handle Delete (DELETE API call)
+  const handleDeleteEmployee = async (id) => {
+    if (window.confirm("Are you sure you want to delete this employee?")) {
+      try {
+        await axios.delete(`${API_URL}/employees/${id}`);
+        setEmployees((prev) =>
+          prev.filter((emp) => (emp._id || emp.id) !== id)
+        );
+        toast.success("Employee deleted successfully!");
+      } catch (error) {
+        toast.error(
+          error.response?.data?.message || "Failed to delete employee"
+        );
+      }
+    }
+  };
+
   const handleAddEmployee = async () => {
     try {
-      const newEmployee = {
-        id: (employees.length + 1).toString(),
-        ...employeeForm,
-        basicSalary: parseFloat(employeeForm.basicSalary),
-        hireDate: new Date().toISOString().split("T")[0],
-        isActive: true,
-      };
-
-      setEmployees((prev) => [...prev, newEmployee]);
+      const res = await axios.post(`${API_URL}/employees`, employeeForm);
+      setEmployees((prev) => [...prev, res.data]);
       setIsAddEmployeeModalOpen(false);
       setEmployeeForm({
         firstName: "",
@@ -295,7 +347,7 @@ const Payroll = () => {
       });
       toast.success("Employee added successfully!");
     } catch (error) {
-      toast.error("Failed to add employee");
+      toast.error(error.response?.data?.message || "Failed to add employee");
     }
   };
 
@@ -385,6 +437,54 @@ const Payroll = () => {
         return <XCircle size={16} />;
       default:
         return null;
+    }
+  };
+
+  //  Mark Attendance Modal State
+  const [isMarkAttendanceModalOpen, setIsMarkAttendanceModalOpen] =
+    useState(false);
+  const [attendanceForm, setAttendanceForm] = useState({
+    employeeId: "",
+    date: new Date().toISOString().slice(0, 10),
+    checkIn: "",
+    checkOut: "",
+    status: "",
+  });
+  const [attendanceErrors, setAttendanceErrors] = useState({});
+
+  const validateAttendance = () => {
+    const errors = {};
+    if (!attendanceForm.employeeId) errors.employeeId = "Employee is required";
+    if (!attendanceForm.checkIn) errors.checkIn = "Check-in time is required";
+    if (!attendanceForm.status) errors.status = "Status is required";
+    return errors;
+  };
+
+  const handleMarkAttendance = async () => {
+    const errors = validateAttendance();
+    setAttendanceErrors(errors);
+    if (Object.keys(errors).length > 0) return;
+
+    try {
+      // Optional: calculate hoursWorked, overtimeHours here if needed
+      const payload = {
+        ...attendanceForm,
+        hoursWorked: 0, // You can calculate based on checkIn/checkOut
+        overtimeHours: 0,
+      };
+      const res = await axios.post(`${API_URL}/attendance`, payload);
+      setAttendanceData((prev) => [...prev, res.data]);
+      setIsMarkAttendanceModalOpen(false);
+      setAttendanceForm({
+        employeeId: "",
+        date: new Date().toISOString().slice(0, 10),
+        checkIn: "",
+        checkOut: "",
+        status: "",
+      });
+      toast.success("Attendance marked successfully!");
+    } catch (error) {
+      toast.error(error.response?.data?.message || "Failed to mark attendance");
     }
   };
 
@@ -479,7 +579,7 @@ const Payroll = () => {
               <p className="text-sm font-medium text-gray-600">
                 Monthly Payroll
               </p>
-              <p className="text-2xl font-bold text-gray-800">$32,500</p>
+              <p className="text-2xl font-bold text-gray-800">LKR 32,500</p>
             </div>
             <div className="rounded-full p-3 bg-purple-100">
               <DollarSign size={20} className="text-purple-700" />
@@ -491,7 +591,7 @@ const Payroll = () => {
       {/* Tab Navigation */}
       <div className="bg-white rounded-xl shadow-sm">
         <div className="border-b border-gray-200">
-          <nav className="flex space-x-8 px-6">
+          <nav className="flex gap-5 flex-wrap md:flex-nowrap space-x-0 md:space-x-8 space-y-2 md:space-y-0 px-2 md:px-6 overflow-x-auto">
             {[
               {
                 id: "employees",
@@ -530,7 +630,7 @@ const Payroll = () => {
           </nav>
         </div>
 
-        <div className="p-6">
+        <div className="p-6 ">
           {/* Employees Tab */}
           {activeTab === "employees" && (
             <div className="space-y-6">
@@ -605,7 +705,7 @@ const Payroll = () => {
                           {employee.department}
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                          ${employee.basicSalary.toLocaleString()}
+                          LKR {employee.basicSalary.toLocaleString()}
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
                           <span
@@ -620,13 +720,29 @@ const Payroll = () => {
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                           <div className="flex items-center justify-end space-x-2">
-                            <button className="text-blue-600 hover:text-blue-900 p-1 rounded hover:bg-blue-50">
+                            <button
+                              className="text-blue-600 hover:text-blue-900 p-1 rounded hover:bg-blue-50"
+                              onClick={() => setViewEmployee(employee)}
+                              title="View"
+                            >
                               <Eye size={16} />
                             </button>
-                            <button className="text-green-600 hover:text-green-900 p-1 rounded hover:bg-green-50">
+                            <button
+                              className="text-green-600 hover:text-green-900 p-1 rounded hover:bg-green-50"
+                              onClick={() => handleEditClick(employee)}
+                              title="Edit"
+                            >
                               <Edit size={16} />
                             </button>
-                            <button className="text-red-600 hover:text-red-900 p-1 rounded hover:bg-red-50">
+                            <button
+                              className="text-red-600 hover:text-red-900 p-1 rounded hover:bg-red-50"
+                              onClick={() =>
+                                handleDeleteEmployee(
+                                  employee._id || employee.id
+                                )
+                              }
+                              title="Delete"
+                            >
                               <Trash2 size={16} />
                             </button>
                           </div>
@@ -636,6 +752,157 @@ const Payroll = () => {
                   </tbody>
                 </table>
               </div>
+
+              {/* View Employee Modal */}
+              <Modal
+                isOpen={!!viewEmployee}
+                onClose={() => setViewEmployee(null)}
+                title="Employee Details"
+              >
+                {viewEmployee && (
+                  <div className="space-y-2">
+                    <div>
+                      <b>Name:</b> {viewEmployee.firstName}{" "}
+                      {viewEmployee.lastName}
+                    </div>
+                    <div>
+                      <b>Email:</b> {viewEmployee.email}
+                    </div>
+                    <div>
+                      <b>Phone:</b> {viewEmployee.phone}
+                    </div>
+                    <div>
+                      <b>Role:</b> {viewEmployee.role}
+                    </div>
+                    <div>
+                      <b>Department:</b> {viewEmployee.department}
+                    </div>
+                    <div>
+                      <b>Basic Salary:</b> LKR {viewEmployee.basicSalary}
+                    </div>
+                    <div>
+                      <b>Status:</b>{" "}
+                      {viewEmployee.isActive ? "Active" : "Inactive"}
+                    </div>
+                    <div>
+                      <b>Bank Account:</b> {viewEmployee.bankAccount}
+                    </div>
+                  </div>
+                )}
+              </Modal>
+
+              {/* Edit Employee Modal */}
+              <Modal
+                isOpen={!!editEmployee}
+                onClose={() => setEditEmployee(null)}
+                title="Edit Employee"
+              >
+                <div className="space-y-4">
+                  <Input
+                    label="First Name"
+                    value={editForm.firstName}
+                    onChange={(e) =>
+                      setEditForm((prev) => ({
+                        ...prev,
+                        firstName: e.target.value,
+                      }))
+                    }
+                  />
+                  <Input
+                    label="Last Name"
+                    value={editForm.lastName}
+                    onChange={(e) =>
+                      setEditForm((prev) => ({
+                        ...prev,
+                        lastName: e.target.value,
+                      }))
+                    }
+                  />
+                  <Input
+                    label="Email"
+                    value={editForm.email}
+                    onChange={(e) =>
+                      setEditForm((prev) => ({
+                        ...prev,
+                        email: e.target.value,
+                      }))
+                    }
+                  />
+                  <Input
+                    label="Phone"
+                    value={editForm.phone}
+                    onChange={(e) =>
+                      setEditForm((prev) => ({
+                        ...prev,
+                        phone: e.target.value,
+                      }))
+                    }
+                  />
+                  <Select
+                    label="Role"
+                    value={editForm.role}
+                    onChange={(e) =>
+                      setEditForm((prev) => ({ ...prev, role: e.target.value }))
+                    }
+                    options={[
+                      { value: "", label: "Select Role" },
+                      {
+                        value: "Senior Technician",
+                        label: "Senior Technician",
+                      },
+                      { value: "Technician", label: "Technician" },
+                      { value: "Front Desk", label: "Front Desk" },
+                      { value: "Manager", label: "Manager" },
+                    ]}
+                  />
+                  <Select
+                    label="Department"
+                    value={editForm.department}
+                    onChange={(e) =>
+                      setEditForm((prev) => ({
+                        ...prev,
+                        department: e.target.value,
+                      }))
+                    }
+                    options={[
+                      { value: "", label: "Select Department" },
+                      { value: "Service", label: "Service" },
+                      { value: "Customer Service", label: "Customer Service" },
+                      { value: "Management", label: "Management" },
+                    ]}
+                  />
+                  <Input
+                    label="Basic Salary"
+                    type="number"
+                    value={editForm.basicSalary}
+                    onChange={(e) =>
+                      setEditForm((prev) => ({
+                        ...prev,
+                        basicSalary: e.target.value,
+                      }))
+                    }
+                  />
+                  <Input
+                    label="Bank Account"
+                    value={editForm.bankAccount}
+                    onChange={(e) =>
+                      setEditForm((prev) => ({
+                        ...prev,
+                        bankAccount: e.target.value,
+                      }))
+                    }
+                  />
+                  <div className="flex justify-end space-x-3 pt-4">
+                    <Button
+                      variant="secondary"
+                      onClick={() => setEditEmployee(null)}
+                    >
+                      Cancel
+                    </Button>
+                    <Button onClick={handleEditSave}>Save Changes</Button>
+                  </div>
+                </div>
+              </Modal>
             </div>
           )}
 
@@ -651,11 +918,103 @@ const Payroll = () => {
                     <Download size={16} className="mr-2" />
                     Export
                   </Button>
-                  <Button>
+                  <Button onClick={() => setIsMarkAttendanceModalOpen(true)}>
                     <Plus size={16} className="mr-2" />
                     Mark Attendance
                   </Button>
                 </div>
+
+                {/* Mark Attendance Modal */}
+                <Modal
+                  isOpen={isMarkAttendanceModalOpen}
+                  onClose={() => setIsMarkAttendanceModalOpen(false)}
+                  title="Mark Attendance"
+                >
+                  <div className="space-y-4">
+                    <Select
+                      label="Employee"
+                      value={attendanceForm.employeeId}
+                      onChange={(e) =>
+                        setAttendanceForm((prev) => ({
+                          ...prev,
+                          employeeId: e.target.value,
+                        }))
+                      }
+                      options={[
+                        { value: "", label: "Select Employee" },
+                        ...employees.map((emp) => ({
+                          value: emp._id || emp.id,
+                          label: `${emp.firstName} ${emp.lastName}`,
+                        })),
+                      ]}
+                      error={attendanceErrors.employeeId}
+                      required
+                    />
+                    <Input
+                      label="Date"
+                      type="date"
+                      value={attendanceForm.date}
+                      onChange={(e) =>
+                        setAttendanceForm((prev) => ({
+                          ...prev,
+                          date: e.target.value,
+                        }))
+                      }
+                      required
+                    />
+                    <Input
+                      label="Check In"
+                      type="time"
+                      value={attendanceForm.checkIn}
+                      onChange={(e) =>
+                        setAttendanceForm((prev) => ({
+                          ...prev,
+                          checkIn: e.target.value,
+                        }))
+                      }
+                      error={attendanceErrors.checkIn}
+                      required
+                    />
+                    <Input
+                      label="Check Out"
+                      type="time"
+                      value={attendanceForm.checkOut}
+                      onChange={(e) =>
+                        setAttendanceForm((prev) => ({
+                          ...prev,
+                          checkOut: e.target.value,
+                        }))
+                      }
+                    />
+                    <Select
+                      label="Status"
+                      value={attendanceForm.status}
+                      onChange={(e) =>
+                        setAttendanceForm((prev) => ({
+                          ...prev,
+                          status: e.target.value,
+                        }))
+                      }
+                      options={[
+                        { value: "", label: "Select Status" },
+                        { value: "present", label: "Present" },
+                        { value: "late", label: "Late" },
+                        { value: "absent", label: "Absent" },
+                      ]}
+                      error={attendanceErrors.status}
+                      required
+                    />
+                    <div className="flex justify-end space-x-3 pt-4">
+                      <Button
+                        variant="secondary"
+                        onClick={() => setIsMarkAttendanceModalOpen(false)}
+                      >
+                        Cancel
+                      </Button>
+                      <Button onClick={handleMarkAttendance}>Submit</Button>
+                    </div>
+                  </div>
+                </Modal>
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
@@ -715,7 +1074,11 @@ const Payroll = () => {
                   <tbody className="bg-white divide-y divide-gray-200">
                     {attendanceData.map((attendance) => {
                       const employee = employees.find(
-                        (emp) => emp.id === attendance.employeeId
+                        (emp) =>
+                          (emp._id || emp.id) ===
+                          (attendance.employeeId._id ||
+                            attendance.employeeId ||
+                            attendance.employeeId.id)
                       );
                       return (
                         <tr key={attendance.id} className="hover:bg-gray-50">
@@ -887,19 +1250,25 @@ const Payroll = () => {
                 <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                   <div>
                     <p className="text-sm text-blue-600">Total Basic Salary</p>
-                    <p className="text-xl font-bold text-blue-800">$32,500</p>
+                    <p className="text-xl font-bold text-blue-800">
+                      LKR 32,500
+                    </p>
                   </div>
                   <div>
                     <p className="text-sm text-blue-600">Total Overtime</p>
-                    <p className="text-xl font-bold text-blue-800">$2,150</p>
+                    <p className="text-xl font-bold text-blue-800">LKR 2,150</p>
                   </div>
                   <div>
-                    <p className="text-sm text-blue-600">Total Deductions</p>
-                    <p className="text-xl font-bold text-blue-800">$3,200</p>
+                    <p className="text-sm text-blue-600">
+                      Total Advance Payment
+                    </p>
+                    <p className="text-xl font-bold text-blue-800">LKR 3,200</p>
                   </div>
                   <div>
                     <p className="text-sm text-blue-600">Net Payroll</p>
-                    <p className="text-xl font-bold text-blue-800">$31,450</p>
+                    <p className="text-xl font-bold text-blue-800">
+                      LKR 31,450
+                    </p>
                   </div>
                 </div>
               </div>
@@ -918,7 +1287,7 @@ const Payroll = () => {
                         Overtime
                       </th>
                       <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Deductions
+                        Advance Payment
                       </th>
                       <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                         Net Salary
@@ -949,16 +1318,16 @@ const Payroll = () => {
                             </div>
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                            ${employee.basicSalary.toLocaleString()}
+                            LKR {employee.basicSalary.toLocaleString()}
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                            ${overtime}
+                            LKR {overtime}
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                            ${deductions.toFixed(0)}
+                            LKR {deductions.toFixed(0)}
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                            ${netSalary.toFixed(0)}
+                            LKR {netSalary.toFixed(0)}
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap">
                             <span className="px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">
