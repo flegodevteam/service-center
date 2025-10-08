@@ -65,6 +65,7 @@ app.use("/api/test", require("./routes/testRoutes"));
 app.use("/api/employees", require("./routes/employeeRoutes"));
 app.use("/api/attendance", require("./routes/attendanceRoutes"));
 app.use("/api/leaves", require("./routes/leaveRoutes"));
+app.use("/api/payrolls", require("./routes/payrollRoutes"));
 
 // Error Handler
 app.use(errorHandler);
