@@ -26,6 +26,7 @@ import { Loader } from "lucide-react";
 import axios from "axios";
 import { API_URL } from "../api/api";
 import { useEffect } from "react";
+import { useAuth } from "../context/AuthContext";
 
 const attendanceData = [
   {
@@ -203,7 +204,36 @@ const Select = ({ label, error, options, className = "", ...props }) => (
 );
 
 const Payroll = () => {
-  const [activeTab, setActiveTab] = useState("employees");
+  const { user } = useAuth(); // Get the authenticated user
+  const allTabs = [
+    {
+      id: "employees",
+      label: "Employees",
+      icon: <Users size={20} />,
+      roles: ["admin"], // Only admin
+    },
+    {
+      id: "attendance",
+      label: "Attendance",
+      icon: <Clock size={20} />,
+      roles: ["admin"], // Only admin
+    },
+    {
+      id: "leaves",
+      label: "Leave Management",
+      icon: <Calendar size={20} />,
+      roles: ["admin", "manager", "technician", "front-desk"], // All
+    },
+    {
+      id: "payroll",
+      label: "Payroll",
+      icon: <DollarSign size={20} />,
+      roles: ["admin"], // Only admin
+    },
+  ];
+
+  const tabs = allTabs.filter((tab) => user && tab.roles.includes(user.role));
+  const [activeTab, setActiveTab] = useState(tabs[0]?.id || "");
 
   const [searchTerm, setSearchTerm] = useState("");
   const [isAddEmployeeModalOpen, setIsAddEmployeeModalOpen] = useState(false);
@@ -236,6 +266,126 @@ const Payroll = () => {
 
   const [attendanceData, setAttendanceData] = useState([]);
 
+  // New payroll form + entries state
+  const [payrollForm, setPayrollForm] = useState({
+    employeeId: "",
+    overtimeHours: 0,
+    overtimeRate: 0,
+    transportAllowance: 0,
+    mealAllowance: 0,
+    accommodationAllowance: 0,
+    medicalAllowance: 0,
+    otherAllowance: 0,
+    deductions: 0,
+  });
+
+  const [payrollEntries, setPayrollEntries] = useState([]);
+
+  // compute payroll summary helper
+  const computePayrollFor = (emp, form) => {
+    const basic = Number(emp.basicSalary || 0);
+    const overtimeHours = Number(form.overtimeHours || 0);
+    const overtimeRate = Number(form.overtimeRate || 0);
+    const transport = Number(form.transportAllowance || 0);
+    const meal = Number(form.mealAllowance || 0);
+    const accom = Number(form.accommodationAllowance || 0);
+    const medical = Number(form.medicalAllowance || 0);
+    const other = Number(form.otherAllowance || 0);
+    const deductions = Number(form.deductions || 0);
+
+    const totalAllowances = transport + meal + accom + medical + other;
+    const overtimePay = overtimeHours * overtimeRate;
+    const grossSalary = basic + totalAllowances + overtimePay;
+
+    const employeeEPF = basic * 0.08;
+    const employerEPF = basic * 0.12;
+    const employerETF = basic * 0.03;
+
+    const netSalary = grossSalary - employeeEPF - deductions;
+
+    return {
+      id: `${emp._id || emp.id}-${Date.now()}`,
+      employeeId: emp._id || emp.id,
+      name: `${emp.firstName} ${emp.lastName}`,
+      role: emp.role,
+      basic,
+      totalAllowances,
+      overtimeHours,
+      overtimeRate,
+      overtimePay,
+      grossSalary,
+      employeeEPF,
+      employerEPF,
+      employerETF,
+      deductions,
+      netSalary,
+      status: "Processed",
+    };
+  };
+
+  const handleAddToPayroll = async () => {
+    if (!payrollForm.employeeId) {
+      toast.error("Please select an employee");
+      return;
+    }
+    const emp = employees.find(
+      (e) => (e._id || e.id) === payrollForm.employeeId
+    );
+    if (!emp) {
+      toast.error("Selected employee not found");
+      return;
+    }
+
+    try {
+      // send to backend which will compute & persist
+      const payload = {
+        employeeId: payrollForm.employeeId,
+        overtimeHours: payrollForm.overtimeHours,
+        overtimeRate: payrollForm.overtimeRate,
+        transportAllowance: payrollForm.transportAllowance,
+        mealAllowance: payrollForm.mealAllowance,
+        accommodationAllowance: payrollForm.accommodationAllowance,
+        medicalAllowance: payrollForm.medicalAllowance,
+        otherAllowance: payrollForm.otherAllowance,
+        deductions: payrollForm.deductions,
+      };
+      const res = await axios.post(`${API_URL}/payrolls`, payload);
+      setPayrollEntries((prev) => [res.data, ...prev]);
+      toast.success("Added to payroll");
+      setPayrollForm((prev) => ({
+        ...prev,
+        overtimeHours: 0,
+        overtimeRate: 0,
+        transportAllowance: 0,
+        mealAllowance: 0,
+        accommodationAllowance: 0,
+        medicalAllowance: 0,
+        otherAllowance: 0,
+        deductions: 0,
+      }));
+    } catch (err) {
+      console.error(err);
+      toast.error("Failed to add to payroll");
+    }
+  };
+
+  const handleRemovePayrollEntry = async (id) => {
+    try {
+      await axios.delete(`${API_URL}/payrolls/${id}`);
+      setPayrollEntries((prev) => prev.filter((p) => (p._id || p.id) !== id));
+      toast.success("Removed from payroll");
+    } catch (err) {
+      console.error(err);
+      toast.error("Failed to remove payroll entry");
+    }
+  };
+
+  useEffect(() => {
+    if (tabs.length > 0) {
+      setActiveTab(tabs[0].id);
+    }
+  }, [user, tabs.length]);
+
   // Fetch employees from backend
   useEffect(() => {
     const fetchEmployees = async () => {
@@ -260,6 +410,33 @@ const Payroll = () => {
       }
     };
     fetchAttendance();
+  }, []);
+
+  // Fetch leaves for employees
+  useEffect(() => {
+    const fetchLeaves = async () => {
+      try {
+        const res = await axios.get(`${API_URL}/leaves`);
+        setLeaves(res.data);
+      } catch (error) {
+        toast.error("Failed to load leaves");
+      }
+    };
+    fetchLeaves();
+  }, []);
+
+  // Fetch payroll entries
+  useEffect(() => {
+    // fetch saved payroll entries from backend
+    const fetchPayrolls = async () => {
+      try {
+        const res = await axios.get(`${API_URL}/payrolls`);
+        setPayrollEntries(res.data || []);
+      } catch (err) {
+        console.error("Failed to fetch payrolls", err);
+      }
+    };
+    fetchPayrolls();
   }, []);
 
   // Edit Employee form state
@@ -353,7 +530,6 @@ const Payroll = () => {
 
   const handleAddLeave = async () => {
     try {
-      const employee = employees.find((emp) => emp.id === leaveForm.employeeId);
       const startDate = new Date(leaveForm.startDate);
       const endDate = new Date(leaveForm.endDate);
       const days =
@@ -361,18 +537,18 @@ const Payroll = () => {
           (endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24)
         ) + 1;
 
-      const newLeave = {
-        id: (leaves.length + 1).toString(),
+      const payload = {
         ...leaveForm,
-        employeeName: employee
-          ? `${employee.firstName} ${employee.lastName}`
-          : "",
         days,
-        status: "pending",
         appliedDate: new Date().toISOString().split("T")[0],
+        otherLeaveType:
+          leaveForm.leaveType === "other"
+            ? leaveForm.otherLeaveType
+            : undefined,
       };
 
-      setLeaves((prev) => [...prev, newLeave]);
+      const res = await axios.post(`${API_URL}/leaves`, payload);
+      setLeaves((prev) => [...prev, res.data]);
       setIsAddLeaveModalOpen(false);
       setLeaveForm({
         employeeId: "",
@@ -380,29 +556,38 @@ const Payroll = () => {
         startDate: "",
         endDate: "",
         reason: "",
+        otherLeaveType: "",
       });
       toast.success("Leave application submitted!");
     } catch (error) {
-      toast.error("Failed to submit leave application");
+      toast.error(
+        error.response?.data?.message || "Failed to submit leave application"
+      );
     }
   };
 
-  const handleApproveLeave = (leaveId) => {
-    setLeaves((prev) =>
-      prev.map((leave) =>
-        leave.id === leaveId ? { ...leave, status: "approved" } : leave
-      )
-    );
-    toast.success("Leave approved!");
+  const handleApproveLeave = async (leaveId) => {
+    try {
+      const res = await axios.put(`${API_URL}/leaves/${leaveId}/approve`);
+      setLeaves((prev) =>
+        prev.map((leave) => (leave._id === leaveId ? res.data : leave))
+      );
+      toast.success("Leave approved!");
+    } catch (error) {
+      toast.error("Failed to approve leave");
+    }
   };
 
-  const handleRejectLeave = (leaveId) => {
-    setLeaves((prev) =>
-      prev.map((leave) =>
-        leave.id === leaveId ? { ...leave, status: "rejected" } : leave
-      )
-    );
-    toast.success("Leave rejected!");
+  const handleRejectLeave = async (leaveId) => {
+    try {
+      const res = await axios.put(`${API_URL}/leaves/${leaveId}/reject`);
+      setLeaves((prev) =>
+        prev.map((leave) => (leave._id === leaveId ? res.data : leave))
+      );
+      toast.success("Leave rejected!");
+    } catch (error) {
+      toast.error("Failed to reject leave");
+    }
   };
 
   const getStatusColor = (status) => {
@@ -592,28 +777,7 @@ const Payroll = () => {
       <div className="bg-white rounded-xl shadow-sm">
         <div className="border-b border-gray-200">
           <nav className="flex gap-5 flex-wrap md:flex-nowrap space-x-0 md:space-x-8 space-y-2 md:space-y-0 px-2 md:px-6 overflow-x-auto">
-            {[
-              {
-                id: "employees",
-                label: "Employees",
-                icon: <Users size={20} />,
-              },
-              {
-                id: "attendance",
-                label: "Attendance",
-                icon: <Clock size={20} />,
-              },
-              {
-                id: "leaves",
-                label: "Leave Management",
-                icon: <Calendar size={20} />,
-              },
-              {
-                id: "payroll",
-                label: "Payroll",
-                icon: <DollarSign size={20} />,
-              },
-            ].map((tab) => (
+            {tabs.map((tab) => (
               <button
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id)}
@@ -1156,16 +1320,19 @@ const Payroll = () => {
                         Status
                       </th>
                       <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Actions
+                        {user?.role === "admin" && "Actions"}
                       </th>
                     </tr>
                   </thead>
                   <tbody className="bg-white divide-y divide-gray-200">
                     {leaves.map((leave) => (
-                      <tr key={leave.id} className="hover:bg-gray-50">
+                      <tr key={leave._id} className="hover:bg-gray-50">
                         <td className="px-6 py-4 whitespace-nowrap">
                           <div className="text-sm font-medium text-gray-900">
-                            {leave.employeeName}
+                            {leave.employeeId &&
+                            typeof leave.employeeId === "object"
+                              ? `${leave.employeeId.firstName} ${leave.employeeId.lastName}`
+                              : "Unknown"}
                           </div>
                           <div className="text-sm text-gray-500">
                             Applied: {leave.appliedDate}
@@ -1202,22 +1369,23 @@ const Payroll = () => {
                           </span>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                          {leave.status === "pending" && (
-                            <div className="flex items-center justify-end space-x-2">
-                              <button
-                                onClick={() => handleApproveLeave(leave.id)}
-                                className="text-green-600 hover:text-green-900 px-2 py-1 rounded border border-green-200 hover:bg-green-50"
-                              >
-                                Approve
-                              </button>
-                              <button
-                                onClick={() => handleRejectLeave(leave.id)}
-                                className="text-red-600 hover:text-red-900 px-2 py-1 rounded border border-red-200 hover:bg-red-50"
-                              >
-                                Reject
-                              </button>
-                            </div>
-                          )}
+                          {user?.role === "admin" &&
+                            leave.status === "pending" && (
+                              <div className="flex items-center justify-end space-x-2">
+                                <button
+                                  onClick={() => handleApproveLeave(leave._id)}
+                                  className="text-green-600 hover:text-green-900 px-2 py-1 rounded border border-green-200 hover:bg-green-50"
+                                >
+                                  Approve
+                                </button>
+                                <button
+                                  onClick={() => handleRejectLeave(leave._id)}
+                                  className="text-red-600 hover:text-red-900 px-2 py-1 rounded border border-red-200 hover:bg-red-50"
+                                >
+                                  Reject
+                                </button>
+                              </div>
+                            )}
                         </td>
                       </tr>
                     ))}
@@ -1243,36 +1411,245 @@ const Payroll = () => {
                 </div>
               </div>
 
-              <div className="bg-blue-50 rounded-lg p-6">
-                <h4 className="text-lg font-semibold text-blue-800 mb-4">
-                  June 2024 Payroll Summary
-                </h4>
-                <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                  <div>
-                    <p className="text-sm text-blue-600">Total Basic Salary</p>
-                    <p className="text-xl font-bold text-blue-800">
-                      LKR 32,500
-                    </p>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                {/* Left: form */}
+                <div className="md:col-span-2 bg-white rounded-lg p-6">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <Select
+                      label="Employee"
+                      value={payrollForm.employeeId}
+                      onChange={(e) =>
+                        setPayrollForm((prev) => ({
+                          ...prev,
+                          employeeId: e.target.value,
+                        }))
+                      }
+                      options={[
+                        { value: "", label: "Select Employee" },
+                        ...employees.map((emp) => ({
+                          value: emp._id || emp.id,
+                          label: `${emp.firstName} ${emp.lastName}`,
+                        })),
+                      ]}
+                    />
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700">
+                        Basic Salary (LKR)
+                      </label>
+                      <input
+                        value={(() => {
+                          const emp = employees.find(
+                            (e) => (e._id || e.id) === payrollForm.employeeId
+                          );
+                          return emp ? emp.basicSalary : "";
+                        })()}
+                        readOnly
+                        className="w-full rounded-lg border border-gray-300 py-2 px-3 bg-gray-50"
+                      />
+                    </div>
                   </div>
-                  <div>
-                    <p className="text-sm text-blue-600">Total Overtime</p>
-                    <p className="text-xl font-bold text-blue-800">LKR 2,150</p>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+                    <Input
+                      label="Overtime Hours"
+                      type="number"
+                      value={payrollForm.overtimeHours}
+                      onChange={(e) =>
+                        setPayrollForm((prev) => ({
+                          ...prev,
+                          overtimeHours: e.target.value,
+                        }))
+                      }
+                    />
+                    <Input
+                      label="Overtime Rate (per hour)"
+                      type="number"
+                      value={payrollForm.overtimeRate}
+                      onChange={(e) =>
+                        setPayrollForm((prev) => ({
+                          ...prev,
+                          overtimeRate: e.target.value,
+                        }))
+                      }
+                    />
                   </div>
-                  <div>
-                    <p className="text-sm text-blue-600">
-                      Total Advance Payment
-                    </p>
-                    <p className="text-xl font-bold text-blue-800">LKR 3,200</p>
+
+                  <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <Input
+                      label="Transport Allowance"
+                      type="number"
+                      value={payrollForm.transportAllowance}
+                      onChange={(e) =>
+                        setPayrollForm((prev) => ({
+                          ...prev,
+                          transportAllowance: e.target.value,
+                        }))
+                      }
+                    />
+                    <Input
+                      label="Meal Allowance"
+                      type="number"
+                      value={payrollForm.mealAllowance}
+                      onChange={(e) =>
+                        setPayrollForm((prev) => ({
+                          ...prev,
+                          mealAllowance: e.target.value,
+                        }))
+                      }
+                    />
+                    <Input
+                      label="Accommodation Allowance"
+                      type="number"
+                      value={payrollForm.accommodationAllowance}
+                      onChange={(e) =>
+                        setPayrollForm((prev) => ({
+                          ...prev,
+                          accommodationAllowance: e.target.value,
+                        }))
+                      }
+                    />
+                    <Input
+                      label="Medical Allowance"
+                      type="number"
+                      value={payrollForm.medicalAllowance}
+                      onChange={(e) =>
+                        setPayrollForm((prev) => ({
+                          ...prev,
+                          medicalAllowance: e.target.value,
+                        }))
+                      }
+                    />
+                    <Input
+                      label="Other Allowance"
+                      type="number"
+                      value={payrollForm.otherAllowance}
+                      onChange={(e) =>
+                        setPayrollForm((prev) => ({
+                          ...prev,
+                          otherAllowance: e.target.value,
+                        }))
+                      }
+                    />
+                    <Input
+                      label="Deductions"
+                      type="number"
+                      value={payrollForm.deductions}
+                      onChange={(e) =>
+                        setPayrollForm((prev) => ({
+                          ...prev,
+                          deductions: e.target.value,
+                        }))
+                      }
+                    />
                   </div>
-                  <div>
-                    <p className="text-sm text-blue-600">Net Payroll</p>
-                    <p className="text-xl font-bold text-blue-800">
-                      LKR 31,450
-                    </p>
+
+                  <div className="flex justify-end space-x-3 pt-4">
+                    <Button variant="secondary">Reset</Button>
+                    <Button onClick={handleAddToPayroll}>Add to Payroll</Button>
                   </div>
+                </div>
+
+                {/* Right: summary box */}
+                <div className="bg-white rounded-lg p-6">
+                  <h4 className="text-lg font-semibold mb-3">
+                    Salary Summary & Contributions
+                  </h4>
+                  {(() => {
+                    const emp = employees.find(
+                      (e) => (e._id || e.id) === payrollForm.employeeId
+                    );
+                    if (!emp) {
+                      return (
+                        <p className="text-sm text-gray-500">
+                          Select an employee to see summary
+                        </p>
+                      );
+                    }
+                    const summary = computePayrollFor(emp, payrollForm);
+                    return (
+                      <div className="space-y-4">
+                        <div className="bg-blue-50 p-3 rounded">
+                          <div className="flex justify-between">
+                            <div className="text-sm text-blue-700">
+                              Basic Salary:
+                            </div>
+                            <div className="font-medium">
+                              LKR {summary.basic.toLocaleString()}
+                            </div>
+                          </div>
+                          <div className="flex justify-between mt-2">
+                            <div className="text-sm text-blue-700">
+                              Total Allowances:
+                            </div>
+                            <div className="font-medium">
+                              LKR {summary.totalAllowances.toLocaleString()}
+                            </div>
+                          </div>
+                          <div className="flex justify-between mt-2">
+                            <div className="text-sm text-blue-700">
+                              Overtime:
+                            </div>
+                            <div className="font-medium">
+                              LKR {summary.overtimePay.toLocaleString()}
+                            </div>
+                          </div>
+                          <div className="flex justify-between mt-3 border-t pt-3">
+                            <div className="text-sm text-blue-800 font-semibold">
+                              Gross Salary
+                            </div>
+                            <div className="font-bold">
+                              LKR{" "}
+                              {Math.round(summary.grossSalary).toLocaleString()}
+                            </div>
+                          </div>
+                        </div>
+
+                        <div className="bg-green-50 p-3 rounded">
+                          <div className="flex justify-between">
+                            <div className="text-sm text-green-700">
+                              Employee EPF (8%):
+                            </div>
+                            <div className="font-medium">
+                              - LKR{" "}
+                              {Math.round(summary.employeeEPF).toLocaleString()}
+                            </div>
+                          </div>
+                          <div className="flex justify-between mt-2">
+                            <div className="text-sm text-green-700">
+                              Employer EPF (12%):
+                            </div>
+                            <div className="font-medium">
+                              LKR{" "}
+                              {Math.round(summary.employerEPF).toLocaleString()}
+                            </div>
+                          </div>
+                          <div className="flex justify-between mt-2">
+                            <div className="text-sm text-green-700">
+                              Employer ETF (3%):
+                            </div>
+                            <div className="font-medium">
+                              LKR{" "}
+                              {Math.round(summary.employerETF).toLocaleString()}
+                            </div>
+                          </div>
+
+                          <div className="flex justify-between mt-3 border-t pt-3">
+                            <div className="text-sm text-blue-800 font-semibold">
+                              Net Salary
+                            </div>
+                            <div className="font-bold">
+                              LKR{" "}
+                              {Math.round(summary.netSalary).toLocaleString()}
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })()}
                 </div>
               </div>
 
+              {/* Payroll entries table */}
               <div className="overflow-x-auto">
                 <table className="min-w-full divide-y divide-gray-200">
                   <thead className="bg-gray-50">
@@ -1281,19 +1658,19 @@ const Payroll = () => {
                         Employee
                       </th>
                       <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Basic Salary
+                        Basic
                       </th>
                       <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                         Overtime
                       </th>
                       <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Advance Payment
+                        Allowances
                       </th>
                       <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Net Salary
+                        Deductions
                       </th>
                       <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Status
+                        Net
                       </th>
                       <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
                         Actions
@@ -1301,47 +1678,53 @@ const Payroll = () => {
                     </tr>
                   </thead>
                   <tbody className="bg-white divide-y divide-gray-200">
-                    {employees.map((employee) => {
-                      const overtime = 150; // Mock overtime
-                      const deductions = employee.basicSalary * 0.1; // Mock deductions
-                      const netSalary =
-                        employee.basicSalary + overtime - deductions;
-
+                    {payrollEntries.map((p) => {
+                      const entryId = p._id || p.id; // <-- ensure correct id
                       return (
-                        <tr key={employee.id} className="hover:bg-gray-50">
-                          <td className="px-6 py-4 whitespace-nowrap">
-                            <div className="text-sm font-medium text-gray-900">
-                              {employee.firstName} {employee.lastName}
-                            </div>
-                            <div className="text-sm text-gray-500">
-                              {employee.role}
-                            </div>
+                        <tr key={entryId} className="hover:bg-gray-50">
+                          <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                            {p.name}
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                            LKR {employee.basicSalary.toLocaleString()}
+                            LKR {Math.round(p.basic).toLocaleString()}
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                            LKR {overtime}
+                            LKR {Math.round(p.overtimePay).toLocaleString()}
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                            LKR {deductions.toFixed(0)}
+                            LKR {Math.round(p.totalAllowances).toLocaleString()}
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                            LKR {Math.round(p.deductions).toLocaleString()}
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                            LKR {netSalary.toFixed(0)}
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap">
-                            <span className="px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">
-                              Processed
-                            </span>
+                            LKR {Math.round(p.netSalary).toLocaleString()}
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                            <button className="text-blue-600 hover:text-blue-900 px-2 py-1 rounded border border-blue-200 hover:bg-blue-50">
-                              View Payslip
-                            </button>
+                            <div className="flex items-center justify-end space-x-2">
+                              <button
+                                onClick={() =>
+                                  handleRemovePayrollEntry(entryId)
+                                }
+                                className="text-red-600 hover:text-red-900 px-2 py-1 rounded border border-red-200 hover:bg-red-50"
+                              >
+                                Remove
+                              </button>
+                            </div>
                           </td>
                         </tr>
                       );
                     })}
+                    {payrollEntries.length === 0 && (
+                      <tr>
+                        <td
+                          colSpan={7}
+                          className="px-6 py-4 text-sm text-gray-500"
+                        >
+                          No payroll entries added
+                        </td>
+                      </tr>
+                    )}
                   </tbody>
                 </table>
               </div>
@@ -1491,7 +1874,7 @@ const Payroll = () => {
             options={[
               { value: "", label: "Select Employee" },
               ...employees.map((emp) => ({
-                value: emp.id,
+                value: emp._id || emp.id,
                 label: `${emp.firstName} ${emp.lastName}`,
               })),
             ]}
@@ -1501,9 +1884,15 @@ const Payroll = () => {
           <Select
             label="Leave Type"
             value={leaveForm.leaveType}
-            onChange={(e) =>
-              setLeaveForm((prev) => ({ ...prev, leaveType: e.target.value }))
-            }
+            onChange={(e) => {
+              const value = e.target.value;
+              setLeaveForm((prev) => ({
+                ...prev,
+                leaveType: value,
+                otherLeaveType:
+                  value === "other" ? prev.otherLeaveType || "" : "", // "other" select பண்ணும்போது மட்டும் field வைத்திருக்கும்
+              }));
+            }}
             options={[
               { value: "", label: "Select Leave Type" },
               { value: "sick", label: "Sick Leave" },
@@ -1511,10 +1900,24 @@ const Payroll = () => {
               { value: "annual", label: "Annual Leave" },
               { value: "maternity", label: "Maternity Leave" },
               { value: "emergency", label: "Emergency Leave" },
+              { value: "other", label: "Other" }, // புதிய option
             ]}
             required
           />
-
+          {leaveForm.leaveType === "other" && (
+            <Input
+              label="Specify Other Leave Type"
+              value={leaveForm.otherLeaveType || ""}
+              onChange={(e) =>
+                setLeaveForm((prev) => ({
+                  ...prev,
+                  otherLeaveType: e.target.value,
+                }))
+              }
+              placeholder="Enter leave type"
+              required
+            />
+          )}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <Input
               label="Start Date"
