@@ -1,4 +1,98 @@
-import React, { useState } from "react";
+// import React from "react";
+// export default function AttendanceTab({
+//   employees,
+//   attendanceMonth,
+//   setAttendanceMonth,
+//   generateMonthTable,
+//   saveMonthAttendance,
+//   monthDays,
+//   monthlyAttendance,
+//   toggleDayStatus,
+//   attendanceData,
+//   attendanceSummary,
+// }) {
+//   return (
+//     <div className="space-y-6">
+//       <div className="flex justify-between items-center">
+//         <h3 className="text-lg font-semibold text-gray-800">Monthly Attendance</h3>
+//         <div className="flex items-center space-x-3">
+//           <label className="text-sm text-gray-600">Select month</label>
+//           <input type="month" className="rounded-lg border border-gray-300 py-2 px-3 bg-white" value={attendanceMonth} onChange={(e) => setAttendanceMonth(e.target.value)} />
+//           <button className="btn" onClick={() => generateMonthTable()}>Create Month Table</button>
+//           <button className="btn" onClick={() => saveMonthAttendance()} disabled={monthDays.length === 0}>Save Month Attendance</button>
+//         </div>
+//       </div>
+
+//       {monthDays.length === 0 ? (
+//         <div className="p-6 bg-yellow-50 rounded">
+//           <p className="text-sm text-yellow-800">Create month table to edit attendance for all employees.</p>
+//         </div>
+//       ) : (
+//         <div className="overflow-x-auto bg-white rounded-lg p-4">
+//           <table className="min-w-full table-auto">
+//             <thead>
+//               <tr>
+//                 <th className="sticky left-0 bg-white z-10 px-4 py-2 text-left border-b">Employee</th>
+//                 {monthDays.map((d) => (
+//                   <th key={d.date} className="px-2 py-2 text-xs text-center border-b" title={d.weekday}>
+//                     <div className="text-xs font-medium">{d.day}</div>
+//                     <div className="text-[10px] text-gray-500">{d.weekday}</div>
+//                   </th>
+//                 ))}
+//               </tr>
+//             </thead>
+//             <tbody>
+//               {employees.map((emp) => {
+//                 const eid = emp._id || emp.id;
+//                 return (
+//                   <tr key={eid} className="hover:bg-gray-50">
+//                     <td className="sticky left-0 bg-white z-10 px-4 py-2 text-sm font-medium border-r">{emp.firstName} {emp.lastName}</td>
+//                     {monthDays.map((d) => {
+//                       const status = (monthlyAttendance[eid] && monthlyAttendance[eid][d.date]) ? monthlyAttendance[eid][d.date] : "absent";
+//                       return (
+//                         <td key={d.date} className="px-1 py-1 text-center border">
+//                           <button onClick={() => toggleDayStatus(eid, d.date)} className={`w-8 h-8 rounded-md inline-flex items-center justify-center text-white text-xs ${status === "present" ? "bg-green-500" : "bg-red-500"}`} title={status === "present" ? "Present" : "Absent"}>
+//                             {status === "present" ? "P" : "A"}
+//                           </button>
+//                         </td>
+//                       );
+//                     })}
+//                   </tr>
+//                 );
+//               })}
+//             </tbody>
+//           </table>
+
+//           <div className="mt-4 bg-gray-50 p-3 rounded">
+//             <h4 className="text-sm font-medium text-gray-700 mb-2">Month summary</h4>
+//             <div className="overflow-x-auto">
+//               <table className="min-w-full text-sm">
+//                 <thead>
+//                   <tr className="text-left text-xs text-gray-500">
+//                     <th className="px-3 py-2">Employee</th>
+//                     <th className="px-3 py-2 text-center">Present</th>
+//                     <th className="px-3 py-2 text-center">Absent</th>
+//                   </tr>
+//                 </thead>
+//                 <tbody>
+//                   {attendanceSummary.map((row) => (
+//                     <tr key={row.employeeId} className="border-t">
+//                       <td className="px-3 py-2">{row.name}</td>
+//                       <td className="px-3 py-2 text-center">{row.present}</td>
+//                       <td className="px-3 py-2 text-center">{row.absent}</td>
+//                     </tr>
+//                   ))}
+//                 </tbody>
+//               </table>
+//             </div>
+//           </div>
+//         </div>
+//       )}
+//     </div>
+//   );
+// }
+
+import React, { useState, useEffect, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Users,
@@ -7,7 +101,6 @@ import {
   DollarSign,
   Plus,
   Search,
-  // Filter, // removed unused import
   Download,
   Eye,
   Edit,
@@ -25,31 +118,7 @@ import toast from "react-hot-toast";
 import { Loader } from "lucide-react";
 import axios from "axios";
 import { API_URL } from "../api/api";
-import { useEffect } from "react";
 import { useAuth } from "../context/AuthContext";
-
-const attendanceData = [
-  {
-    id: "1",
-    employeeId: "1",
-    date: "2024-06-15",
-    checkIn: "08:00",
-    checkOut: "17:30",
-    hoursWorked: 8.5,
-    overtimeHours: 0.5,
-    status: "present",
-  },
-  {
-    id: "2",
-    employeeId: "2",
-    date: "2024-06-15",
-    checkIn: "08:15",
-    checkOut: "17:00",
-    hoursWorked: 7.75,
-    overtimeHours: 0,
-    status: "late",
-  },
-];
 
 const leaveData = [
   {
@@ -230,6 +299,12 @@ const Payroll = () => {
       icon: <DollarSign size={20} />,
       roles: ["admin"], // Only admin
     },
+    {
+      id: "deduction",
+      label: "Deductions",
+      icon: <AlertCircle size={20} />,
+      roles: ["admin"], // Only admin
+    },
   ];
 
   const tabs = allTabs.filter((tab) => user && tab.roles.includes(user.role));
@@ -265,6 +340,162 @@ const Payroll = () => {
   const [editEmployee, setEditEmployee] = useState(null);
 
   const [attendanceData, setAttendanceData] = useState([]);
+  const [attendanceMonth, setAttendanceMonth] = useState(
+    new Date().toISOString().slice(0, 7)
+  ); // yyyy-mm
+  const [monthDays, setMonthDays] = useState([]); // [{ day: 1, date: 'YYYY-MM-DD', weekday: 'Mon' }, ...]
+  const [monthlyAttendance, setMonthlyAttendance] = useState({}); // { employeeId: { 'YYYY-MM-DD': 'present'|'absent' } }
+
+  const attendanceSummary = useMemo(() => {
+    // returns [{ employeeId, name, present, absent }]
+    if (!monthDays || monthDays.length === 0) return [];
+    return employees.map((emp) => {
+      const eid = emp._id || emp.id;
+      let present = 0;
+      let absent = 0;
+      monthDays.forEach((d) => {
+        const s = monthlyAttendance[eid] && monthlyAttendance[eid][d.date];
+        if (s === "present") present++;
+        else absent++;
+      });
+      return {
+        employeeId: eid,
+        name: `${emp.firstName} ${emp.lastName}`,
+        present,
+        absent,
+      };
+    });
+  }, [employees, monthDays, monthlyAttendance]);
+
+  const saveMonthAttendance = async () => {
+    if (!monthDays || monthDays.length === 0) {
+      toast.error("Create month table first");
+      return;
+    }
+
+    // Build payload entries
+    const entries = [];
+    Object.keys(monthlyAttendance).forEach((eid) => {
+      monthDays.forEach((d) => {
+        const status = monthlyAttendance[eid] && monthlyAttendance[eid][d.date];
+        if (!status) return; // skip undefined
+        entries.push({
+          employeeId: eid,
+          date: d.date,
+          status,
+        });
+      });
+    });
+
+    if (entries.length === 0) {
+      toast.error("No attendance data to save for this month");
+      return;
+    }
+
+    console.debug("Saving monthly attendance entries:", entries);
+
+    // Try bulk endpoint first, fallback to parallel individual posts if bulk not available
+    try {
+      // <-- bulk save -->
+      const bulkUrl = `${API_URL}/attendance/bulk`;
+      await axios.post(bulkUrl, { entries });
+      toast.success("Monthly attendance saved");
+
+      // refresh local attendance data
+      try {
+        const res = await axios.get(`${API_URL}/attendance`);
+        setAttendanceData(res.data || []);
+        setAttendanceData(res.data?.items || res.data || []);
+      } catch (e) {
+        console.warn("Failed to refresh attendance after bulk save", e);
+      }
+      return;
+    } catch (bulkErr) {
+      console.warn(
+        "Bulk attendance save failed, attempting fallback:",
+        bulkErr?.response?.data || bulkErr.message
+      );
+      // fallback: send individual upserts
+      try {
+        const results = await Promise.all(
+          entries.map((item) =>
+            axios.post(`${API_URL}/attendance`, item).catch((e) => {
+              return { __failed: true, error: e, item };
+            })
+          )
+        );
+
+        const failed = results.filter((r) => r && r.__failed);
+        if (failed.length > 0) {
+          console.error("Some attendance items failed:", failed);
+          toast.error(
+            `Failed to save ${failed.length} attendance records. Check console for details.`
+          );
+        } else {
+          toast.success("Monthly attendance saved (fallback)");
+        }
+
+        // refresh attendance data after fallback
+        try {
+          const res = await axios.get(`${API_URL}/attendance`);
+          setAttendanceData(res.data || []);
+          setAttendanceData(res.data?.items || res.data || []);
+        } catch (e) {
+          console.warn("Failed to refresh attendance after fallback save", e);
+        }
+        return;
+      } catch (fallbackErr) {
+        console.error("Fallback save also failed:", fallbackErr);
+        const serverMsg =
+          fallbackErr?.response?.data?.message ||
+          fallbackErr?.message ||
+          "Unknown error";
+        toast.error("Failed to save monthly attendance: " + serverMsg);
+        return;
+      }
+    }
+  };
+
+  const generateMonthTable = () => {
+    if (!attendanceMonth) return;
+    const [yearStr, monthStr] = attendanceMonth.split("-");
+    const year = Number(yearStr);
+    const month = Number(monthStr);
+    const daysCount = new Date(year, month, 0).getDate();
+    const days = Array.from({ length: daysCount }, (_, i) => {
+      const d = new Date(year, month - 1, i + 1);
+      return {
+        day: i + 1,
+        date: d.toISOString().split("T")[0],
+        weekday: d.toLocaleDateString(undefined, { weekday: "short" }),
+      };
+    });
+    setMonthDays(days);
+
+    // initialize monthlyAttendance using existing attendanceData when available
+    const initial = {};
+    employees.forEach((emp) => {
+      const eid = emp._id || emp.id;
+      initial[eid] = {};
+      days.forEach((dd) => {
+        const exist = attendanceData.find(
+          (a) =>
+            ((a.employeeId && (a.employeeId._id || a.employeeId)) ||
+              a.employeeId) === eid && a.date === dd.date
+        );
+        initial[eid][dd.date] = exist ? exist.status : "absent";
+      });
+    });
+    setMonthlyAttendance(initial);
+  };
+
+  const toggleDayStatus = (employeeId, date) => {
+    setMonthlyAttendance((prev) => {
+      const empObj = { ...(prev[employeeId] || {}) };
+      empObj[date] = empObj[date] === "present" ? "absent" : "present";
+      return { ...prev, [employeeId]: empObj };
+    });
+  };
 
   // New payroll form + entries state
   const [payrollForm, setPayrollForm] = useState({
@@ -279,7 +510,195 @@ const Payroll = () => {
     deductions: 0,
   });
 
+  // track if user manually edited deductions to prevent overwriting auto value
+  const [deductionsManual, setDeductionsManual] = useState(false);
+
+  // suggested EPF (show to user, do NOT auto-write into payrollForm.deductions)
+  const [suggestedEPF, setSuggestedEPF] = useState(0);
+
   const [payrollEntries, setPayrollEntries] = useState([]);
+  // Deduction (salary advance / other) state
+  const [deductionForm, setDeductionForm] = useState({
+    employeeId: "",
+    date: new Date().toISOString().slice(0, 10),
+    amount: "",
+    description: "",
+  });
+  const [deductions, setDeductions] = useState([]);
+
+  // --- START: EPF / ETF helper and state (insert here, inside Payroll component) ---
+  const computeEpfEtf = ({ basic = 0, allowances = 0 }) => {
+    const total = Number(basic || 0) + Number(allowances || 0);
+    const employeeEPF = total * 0.08; // deducted from employee salary
+    const employerEPF = total * 0.12; // employer share
+    const employerETF = total * 0.03; // employer ETF
+    return {
+      total,
+      employeeEPF,
+      employerEPF,
+      employerETF,
+    };
+  };
+
+  const [epfSummary, setEpfSummary] = useState(null);
+  // compute employee EPF (8%) based on employee basic + current allowances from payrollForm
+  const computeEmployeeEpfFromForm = (emp, form) => {
+    const basic = Number(emp?.basicSalary || 0);
+    const allowances =
+      Number(form.transportAllowance || 0) +
+      Number(form.mealAllowance || 0) +
+      Number(form.accommodationAllowance || 0) +
+      Number(form.medicalAllowance || 0) +
+      Number(form.otherAllowance || 0);
+    return Math.round((basic + allowances) * 0.08);
+  };
+
+  // Auto-fill payrollForm.deductions with Employee EPF (8%) when employee or allowance inputs change.
+  useEffect(() => {
+    if (!payrollForm.employeeId) return;
+    const emp = employees.find(
+      (e) => (e._id || e.id) === payrollForm.employeeId
+    );
+    if (!emp) return;
+
+    const epf8 = computeEmployeeEpfFromForm(emp, payrollForm);
+
+    // always update suggestion
+    setSuggestedEPF(epf8);
+
+    // auto-fill deductions only when user hasn't manually edited deductions yet
+    // *** FIX: When employee changes, reset deductionsManual to false ***
+    // So, new employee select பண்ணும்போது deductionsManual false ஆகும், auto-fill நடக்கும்
+    if (!deductionsManual) {
+      setPayrollForm((prev) => ({ ...prev, deductions: epf8 }));
+    }
+  }, [
+    payrollForm.employeeId,
+    payrollForm.transportAllowance,
+    payrollForm.mealAllowance,
+    payrollForm.accommodationAllowance,
+    payrollForm.medicalAllowance,
+    payrollForm.otherAllowance,
+    payrollForm.overtimeHours,
+    employees,
+    deductionsManual,
+  ]);
+
+  // Reset manual flag when employee changes
+  useEffect(() => {
+    setDeductionsManual(false);
+  }, [payrollForm.employeeId]);
+
+  useEffect(() => {
+    // Compute EPF/ETF when employee for deduction is selected.
+    const emp = employees.find(
+      (e) => (e._id || e.id) === deductionForm.employeeId
+    );
+    if (!emp) {
+      setEpfSummary(null);
+      return;
+    }
+
+    const allowances = emp.totalAllowances || 0; // adjust if you track allowances elsewhere
+    const summary = computeEpfEtf({ basic: emp.basicSalary || 0, allowances });
+    setEpfSummary(summary);
+
+    // Auto-fill Deduction Amount with Employee EPF (8%) when user hasn't provided an amount yet.
+    // Only set if current amount is empty or zero-like.
+    const currentAmount = deductionForm.amount;
+    if (
+      currentAmount === "" ||
+      currentAmount === null ||
+      Number(currentAmount) === 0
+    ) {
+      setDeductionForm((prev) => ({
+        ...prev,
+        amount: Math.round(summary.employeeEPF).toString(),
+      }));
+    }
+  }, [deductionForm.employeeId, employees, deductionForm.amount]);
+
+  // Fetch payroll entries
+  useEffect(() => {
+    // fetch saved payroll entries from backend
+    const fetchPayrolls = async () => {
+      try {
+        const res = await axios.get(`${API_URL}/payrolls`);
+        setPayrollEntries(res.data || []);
+      } catch (err) {
+        console.error("Failed to fetch payrolls", err);
+      }
+    };
+    fetchPayrolls();
+  }, []);
+
+  // Fetch deductions
+  useEffect(() => {
+    const fetchDeductions = async () => {
+      try {
+        const res = await axios.get(`${API_URL}/deductions`);
+        setDeductions(res.data || []);
+      } catch (err) {
+        console.error("Failed to fetch deductions", err);
+      }
+    };
+    fetchDeductions();
+  }, []);
+
+  const handleRemovePayrollEntry = async (id) => {
+    try {
+      await axios.delete(`${API_URL}/payrolls/${id}`);
+      setPayrollEntries((prev) => prev.filter((p) => (p._id || p.id) !== id));
+      toast.success("Removed from payroll");
+    } catch (err) {
+      console.error(err);
+      toast.error("Failed to remove payroll entry");
+    }
+  };
+
+  // Add deduction (salary advance / other)
+  const handleAddDeduction = async () => {
+    if (!deductionForm.employeeId) {
+      toast.error("Please select an employee");
+      return;
+    }
+    if (!deductionForm.amount || Number(deductionForm.amount) <= 0) {
+      toast.error("Please enter a valid amount");
+      return;
+    }
+    try {
+      const payload = {
+        employeeId: deductionForm.employeeId,
+        date: deductionForm.date,
+        amount: Number(deductionForm.amount),
+        description: deductionForm.description,
+      };
+      const res = await axios.post(`${API_URL}/deductions`, payload);
+      setDeductions((prev) => [res.data, ...prev]);
+      toast.success("Deduction added");
+      setDeductionForm({
+        employeeId: "",
+        date: new Date().toISOString().slice(0, 10),
+        amount: "",
+        description: "",
+      });
+    } catch (err) {
+      console.error(err);
+      toast.error("Failed to add deduction");
+    }
+  };
+
+  const handleRemoveDeduction = async (id) => {
+    if (!window.confirm("Remove this deduction?")) return;
+    try {
+      await axios.delete(`${API_URL}/deductions/${id}`);
+      setDeductions((prev) => prev.filter((d) => (d._id || d.id) !== id));
+      toast.success("Deduction removed");
+    } catch (err) {
+      console.error(err);
+      toast.error("Failed to remove deduction");
+    }
+  };
 
   // compute payroll summary helper
   const computePayrollFor = (emp, form) => {
@@ -297,12 +716,15 @@ const Payroll = () => {
     const overtimePay = overtimeHours * overtimeRate;
     const grossSalary = basic + totalAllowances + overtimePay;
 
-    const employeeEPF = basic * 0.08;
-    const employerEPF = basic * 0.12;
-    const employerETF = basic * 0.03;
+    // <-- CHANGED: EPF/ETF calculated on (basic + allowances) as requested -->
+    const employeeEPF = deductions;
+    const employerEPF = (basic + totalAllowances) * 0.12;
+    const employerETF = (basic + totalAllowances) * 0.03;
 
-    const netSalary = grossSalary - employeeEPF - deductions;
-
+    // If payrollForm.deductions already contains the EPF amount (auto-filled),
+    // we subtract deductions only to avoid double-deducting employeeEPF.
+    // const netSalary = grossSalary - deductions;
+    const netSalary = grossSalary - employeeEPF;
     return {
       id: `${emp._id || emp.id}-${Date.now()}`,
       employeeId: emp._id || emp.id,
@@ -337,7 +759,6 @@ const Payroll = () => {
     }
 
     try {
-      // send to backend which will compute & persist
       const payload = {
         employeeId: payrollForm.employeeId,
         overtimeHours: payrollForm.overtimeHours,
@@ -352,8 +773,8 @@ const Payroll = () => {
       const res = await axios.post(`${API_URL}/payrolls`, payload);
       setPayrollEntries((prev) => [res.data, ...prev]);
       toast.success("Added to payroll");
-      setPayrollForm((prev) => ({
-        ...prev,
+      setPayrollForm({
+        employeeId: "",
         overtimeHours: 0,
         overtimeRate: 0,
         transportAllowance: 0,
@@ -362,22 +783,28 @@ const Payroll = () => {
         medicalAllowance: 0,
         otherAllowance: 0,
         deductions: 0,
-      }));
+      });
+      // reset manual flag so future auto-fill can work again
+      setDeductionsManual(false);
     } catch (err) {
       console.error(err);
       toast.error("Failed to add to payroll");
     }
   };
 
-  const handleRemovePayrollEntry = async (id) => {
-    try {
-      await axios.delete(`${API_URL}/payrolls/${id}`);
-      setPayrollEntries((prev) => prev.filter((p) => (p._id || p.id) !== id));
-      toast.success("Removed from payroll");
-    } catch (err) {
-      console.error(err);
-      toast.error("Failed to remove payroll entry");
-    }
+  const handlePayrollFormReset = () => {
+    setPayrollForm({
+      employeeId: "",
+      overtimeHours: 0,
+      overtimeRate: 0,
+      transportAllowance: 0,
+      mealAllowance: 0,
+      accommodationAllowance: 0,
+      medicalAllowance: 0,
+      otherAllowance: 0,
+      deductions: 0,
+    });
+    setDeductionsManual(false); // auto-fill EPF for next employee select
   };
 
   useEffect(() => {
@@ -404,7 +831,8 @@ const Payroll = () => {
     const fetchAttendance = async () => {
       try {
         const res = await axios.get(`${API_URL}/attendance`);
-        setAttendanceData(res.data);
+        // backend returns { success, total, page, items }
+        setAttendanceData(res.data?.items || res.data || []);
       } catch (error) {
         toast.error("Failed to load attendance");
       }
@@ -622,54 +1050,6 @@ const Payroll = () => {
         return <XCircle size={16} />;
       default:
         return null;
-    }
-  };
-
-  //  Mark Attendance Modal State
-  const [isMarkAttendanceModalOpen, setIsMarkAttendanceModalOpen] =
-    useState(false);
-  const [attendanceForm, setAttendanceForm] = useState({
-    employeeId: "",
-    date: new Date().toISOString().slice(0, 10),
-    checkIn: "",
-    checkOut: "",
-    status: "",
-  });
-  const [attendanceErrors, setAttendanceErrors] = useState({});
-
-  const validateAttendance = () => {
-    const errors = {};
-    if (!attendanceForm.employeeId) errors.employeeId = "Employee is required";
-    if (!attendanceForm.checkIn) errors.checkIn = "Check-in time is required";
-    if (!attendanceForm.status) errors.status = "Status is required";
-    return errors;
-  };
-
-  const handleMarkAttendance = async () => {
-    const errors = validateAttendance();
-    setAttendanceErrors(errors);
-    if (Object.keys(errors).length > 0) return;
-
-    try {
-      // Optional: calculate hoursWorked, overtimeHours here if needed
-      const payload = {
-        ...attendanceForm,
-        hoursWorked: 0, // You can calculate based on checkIn/checkOut
-        overtimeHours: 0,
-      };
-      const res = await axios.post(`${API_URL}/attendance`, payload);
-      setAttendanceData((prev) => [...prev, res.data]);
-      setIsMarkAttendanceModalOpen(false);
-      setAttendanceForm({
-        employeeId: "",
-        date: new Date().toISOString().slice(0, 10),
-        checkIn: "",
-        checkOut: "",
-        status: "",
-      });
-      toast.success("Attendance marked successfully!");
-    } catch (error) {
-      toast.error(error.response?.data?.message || "Failed to mark attendance");
     }
   };
 
@@ -1070,220 +1450,149 @@ const Payroll = () => {
             </div>
           )}
 
-          {/* Attendance Tab */}
           {activeTab === "attendance" && (
             <div className="space-y-6">
               <div className="flex justify-between items-center">
                 <h3 className="text-lg font-semibold text-gray-800">
-                  Today's Attendance
+                  Monthly Attendance
                 </h3>
-                <div className="flex space-x-2">
-                  <Button variant="secondary">
-                    <Download size={16} className="mr-2" />
-                    Export
+                <div className="flex items-center space-x-3">
+                  <label className="text-sm text-gray-600">Select month</label>
+                  <input
+                    type="month"
+                    className="rounded-lg border border-gray-300 py-2 px-3 bg-white"
+                    value={attendanceMonth}
+                    onChange={(e) => setAttendanceMonth(e.target.value)}
+                  />
+                  <Button onClick={() => generateMonthTable()}>
+                    Create Month Table
                   </Button>
-                  <Button onClick={() => setIsMarkAttendanceModalOpen(true)}>
-                    <Plus size={16} className="mr-2" />
-                    Mark Attendance
+                  <Button
+                    variant="primary"
+                    onClick={() => saveMonthAttendance()}
+                    disabled={monthDays.length === 0}
+                  >
+                    Save Month Attendance
                   </Button>
                 </div>
-
-                {/* Mark Attendance Modal */}
-                <Modal
-                  isOpen={isMarkAttendanceModalOpen}
-                  onClose={() => setIsMarkAttendanceModalOpen(false)}
-                  title="Mark Attendance"
-                >
-                  <div className="space-y-4">
-                    <Select
-                      label="Employee"
-                      value={attendanceForm.employeeId}
-                      onChange={(e) =>
-                        setAttendanceForm((prev) => ({
-                          ...prev,
-                          employeeId: e.target.value,
-                        }))
-                      }
-                      options={[
-                        { value: "", label: "Select Employee" },
-                        ...employees.map((emp) => ({
-                          value: emp._id || emp.id,
-                          label: `${emp.firstName} ${emp.lastName}`,
-                        })),
-                      ]}
-                      error={attendanceErrors.employeeId}
-                      required
-                    />
-                    <Input
-                      label="Date"
-                      type="date"
-                      value={attendanceForm.date}
-                      onChange={(e) =>
-                        setAttendanceForm((prev) => ({
-                          ...prev,
-                          date: e.target.value,
-                        }))
-                      }
-                      required
-                    />
-                    <Input
-                      label="Check In"
-                      type="time"
-                      value={attendanceForm.checkIn}
-                      onChange={(e) =>
-                        setAttendanceForm((prev) => ({
-                          ...prev,
-                          checkIn: e.target.value,
-                        }))
-                      }
-                      error={attendanceErrors.checkIn}
-                      required
-                    />
-                    <Input
-                      label="Check Out"
-                      type="time"
-                      value={attendanceForm.checkOut}
-                      onChange={(e) =>
-                        setAttendanceForm((prev) => ({
-                          ...prev,
-                          checkOut: e.target.value,
-                        }))
-                      }
-                    />
-                    <Select
-                      label="Status"
-                      value={attendanceForm.status}
-                      onChange={(e) =>
-                        setAttendanceForm((prev) => ({
-                          ...prev,
-                          status: e.target.value,
-                        }))
-                      }
-                      options={[
-                        { value: "", label: "Select Status" },
-                        { value: "present", label: "Present" },
-                        { value: "late", label: "Late" },
-                        { value: "absent", label: "Absent" },
-                      ]}
-                      error={attendanceErrors.status}
-                      required
-                    />
-                    <div className="flex justify-end space-x-3 pt-4">
-                      <Button
-                        variant="secondary"
-                        onClick={() => setIsMarkAttendanceModalOpen(false)}
-                      >
-                        Cancel
-                      </Button>
-                      <Button onClick={handleMarkAttendance}>Submit</Button>
-                    </div>
-                  </div>
-                </Modal>
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
-                <div className="bg-green-50 rounded-lg p-4">
-                  <div className="flex items-center">
-                    <CheckCircle size={24} className="text-green-600 mr-3" />
-                    <div>
-                      <p className="text-sm text-green-600">Present</p>
-                      <p className="text-2xl font-bold text-green-800">8</p>
-                    </div>
+              <div className="text-sm text-gray-600">
+                <div className="flex items-center space-x-4">
+                  <div className="flex items-center space-x-2">
+                    <span className="w-3 h-3 bg-green-400 rounded-full" />
+                    <span>Present</span>
                   </div>
-                </div>
-                <div className="bg-yellow-50 rounded-lg p-4">
-                  <div className="flex items-center">
-                    <AlertCircle size={24} className="text-yellow-600 mr-3" />
-                    <div>
-                      <p className="text-sm text-yellow-600">Late</p>
-                      <p className="text-2xl font-bold text-yellow-800">2</p>
-                    </div>
-                  </div>
-                </div>
-                <div className="bg-red-50 rounded-lg p-4">
-                  <div className="flex items-center">
-                    <XCircle size={24} className="text-red-600 mr-3" />
-                    <div>
-                      <p className="text-sm text-red-600">Absent</p>
-                      <p className="text-2xl font-bold text-red-800">1</p>
-                    </div>
+                  <div className="flex items-center space-x-2">
+                    <span className="w-3 h-3 bg-red-400 rounded-full" />
+                    <span>Absent</span>
                   </div>
                 </div>
               </div>
 
-              <div className="overflow-x-auto">
-                <table className="min-w-full divide-y divide-gray-200">
-                  <thead className="bg-gray-50">
-                    <tr>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Employee
-                      </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Check In
-                      </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Check Out
-                      </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Hours
-                      </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Overtime
-                      </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Status
-                      </th>
-                    </tr>
-                  </thead>
-                  <tbody className="bg-white divide-y divide-gray-200">
-                    {attendanceData.map((attendance) => {
-                      const employee = employees.find(
-                        (emp) =>
-                          (emp._id || emp.id) ===
-                          (attendance.employeeId._id ||
-                            attendance.employeeId ||
-                            attendance.employeeId.id)
-                      );
-                      return (
-                        <tr key={attendance.id} className="hover:bg-gray-50">
-                          <td className="px-6 py-4 whitespace-nowrap">
-                            <div className="text-sm font-medium text-gray-900">
-                              {employee
-                                ? `${employee.firstName} ${employee.lastName}`
-                                : "Unknown"}
+              {monthDays.length === 0 ? (
+                <div className="p-6 bg-yellow-50 rounded">
+                  <p className="text-sm text-yellow-800">
+                    Create month table to edit attendance for all employees.
+                  </p>
+                </div>
+              ) : (
+                <div className="overflow-x-auto bg-white rounded-lg p-4">
+                  <table className="min-w-full table-auto">
+                    <thead>
+                      <tr>
+                        <th className="sticky left-0 bg-white z-10 px-4 py-2 text-left border-b">
+                          Employee
+                        </th>
+                        {monthDays.map((d) => (
+                          <th
+                            key={d.date}
+                            className="px-2 py-2 text-xs text-center border-b"
+                            title={d.weekday}
+                          >
+                            <div className="text-xs font-medium">{d.day}</div>
+                            <div className="text-[10px] text-gray-500">
+                              {d.weekday}
                             </div>
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                            {attendance.checkIn}
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                            {attendance.checkOut || "-"}
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                            {attendance.hoursWorked}h
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                            {attendance.overtimeHours}h
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap">
-                            <span
-                              className={`px-2 py-1 inline-flex items-center text-xs leading-5 font-semibold rounded-full ${getStatusColor(
-                                attendance.status
-                              )}`}
-                            >
-                              <span className="mr-1">
-                                {getStatusIcon(attendance.status)}
-                              </span>
-                              {attendance.status.charAt(0).toUpperCase() +
-                                attendance.status.slice(1)}
-                            </span>
-                          </td>
-                        </tr>
-                      );
-                    })}
-                  </tbody>
-                </table>
-              </div>
+                          </th>
+                        ))}
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {employees.map((emp) => {
+                        const eid = emp._id || emp.id;
+                        return (
+                          <tr key={eid} className="hover:bg-gray-50">
+                            <td className="sticky left-0 bg-white z-10 px-4 py-2 text-sm font-medium border-r">
+                              {emp.firstName} {emp.lastName}
+                            </td>
+                            {monthDays.map((d) => {
+                              const status =
+                                monthlyAttendance[eid] &&
+                                monthlyAttendance[eid][d.date]
+                                  ? monthlyAttendance[eid][d.date]
+                                  : "absent";
+                              return (
+                                <td
+                                  key={d.date}
+                                  className="px-1 py-1 text-center border"
+                                >
+                                  <button
+                                    onClick={() => toggleDayStatus(eid, d.date)}
+                                    className={`w-8 h-8 rounded-md inline-flex items-center justify-center text-white text-xs ${
+                                      status === "present"
+                                        ? "bg-green-500"
+                                        : "bg-red-500"
+                                    }`}
+                                    title={
+                                      status === "present"
+                                        ? "Present"
+                                        : "Absent"
+                                    }
+                                  >
+                                    {status === "present" ? "P" : "A"}
+                                  </button>
+                                </td>
+                              );
+                            })}
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+
+                  {/* Attendance summary per employee */}
+                  <div className="mt-4 bg-gray-50 p-3 rounded">
+                    <h4 className="text-sm font-medium text-gray-700 mb-2">
+                      Month summary
+                    </h4>
+                    <div className="overflow-x-auto">
+                      <table className="min-w-full text-sm">
+                        <thead>
+                          <tr className="text-left text-xs text-gray-500">
+                            <th className="px-3 py-2">Employee</th>
+                            <th className="px-3 py-2 text-center">Present</th>
+                            <th className="px-3 py-2 text-center">Absent</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {attendanceSummary.map((row) => (
+                            <tr key={row.employeeId} className="border-t">
+                              <td className="px-3 py-2">{row.name}</td>
+                              <td className="px-3 py-2 text-center">
+                                {row.present}
+                              </td>
+                              <td className="px-3 py-2 text-center">
+                                {row.absent}
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
           )}
 
@@ -1534,17 +1843,28 @@ const Payroll = () => {
                       label="Deductions"
                       type="number"
                       value={payrollForm.deductions}
-                      onChange={(e) =>
-                        setPayrollForm((prev) => ({
-                          ...prev,
-                          deductions: e.target.value,
-                        }))
-                      }
+                      // onChange={(e) => {
+                      //   const v = e.target.value;
+                      //   setPayrollForm((prev) => ({ ...prev, deductions: v }));
+                      //   setDeductionsManual(true);
+                      // }}
                     />
+                    {suggestedEPF > 0 && (
+                      <div className="text-xs text-gray-500 mt-1">
+                        Suggested EPF (8%): LKR{" "}
+                        {Math.round(suggestedEPF).toLocaleString()} — add to
+                        Deductions if applicable.
+                      </div>
+                    )}
                   </div>
 
                   <div className="flex justify-end space-x-3 pt-4">
-                    <Button variant="secondary">Reset</Button>
+                    <Button
+                      variant="secondary"
+                      onClick={handlePayrollFormReset}
+                    >
+                      Reset
+                    </Button>
                     <Button onClick={handleAddToPayroll}>Add to Payroll</Button>
                   </div>
                 </div>
@@ -1722,6 +2042,230 @@ const Payroll = () => {
                           className="px-6 py-4 text-sm text-gray-500"
                         >
                           No payroll entries added
+                        </td>
+                      </tr>
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          )}
+
+          {/* Deduction Tab */}
+          {activeTab === "deduction" && (
+            <div className="space-y-6">
+              <div className="flex justify-between items-center">
+                <h3 className="text-lg font-semibold text-gray-800">
+                  Deductions / Salary Advances
+                </h3>
+                <div className="flex space-x-2">
+                  <Button variant="secondary">
+                    <Download size={16} className="mr-2" />
+                    Export
+                  </Button>
+                </div>
+              </div>
+
+              {/* EPF / ETF quick summary card */}
+              <div className="bg-white rounded-lg p-4 border">
+                <h4 className="text-sm font-semibold mb-2">
+                  EPF / ETF Summary{" "}
+                </h4>
+                <p className="text-sm text-gray-600 mb-2">
+                  EPF: Employee pays 8% and employer pays 12% (total 20%).
+                  Calculated on {`(basic + allowances)`}. ETF: Employer pays
+                  only 3%. This will not be deducted from the employee's salary.
+                </p>
+
+                {epfSummary ? (
+                  <div className="grid grid-cols-1 md:grid-cols-4 gap-3 text-sm">
+                    <div>
+                      <div className="text-gray-500">Salary:</div>
+                      <div className="font-medium">
+                        LKR {Math.round(epfSummary.total).toLocaleString()}
+                      </div>
+                    </div>
+                    <div>
+                      <div className="text-gray-500">Employee EPF (8%)</div>
+                      <div className="font-medium">
+                        LKR{" "}
+                        {Math.round(epfSummary.employeeEPF).toLocaleString()}
+                      </div>
+                    </div>
+                    <div>
+                      <div className="text-gray-500">Employer EPF (12%)</div>
+                      <div className="font-medium">
+                        LKR{" "}
+                        {Math.round(epfSummary.employerEPF).toLocaleString()}
+                      </div>
+                    </div>
+                    <div>
+                      <div className="text-gray-500">Employer ETF (3%)</div>
+                      <div className="font-medium">
+                        LKR{" "}
+                        {Math.round(epfSummary.employerETF).toLocaleString()}
+                      </div>
+                    </div>
+                  </div>
+                ) : (
+                  <p className="text-sm text-gray-500">
+                    Select an employee to calculate EPF/ETF contributions.
+                  </p>
+                )}
+              </div>
+
+              <div className="bg-white rounded-lg p-6">
+                <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                  <Select
+                    label="Employee"
+                    value={deductionForm.employeeId}
+                    onChange={(e) =>
+                      setDeductionForm((prev) => ({
+                        ...prev,
+                        employeeId: e.target.value,
+                      }))
+                    }
+                    options={[
+                      { value: "", label: "Select Employee" },
+                      ...employees.map((emp) => ({
+                        value: emp._id || emp.id,
+                        label: `${emp.firstName} ${emp.lastName}`,
+                      })),
+                    ]}
+                  />
+                  <Input
+                    label="Date"
+                    type="date"
+                    value={deductionForm.date}
+                    onChange={(e) =>
+                      setDeductionForm((prev) => ({
+                        ...prev,
+                        date: e.target.value,
+                      }))
+                    }
+                  />
+                  <Input
+                    label="Amount (LKR)"
+                    type="number"
+                    value={deductionForm.amount}
+                    // onChange={(e) =>
+                    //   setDeductionForm((prev) => ({
+                    //     ...prev,
+                    //     amount: e.target.value,
+                    //   }))
+                    // }
+                  />
+                  <Input
+                    label="Description"
+                    value={deductionForm.description}
+                    onChange={(e) =>
+                      setDeductionForm((prev) => ({
+                        ...prev,
+                        description: e.target.value,
+                      }))
+                    }
+                  />
+                </div>
+
+                <div className="flex justify-end space-x-3 pt-4">
+                  <Button
+                    variant="secondary"
+                    onClick={() =>
+                      setDeductionForm({
+                        employeeId: "",
+                        date: new Date().toISOString().slice(0, 10),
+                        amount: "",
+                        description: "",
+                      })
+                    }
+                  >
+                    Reset
+                  </Button>
+                  <Button onClick={handleAddDeduction}>Add Deduction</Button>
+                </div>
+              </div>
+
+              <div className="overflow-x-auto">
+                <table className="min-w-full divide-y divide-gray-200">
+                  <thead className="bg-gray-50">
+                    <tr>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Date
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Employee
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Amount
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Description
+                      </th>
+                      <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Actions
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody className="bg-white divide-y divide-gray-200">
+                    {deductions.map((d) => {
+                      const id = d._id || d.id;
+
+                      // --- changed: handle both populated object and string id ---
+                      const dedEmpId =
+                        d.employeeId && typeof d.employeeId === "object"
+                          ? d.employeeId._id || d.employeeId
+                          : d.employeeId;
+
+                      const emp = employees.find(
+                        (e) => (e._id || e.id) === dedEmpId
+                      );
+
+                      // use populated name if emp not found but response included populated employeeId object
+                      const displayName = emp
+                        ? `${emp.firstName} ${emp.lastName}`
+                        : d.employeeId && typeof d.employeeId === "object"
+                        ? `${d.employeeId.firstName} ${d.employeeId.lastName}`
+                        : d.employeeName || "Unknown";
+
+                      // --- NEW: format date to YYYY-MM-DD ---
+                      const displayDate = d.date
+                        ? new Date(d.date).toISOString().slice(0, 10)
+                        : "";
+
+                      return (
+                        <tr key={id} className="hover:bg-gray-50">
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                            {displayDate}
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                            {displayName}
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                            LKR {Number(d.amount).toLocaleString()}
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                            {d.description}
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                            <div className="flex items-center justify-end space-x-2">
+                              <button
+                                onClick={() => handleRemoveDeduction(id)}
+                                className="text-red-600 hover:text-red-900 px-2 py-1 rounded border border-red-200 hover:bg-red-50"
+                              >
+                                Remove
+                              </button>
+                            </div>
+                          </td>
+                        </tr>
+                      );
+                    })}
+                    {deductions.length === 0 && (
+                      <tr>
+                        <td
+                          colSpan={5}
+                          className="px-6 py-4 text-sm text-gray-500"
+                        >
+                          No deductions recorded
                         </td>
                       </tr>
                     )}

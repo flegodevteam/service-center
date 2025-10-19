@@ -20,7 +20,7 @@ function computeFromEmployee(emp, body) {
   const employeeEPF = basic * 0.08;
   const employerEPF = basic * 0.12;
   const employerETF = basic * 0.03;
-  const netSalary = grossSalary - employeeEPF - deductions;
+  const netSalary = grossSalary - employeeEPF;
 
   return {
     basic,
@@ -45,7 +45,8 @@ function computeFromEmployee(emp, body) {
 exports.createPayroll = async (req, res) => {
   try {
     const { employeeId } = req.body;
-    if (!employeeId) return res.status(400).json({ message: "employeeId required" });
+    if (!employeeId)
+      return res.status(400).json({ message: "employeeId required" });
 
     const emp = await Employee.findById(employeeId);
     if (!emp) return res.status(404).json({ message: "Employee not found" });
@@ -70,7 +71,9 @@ exports.createPayroll = async (req, res) => {
 
 exports.getPayrolls = async (req, res) => {
   try {
-    const payrolls = await Payroll.find().sort({ createdAt: -1 }).populate("employeeId", "firstName lastName email");
+    const payrolls = await Payroll.find()
+      .sort({ createdAt: -1 })
+      .populate("employeeId", "firstName lastName email");
     res.json(payrolls);
   } catch (err) {
     console.error(err);
@@ -138,9 +141,14 @@ exports.exportPayslipCSV = async (req, res) => {
       ["Status", payroll.status],
       ["Created At", payroll.createdAt?.toISOString() || ""],
     ];
-    const csv = rows.map((r) => r.map((c) => `"${String(c).replace(/"/g, '""')}"`).join(",")).join("\n");
+    const csv = rows
+      .map((r) => r.map((c) => `"${String(c).replace(/"/g, '""')}"`).join(","))
+      .join("\n");
     res.setHeader("Content-Type", "text/csv");
-    res.setHeader("Content-Disposition", `attachment; filename="payslip_${payroll._id}.csv"`);
+    res.setHeader(
+      "Content-Disposition",
+      `attachment; filename="payslip_${payroll._id}.csv"`
+    );
     res.send(csv);
   } catch (err) {
     console.error(err);
