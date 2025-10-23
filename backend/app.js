@@ -86,9 +86,11 @@ app.use("/api/reports", require("./routes/reportsRoutes"));
 app.use("/api/users", require("./routes/userRoutes"));
 app.use("/api/test", require("./routes/testRoutes"));
 app.use("/api/employees", require("./routes/employeeRoutes"));
-app.use("/api/attendance", require("./routes/attendanceRoutes"));
 app.use("/api/leaves", require("./routes/leaveRoutes"));
 app.use("/api/payrolls", require("./routes/payrollRoutes"));
+app.use("/api/deductions", require("./routes/deductionsRoutes"));
+app.use("/api/attendance", require("./routes/attendanceRoutes"));
+
 
 // Error Handler
 app.use(errorHandler);
