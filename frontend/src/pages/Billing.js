@@ -227,7 +227,7 @@ const Billing = () => {
             <div>
               <p className="text-sm font-medium text-gray-600">Total Revenue</p>
               <p className="text-2xl font-bold text-gray-800">
-                ${totalRevenue.toFixed(2)}
+                LKR {totalRevenue.toFixed(2)}
               </p>
             </div>
             <div className="rounded-full p-3 bg-green-100">
@@ -248,7 +248,7 @@ const Billing = () => {
                 Pending Payments
               </p>
               <p className="text-2xl font-bold text-gray-800">
-                ${pendingPayments.toFixed(2)}
+                LKR {pendingPayments.toFixed(2)}
               </p>
             </div>
             <div className="rounded-full p-3 bg-yellow-100">
@@ -385,7 +385,7 @@ const Billing = () => {
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="text-sm font-medium text-gray-900">
-                          ${invoice.amount.toFixed(2)}
+                          LKR {invoice.amount.toFixed(2)}
                         </div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
@@ -533,36 +533,36 @@ const Billing = () => {
                   <div className="space-y-2">
                     <div className="flex justify-between text-sm">
                       <span className="text-gray-600">Oil Change</span>
-                      <span className="text-gray-900">$45.00</span>
+                      <span className="text-gray-900">45.00</span>
                     </div>
                     <div className="flex justify-between text-sm">
                       <span className="text-gray-600">
                         Air Filter Replacement
                       </span>
-                      <span className="text-gray-900">$35.00</span>
+                      <span className="text-gray-900">35.00</span>
                     </div>
                     <div className="flex justify-between text-sm">
                       <span className="text-gray-600">Labor (1 hour)</span>
-                      <span className="text-gray-900">$75.00</span>
+                      <span className="text-gray-900">75.00</span>
                     </div>
                   </div>
                   <div className="border-t border-gray-200 mt-4 pt-4 space-y-2">
                     <div className="flex justify-between text-sm">
                       <span className="text-gray-600">Subtotal</span>
                       <span className="text-gray-900">
-                        ${(selectedInvoiceData.amount * 0.9).toFixed(2)}
+                        LKR {(selectedInvoiceData.amount * 0.9).toFixed(2)}
                       </span>
                     </div>
                     <div className="flex justify-between text-sm">
                       <span className="text-gray-600">Tax (10%)</span>
                       <span className="text-gray-900">
-                        ${(selectedInvoiceData.amount * 0.1).toFixed(2)}
+                        LKR {(selectedInvoiceData.amount * 0.1).toFixed(2)}
                       </span>
                     </div>
                     <div className="flex justify-between font-medium text-base pt-2">
                       <span className="text-gray-800">Total</span>
                       <span className="text-gray-900">
-                        ${selectedInvoiceData.amount.toFixed(2)}
+                        LKR {selectedInvoiceData.amount.toFixed(2)}
                       </span>
                     </div>
                   </div>

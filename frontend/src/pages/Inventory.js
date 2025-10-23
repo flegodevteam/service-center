@@ -169,7 +169,7 @@ const Inventory = () => {
             <div>
               <p className="text-sm font-medium text-gray-600">Total Value</p>
               <p className="text-2xl font-bold text-gray-800">
-                $
+                LKR{" "}
                 {inventory
                   .reduce((acc, item) => acc + item.price * item.stock, 0)
                   .toFixed(2)}
@@ -248,7 +248,7 @@ const Inventory = () => {
                 Min Stock
               </th>
               <th className="text-right p-3 border border-gray-300">
-                Price ($)
+                Price (LKR)
               </th>
               <th className="text-left p-3 border border-gray-300">Location</th>
               <th className="text-center p-3 border border-gray-300">Status</th>

@@ -259,7 +259,7 @@ const Reports = () => {
                     Total Revenue
                   </p>
                   <p className="text-2xl font-bold text-gray-800">
-                    $
+                    LKR{" "}
                     {monthlyRevenue
                       .reduce((sum, d) => sum + d.revenue, 0)
                       .toLocaleString()}
@@ -284,7 +284,7 @@ const Reports = () => {
                     Average Job Value
                   </p>
                   <p className="text-2xl font-bold text-gray-800">
-                    $
+                    LKR{" "}
                     {serviceStats.length > 0
                       ? (
                           serviceStats.reduce((sum, s) => sum + s.revenue, 0) /
@@ -466,12 +466,12 @@ const Reports = () => {
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="text-sm text-gray-900">
-                          ${s.revenue.toFixed(2)}
+                          LKR {s.revenue.toFixed(2)}
                         </div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="text-sm text-gray-900">
-                          ${s.avgValue.toFixed(2)}
+                          LKR {s.avgValue.toFixed(2)}
                         </div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
