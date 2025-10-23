@@ -556,33 +556,36 @@ const Payroll = () => {
   // Auto-fill payrollForm.deductions with Employee EPF (8%) when employee or allowance inputs change.
   useEffect(() => {
     if (!payrollForm.employeeId) return;
-    const emp = employees.find(
-      (e) => (e._id || e.id) === payrollForm.employeeId
-    );
-    if (!emp) return;
 
-    const epf8 = computeEmployeeEpfFromForm(emp, payrollForm);
+    const empId = payrollForm.employeeId;
 
-    // always update suggestion
-    setSuggestedEPF(epf8);
+    // find latest deduction record for this employee (use createdAt/date)
+    const latest = [...deductions]
+      .filter((d) => {
+        const did =
+          d.employeeId && typeof d.employeeId === "object"
+            ? d.employeeId._id || d.employeeId
+            : d.employeeId;
+        return String(did) === String(empId);
+      })
+      .sort(
+        (a, b) =>
+          new Date(b.createdAt || b.date).getTime() -
+          new Date(a.createdAt || a.date).getTime()
+      )[0];
 
-    // auto-fill deductions only when user hasn't manually edited deductions yet
-    // *** FIX: When employee changes, reset deductionsManual to false ***
-    // So, new employee select பண்ணும்போது deductionsManual false ஆகும், auto-fill நடக்கும்
-    if (!deductionsManual) {
-      setPayrollForm((prev) => ({ ...prev, deductions: epf8 }));
+    if (latest) {
+      setPayrollForm((prev) => ({
+        ...prev,
+        deductions: Number(latest.amount) || 0,
+      }));
+      setDeductionsManual(true); // prevent EPF auto-overwrite
+    } else {
+      // no saved deduction -> allow EPF autofill to run
+      setPayrollForm((prev) => ({ ...prev, deductions: 0 }));
+      setDeductionsManual(false);
     }
-  }, [
-    payrollForm.employeeId,
-    payrollForm.transportAllowance,
-    payrollForm.mealAllowance,
-    payrollForm.accommodationAllowance,
-    payrollForm.medicalAllowance,
-    payrollForm.otherAllowance,
-    payrollForm.overtimeHours,
-    employees,
-    deductionsManual,
-  ]);
+  }, [payrollForm.employeeId, deductions]);
 
   // Reset manual flag when employee changes
   useEffect(() => {
@@ -1843,11 +1846,14 @@ const Payroll = () => {
                       label="Deductions"
                       type="number"
                       value={payrollForm.deductions}
-                      // onChange={(e) => {
-                      //   const v = e.target.value;
-                      //   setPayrollForm((prev) => ({ ...prev, deductions: v }));
-                      //   setDeductionsManual(true);
-                      // }}
+                      onChange={(e) => {
+                        const v = e.target.value;
+                        setPayrollForm((prev) => ({
+                          ...prev,
+                          deductions: v === "" ? "" : Number(v),
+                        }));
+                        setDeductionsManual(true); // user edited -> treat as manual
+                      }}
                     />
                     {suggestedEPF > 0 && (
                       <div className="text-xs text-gray-500 mt-1">
@@ -2148,12 +2154,12 @@ const Payroll = () => {
                     label="Amount (LKR)"
                     type="number"
                     value={deductionForm.amount}
-                    // onChange={(e) =>
-                    //   setDeductionForm((prev) => ({
-                    //     ...prev,
-                    //     amount: e.target.value,
-                    //   }))
-                    // }
+                    onChange={(e) =>
+                      setDeductionForm((prev) => ({
+                        ...prev,
+                        amount: e.target.value,
+                      }))
+                    }
                   />
                   <Input
                     label="Description"

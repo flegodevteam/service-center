@@ -620,7 +620,7 @@ const JobCards = () => {
                         </span>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                        ${jobCard.totalAmount.toFixed(2)}
+                        LKR {jobCard.totalAmount.toFixed(2)}
                       </td>
                     </motion.tr>
                   ))}
@@ -803,13 +803,13 @@ const JobCards = () => {
                     <div className="flex justify-between items-center mb-2">
                       <span className="text-sm text-gray-600">Subtotal:</span>
                       <span className="text-sm text-gray-700">
-                        ${(selectedJobCardData.totalAmount * 0.9).toFixed(2)}
+                        LKR {(selectedJobCardData.totalAmount * 0.9).toFixed(2)}
                       </span>
                     </div>
                     <div className="flex justify-between items-center mb-2">
                       <span className="text-sm text-gray-600">Tax (10%):</span>
                       <span className="text-sm text-gray-700">
-                        ${(selectedJobCardData.totalAmount * 0.1).toFixed(2)}
+                        LKR {(selectedJobCardData.totalAmount * 0.1).toFixed(2)}
                       </span>
                     </div>
                     <div className="flex justify-between items-center pt-2 border-t border-gray-200">
@@ -817,7 +817,7 @@ const JobCards = () => {
                         Total:
                       </span>
                       <span className="text-sm font-bold text-gray-900">
-                        ${selectedJobCardData.totalAmount.toFixed(2)}
+                        LKR {selectedJobCardData.totalAmount.toFixed(2)}
                       </span>
                     </div>
                   </div>
