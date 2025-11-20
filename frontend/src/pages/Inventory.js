@@ -1,4 +1,4 @@
-import React, { useState, useContext } from "react";
+import React, { useState, useContext, useEffect } from "react";
 import { motion } from "framer-motion";
 import {
   Search,
@@ -8,8 +8,10 @@ import {
   AlertTriangle,
   BarChart2,
   Truck,
+  Barcode,
 } from "lucide-react";
 import InventoryContext from "../context/InventoryContext";
+import { API_URL } from "../api/api";
 
 const getStatusColor = (status) => {
   switch (status) {
@@ -39,6 +41,17 @@ const Inventory = () => {
   });
   const [errors, setErrors] = useState({});
   const { inventory, addItem } = useContext(InventoryContext);
+  const [barcodeUrl, setBarcodeUrl] = useState(null);
+  const [barcodeLoading, setBarcodeLoading] = useState(false);
+  const [selectedBarcodeItem, setSelectedBarcodeItem] = useState(null);
+  const [isBarcodeModalOpen, setIsBarcodeModalOpen] = useState(false);
+
+  useEffect(() => {
+    return () => {
+      // cleanup object URL on unmount
+      if (barcodeUrl) URL.revokeObjectURL(barcodeUrl);
+    };
+  }, [barcodeUrl]);
 
   const filteredInventory = inventory.filter(
     (item) =>
@@ -100,6 +113,34 @@ const Inventory = () => {
       status: "in-stock",
     });
     setErrors({});
+  };
+
+  const handleGenerateBarcode = async (item) => {
+    try {
+      setBarcodeLoading(true);
+      setSelectedBarcodeItem(item);
+      // Fetch barcode image from backend
+      const res = await fetch(`${API_URL}/inventory/${item.id}/barcode`);
+      if (!res.ok) throw new Error("Failed to generate barcode");
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      // revoke previous URL if exists
+      if (barcodeUrl) URL.revokeObjectURL(barcodeUrl);
+      setBarcodeUrl(url);
+      setIsBarcodeModalOpen(true);
+    } catch (err) {
+      console.error(err);
+      alert("Unable to generate barcode. See console for details.");
+    } finally {
+      setBarcodeLoading(false);
+    }
+  };
+
+  const handleCloseBarcodeModal = () => {
+    if (barcodeUrl) URL.revokeObjectURL(barcodeUrl);
+    setBarcodeUrl(null);
+    setSelectedBarcodeItem(null);
+    setIsBarcodeModalOpen(false);
   };
 
   return (
@@ -252,6 +293,9 @@ const Inventory = () => {
               </th>
               <th className="text-left p-3 border border-gray-300">Location</th>
               <th className="text-center p-3 border border-gray-300">Status</th>
+              <th className="text-center p-3 border border-gray-300">
+                Actions
+              </th>
             </tr>
           </thead>
           <tbody>
@@ -283,6 +327,20 @@ const Inventory = () => {
                     >
                       {item.status.replace("-", " ").toUpperCase()}
                     </span>
+                  </td>
+                  <td className="p-3 border border-gray-300 text-center">
+                    <button
+                      onClick={() => handleGenerateBarcode(item)}
+                      disabled={
+                        barcodeLoading && selectedBarcodeItem?.id === item.id
+                      }
+                      className="inline-flex items-center gap-2 px-3 py-1 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-md"
+                    >
+                      <Barcode size={14} />
+                      {barcodeLoading && selectedBarcodeItem?.id === item.id
+                        ? "Generating..."
+                        : "Barcode"}
+                    </button>
                   </td>
                 </tr>
               ))
@@ -526,6 +584,45 @@ const Inventory = () => {
               </div>
             </form>
           </motion.div>
+        </div>
+      )}
+      {/* Barcode Modal */}
+      {isBarcodeModalOpen && (
+        <div className="fixed -inset-y-full inset-x-0 bg-black bg-opacity-50 z-40 flex items-center justify-center p-4">
+          <div className="bg-white rounded-[5%] shadow-xl p-6 w-full max-w-md text-center">
+            <div className="flex justify-between items-center mb-4">
+              <h3 className="text-lg font-semibold">Barcode</h3>
+              <button
+                onClick={() => handleCloseBarcodeModal()}
+                className="text-gray-500 hover:text-gray-700"
+              >
+                ×
+              </button>
+            </div>
+
+            {barcodeUrl ? (
+              <div className="space-y-4">
+                <img src={barcodeUrl} alt="barcode" className="mx-auto" />
+                <div className="flex justify-center gap-3">
+                  <a
+                    href={barcodeUrl}
+                    download={`${selectedBarcodeItem?.id || "barcode"}.png`}
+                    className="px-4 py-2 bg-blue-600 text-white rounded-md"
+                  >
+                    Download
+                  </a>
+                  <button
+                    onClick={() => handleCloseBarcodeModal()}
+                    className="px-4 py-2 bg-gray-200 rounded-md"
+                  >
+                    Close
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <p>Loading...</p>
+            )}
+          </div>
         </div>
       )}
     </div>

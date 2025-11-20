@@ -4,11 +4,43 @@ const Invoice = require("../models/billingModel");
 // Add new invoice
 exports.addInvoice = async (req, res, next) => {
   try {
+    let totalAmount = 0;
+    
+    // Calculate total from job card if provided
+    if (req.body.jobCard) {
+      const JobCard = require("../models/jobCardModel");
+      const jobCard = await JobCard.findById(req.body.jobCard);
+      if (jobCard) {
+        totalAmount += jobCard.totalAmount || 0;
+      }
+    }
+    
+    // Add additional charges
+    if (req.body.additionalCharges && Array.isArray(req.body.additionalCharges)) {
+      req.body.additionalCharges.forEach((charge) => {
+        totalAmount += parseFloat(charge.amount) || 0;
+      });
+    }
+    
+    // Add inventory items
+    if (req.body.inventoryItems && Array.isArray(req.body.inventoryItems)) {
+      req.body.inventoryItems.forEach((item) => {
+        totalAmount += parseFloat(item.totalPrice) || 0;
+      });
+    }
+    
+    // If amount is not provided or is 0, use calculated total
+    if (!req.body.amount || req.body.amount === 0) {
+      req.body.amount = totalAmount;
+    }
+    
     const invoice = await Invoice.create(req.body);
-    // Populate customer, vehicle
+    // Populate customer, vehicle, jobCard, inventoryItems
     const populatedInvoice = await Invoice.findById(invoice._id)
       .populate("customer", "name email phone")
-      .populate("vehicle", "make model regNumber");
+      .populate("vehicle", "make model regNumber")
+      .populate("jobCard")
+      .populate("inventoryItems.item");
     res.status(201).json({ success: true, invoice: populatedInvoice });
   } catch (err) {
     next(err);
@@ -27,7 +59,9 @@ exports.getInvoices = async (req, res, next) => {
       .skip(skip)
       .limit(limit)
       .populate("customer", "name email phone")
-      .populate("vehicle", "make model regNumber");
+      .populate("vehicle", "make model regNumber")
+      .populate("jobCard")
+      .populate("inventoryItems.item");
 
     res.json({
       success: true,
@@ -47,7 +81,9 @@ exports.downloadInvoicePDF = async (req, res, next) => {
   try {
     const invoice = await Invoice.findById(req.params.id)
       .populate("customer", "name email phone")
-      .populate("vehicle", "make model regNumber");
+      .populate("vehicle", "make model regNumber")
+      .populate("jobCard")
+      .populate("inventoryItems.item");
 
     if (!invoice || !invoice.customer || !invoice.vehicle) {
       // CORS header for error response
@@ -78,7 +114,35 @@ exports.downloadInvoicePDF = async (req, res, next) => {
     doc.text(
       `Vehicle: ${invoice.vehicle.make} ${invoice.vehicle.model} (${invoice.vehicle.regNumber})`
     );
-    doc.text(`Amount: $${invoice.amount.toFixed(2)}`);
+    
+    // Job Card details
+    if (invoice.jobCard) {
+      doc.moveDown();
+      doc.text(`Job Card: ${invoice.jobCard._id}`);
+      doc.text(`Job Card Amount: LKR ${(invoice.jobCard.totalAmount || 0).toFixed(2)}`);
+    }
+    
+    // Additional charges
+    if (invoice.additionalCharges && invoice.additionalCharges.length > 0) {
+      doc.moveDown();
+      doc.text("Additional Charges:");
+      invoice.additionalCharges.forEach((charge) => {
+        doc.text(`  - ${charge.description}: LKR ${charge.amount.toFixed(2)}`);
+      });
+    }
+    
+    // Inventory items
+    if (invoice.inventoryItems && invoice.inventoryItems.length > 0) {
+      doc.moveDown();
+      doc.text("Inventory Items:");
+      invoice.inventoryItems.forEach((invItem) => {
+        const item = invItem.item;
+        doc.text(`  - ${item ? item.name : 'N/A'} (Qty: ${invItem.quantity}): LKR ${invItem.totalPrice.toFixed(2)}`);
+      });
+    }
+    
+    doc.moveDown();
+    doc.text(`Total Amount: LKR ${invoice.amount.toFixed(2)}`);
     doc.text(`Status: ${invoice.paymentStatus}`);
     doc.text(`Payment Method: ${invoice.paymentMethod}`);
 

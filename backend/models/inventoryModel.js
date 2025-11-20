@@ -9,6 +9,7 @@ const inventorySchema = new mongoose.Schema({
   price: { type: Number, required: true },
   location: { type: String, required: true },
   status: { type: String, enum: ["in-stock", "low-stock", "out-of-stock"], default: "in-stock" },
+  barcode: { type: String, unique: true, sparse: true }, // Optional barcode field
 });
 
 module.exports = mongoose.model("Inventory", inventorySchema);

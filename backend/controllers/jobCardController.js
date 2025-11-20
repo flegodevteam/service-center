@@ -111,3 +111,57 @@ exports.markJobCardComplete = async (req, res, next) => {
     next(err);
   }
 };
+
+// Get job cards by date and/or vehicle for billing
+exports.getJobCardsForBilling = async (req, res, next) => {
+  try {
+    const { date, vehicle } = req.query;
+    console.log("getJobCardsForBilling called with:", { date, vehicle });
+    
+    const query = {};
+    
+    if (date) {
+      // Get job cards for the specific date
+      // Handle date string format "YYYY-MM-DD"
+      const dateObj = new Date(date);
+      if (isNaN(dateObj.getTime())) {
+        return res.status(400).json({ 
+          success: false, 
+          message: "Invalid date format. Use YYYY-MM-DD",
+          jobCards: [] 
+        });
+      }
+      
+      const startDate = new Date(date);
+      startDate.setHours(0, 0, 0, 0);
+      const endDate = new Date(date);
+      endDate.setHours(23, 59, 59, 999);
+      
+      console.log("Date range:", { startDate, endDate });
+      query.date = { $gte: startDate, $lte: endDate };
+    }
+    
+    if (vehicle) {
+      query.vehicle = vehicle;
+      console.log("Vehicle filter:", vehicle);
+    }
+    
+    // Get job cards with status completed or in-progress (allow all statuses for now to test)
+    // You can uncomment the line below to filter by status
+    // query.status = { $in: ["completed", "in-progress"] };
+    
+    console.log("Query:", JSON.stringify(query, null, 2));
+    
+    const jobCards = await JobCard.find(query)
+      .populate("customer", "name email phone")
+      .populate("vehicle", "make model regNumber")
+      .sort({ date: -1 });
+    
+    console.log(`Found ${jobCards.length} job cards`);
+    
+    res.json({ success: true, jobCards });
+  } catch (err) {
+    console.error("Error in getJobCardsForBilling:", err);
+    next(err);
+  }
+};
