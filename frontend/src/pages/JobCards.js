@@ -50,6 +50,7 @@ const JobCards = () => {
   const [serviceLevels] = useState(["normal", "hard", "heavy"]);
   const [serviceLevelOptions, setServiceLevelOptions] = useState([]);
   const [vehicleTypes, setVehicleTypes] = useState([]);
+  const [technicians, setTechnicians] = useState([]);
 
   useEffect(() => {
     const params = new URLSearchParams(location.search);
@@ -77,6 +78,21 @@ const JobCards = () => {
       setServiceLevelOptions(res.data.serviceLevelOptions || []);
       setVehicleTypes(res.data.vehicleTypes || []);
     });
+  }, []);
+
+  // Fetch users and filter technicians
+  useEffect(() => {
+    const fetchTechnicians = async () => {
+      try {
+        const res = await axios.get(`${API_URL}/users`);
+        const users = res.data.users || [];
+        const techs = users.filter((u) => u.role === "technician");
+        setTechnicians(techs);
+      } catch (err) {
+        setTechnicians([]);
+      }
+    };
+    fetchTechnicians();
   }, []);
 
   // Validate form
@@ -433,14 +449,20 @@ const JobCards = () => {
               </div>
               <div>
                 <label className="block text-sm">Technician</label>
-                <input
-                  type="text"
+                <select
                   className="w-full border rounded px-2 py-1"
                   value={newJobCard.technician}
                   onChange={(e) =>
                     setNewJobCard({ ...newJobCard, technician: e.target.value })
                   }
-                />
+                >
+                  <option value="">Select</option>
+                  {technicians.map((t) => (
+                    <option key={t._id} value={t.name}>
+                      {t.name}
+                    </option>
+                  ))}
+                </select>
                 {errors.technician && (
                   <span className="text-red-500 text-xs">
                     {errors.technician}
