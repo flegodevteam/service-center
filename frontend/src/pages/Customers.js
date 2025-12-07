@@ -28,7 +28,6 @@ const Customers = () => {
     fetchCustomers,
     loading,
     total,
-    totalPages,
   } = useContext(CustomerContext);
   const [errors, setErrors] = useState({});
   const [isEditCustomerModalOpen, setIsEditCustomerModalOpen] = useState(false);
@@ -37,8 +36,9 @@ const Customers = () => {
   const customersPerPage = 5;
 
   useEffect(() => {
-    fetchCustomers(currentPage, customersPerPage);
-  }, [currentPage, customersPerPage, fetchCustomers]);
+    // Fetch all customers at once on component mount
+    fetchCustomers();
+  }, [fetchCustomers]);
 
   useEffect(() => {
     const params = new URLSearchParams(location.search);
@@ -116,11 +116,28 @@ const Customers = () => {
     return false;
   });
 
-  // Pagination logic
-  // const totalPages = Math.ceil(filteredCustomers.length / customersPerPage);
+  // Client-side pagination logic (since all data is loaded)
+  const clientTotalPages = Math.ceil(filteredCustomers.length / customersPerPage);
   const indexOfLastCustomer = currentPage * customersPerPage;
   const indexOfFirstCustomer = indexOfLastCustomer - customersPerPage;
-  const currentCustomers = filteredCustomers; // Or just use customers
+  const currentCustomers = filteredCustomers.slice(
+    indexOfFirstCustomer,
+    indexOfLastCustomer
+  );
+
+  // Show preloader while loading
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <div className="text-center">
+          <div className="relative">
+            <div className="w-16 h-16 border-4 border-blue-200 border-t-blue-600 rounded-full animate-spin mx-auto"></div>
+          </div>
+          <p className="mt-4 text-gray-600 text-sm">Loading customers...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -323,23 +340,24 @@ const Customers = () => {
 
         <div className="px-6 py-3 flex items-center justify-between border-t border-gray-200">
           <div className="text-sm text-gray-500">
-            Showing {currentCustomers.length} of {filteredCustomers.length}{" "}
-            customers
+            Showing {filteredCustomers.length > 0 ? indexOfFirstCustomer + 1 : 0} to{" "}
+            {Math.min(indexOfLastCustomer, filteredCustomers.length)} of{" "}
+            {filteredCustomers.length} customers
           </div>
           <div className="flex items-center space-x-2">
             <button
-              className="px-3 py-1 border border-gray-300 rounded text-gray-700 hover:bg-gray-50"
+              className="px-3 py-1 border border-gray-300 rounded text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
               disabled={currentPage === 1}
               onClick={() => setCurrentPage((prev) => prev - 1)}
             >
               Previous
             </button>
             <span className="text-sm px-2">
-              Page {currentPage} of {totalPages}
+              Page {currentPage} of {clientTotalPages || 1}
             </span>
             <button
-              className="px-3 py-1 border border-gray-300 rounded text-gray-700 hover:bg-gray-50"
-              disabled={currentPage === totalPages || totalPages === 0}
+              className="px-3 py-1 border border-gray-300 rounded text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+              disabled={currentPage === clientTotalPages || clientTotalPages === 0}
               onClick={() => setCurrentPage((prev) => prev + 1)}
             >
               Next

@@ -1,1 +1,3 @@
 backend/node_modules/.bin/mime
+config.bat
+node_modules
