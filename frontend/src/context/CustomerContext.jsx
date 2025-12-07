@@ -1,4 +1,4 @@
-import { createContext, useState, useEffect } from "react";
+import { createContext, useState, useCallback } from "react";
 import axios from "axios";
 import { API_URL } from "../api/api";
 
@@ -6,27 +6,28 @@ export const CustomerContext = createContext();
 
 export const CustomerProvider = ({ children }) => {
   const [customers, setCustomers] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const [total, setTotal] = useState(0); // total customers
   const [totalPages, setTotalPages] = useState(1); // total pages
 
-  const fetchCustomers = async (page = 1, limit = 5) => {
+  const fetchCustomers = useCallback(async () => {
     try {
+      setLoading(true);
+      // Fetch all customers at once with a large limit
       const res = await axios.get(
-        `${API_URL}/customers?page=${page}&limit=${limit}`
+        `${API_URL}/customers?page=1&limit=10000`
       );
-      setCustomers(res.data.customers);
-      setTotal(res.data.total); // total customers
-      setTotalPages(res.data.totalPages); // total pages
+      setCustomers(res.data.customers || []);
+      setTotal(res.data.total || 0); // total customers
+      setTotalPages(res.data.totalPages || 1); // total pages
     } catch (err) {
       console.error("Customer fetch error", err);
+      setCustomers([]);
+      setTotal(0);
+      setTotalPages(1);
     } finally {
       setLoading(false);
     }
-  };
-
-  useEffect(() => {
-    fetchCustomers();
   }, []);
 
   // Customer add panna function
