@@ -1,4 +1,4 @@
-const mongoose = require("mongoose");
+import mongoose from "mongoose";
 
 const ServiceTypeSchema = new mongoose.Schema({
   vehicleTypes: [{ type: String, required: true }],
@@ -16,4 +16,4 @@ const ServiceTypeSchema = new mongoose.Schema({
   },
 });
 
-module.exports = mongoose.model("ServiceTypeConfig", ServiceTypeSchema);
+export default mongoose.model("ServiceTypeConfig", ServiceTypeSchema);

@@ -1,4 +1,4 @@
-const mongoose = require("mongoose");
+import mongoose from "mongoose";
 
 const inventorySchema = new mongoose.Schema({
   id: { type: String, required: true, unique: true },
@@ -12,4 +12,4 @@ const inventorySchema = new mongoose.Schema({
   barcode: { type: String, unique: true, sparse: true }, // Optional barcode field
 });
 
-module.exports = mongoose.model("Inventory", inventorySchema);
+export default mongoose.model("Inventory", inventorySchema);

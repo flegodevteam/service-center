@@ -1,7 +1,7 @@
-const Appointment = require("../models/appointmentModel");
+import Appointment from "../models/appointmentModel.js";
 
 // Add new appointment
-exports.addAppointment = async (req, res, next) => {
+export const addAppointment = async (req, res, next) => {
   try {
     const appointment = await Appointment.create(req.body);
     // Populate customer & vehicle details
@@ -15,7 +15,7 @@ exports.addAppointment = async (req, res, next) => {
 };
 
 // Get all appointments (with customer & vehicle details)
-exports.getAppointments = async (req, res, next) => {
+export const getAppointments = async (req, res, next) => {
   try {
     const page = parseInt(req.query.page) || 1;
     const limit = parseInt(req.query.limit) || 5;
@@ -41,7 +41,7 @@ exports.getAppointments = async (req, res, next) => {
 };
 
 // Get single appointment by ID
-exports.getAppointmentById = async (req, res, next) => {
+export const getAppointmentById = async (req, res, next) => {
   try {
     const appointment = await Appointment.findById(req.params.id)
       .populate("customer", "name email phone")
@@ -58,7 +58,7 @@ exports.getAppointmentById = async (req, res, next) => {
 };
 
 // Update appointment status
-exports.updateAppointmentStatus = async (req, res, next) => {
+export const updateAppointmentStatus = async (req, res, next) => {
   try {
     const { status } = req.body;
     const appointment = await Appointment.findByIdAndUpdate(

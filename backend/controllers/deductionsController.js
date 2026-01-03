@@ -1,8 +1,8 @@
-const Deduction = require("../models/deductionsModel");
-const mongoose = require("mongoose");
+import Deduction from "../models/deductionsModel.js";
+import mongoose from "mongoose";
 
 // GET /api/deductions
-exports.getDeductions = async (req, res, next) => {
+export const getDeductions = async (req, res, next) => {
   try {
     const list = await Deduction.find()
       .sort({ date: -1 })
@@ -14,7 +14,7 @@ exports.getDeductions = async (req, res, next) => {
 };
 
 // POST /api/deductions
-exports.createDeduction = async (req, res, next) => {
+export const createDeduction = async (req, res, next) => {
   try {
     const { employeeId, date, amount, description } = req.body;
 
@@ -44,7 +44,7 @@ exports.createDeduction = async (req, res, next) => {
 };
 
 // DELETE /api/deductions/:id
-exports.deleteDeduction = async (req, res, next) => {
+export const deleteDeduction = async (req, res, next) => {
   try {
     const id = req.params.id;
     if (!mongoose.Types.ObjectId.isValid(id)) {

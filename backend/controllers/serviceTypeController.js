@@ -1,7 +1,7 @@
-const ServiceTypeConfig = require("../models/serviceTypeModel");
+import ServiceTypeConfig from "../models/serviceTypeModel.js";
 
 // Get config
-exports.getConfig = async (req, res) => {
+export const getConfig = async (req, res) => {
   const config = await ServiceTypeConfig.findOne();
   if (!config) {
     // If not exists, create default
@@ -17,7 +17,7 @@ exports.getConfig = async (req, res) => {
 };
 
 // Add vehicle type
-exports.addVehicleType = async (req, res) => {
+export const addVehicleType = async (req, res) => {
   const { type } = req.body;
   const config = await ServiceTypeConfig.findOne();
   if (!config) return res.status(404).json({ message: "Config not found" });
@@ -29,7 +29,7 @@ exports.addVehicleType = async (req, res) => {
 };
 
 // Delete vehicle type
-exports.deleteVehicleType = async (req, res) => {
+export const deleteVehicleType = async (req, res) => {
   const { type } = req.params;
   const config = await ServiceTypeConfig.findOne();
   if (!config) return res.status(404).json({ message: "Config not found" });
@@ -39,7 +39,7 @@ exports.deleteVehicleType = async (req, res) => {
 };
 
 // Add service type
-exports.addServiceType = async (req, res) => {
+export const addServiceType = async (req, res) => {
   const { type } = req.body;
   const config = await ServiceTypeConfig.findOne();
   if (!config) return res.status(404).json({ message: "Config not found" });
@@ -51,7 +51,7 @@ exports.addServiceType = async (req, res) => {
 };
 
 // Delete service type
-exports.deleteServiceType = async (req, res) => {
+export const deleteServiceType = async (req, res) => {
   const { type } = req.params;
   const config = await ServiceTypeConfig.findOne();
   if (!config) return res.status(404).json({ message: "Config not found" });
@@ -61,7 +61,7 @@ exports.deleteServiceType = async (req, res) => {
 };
 
 // Add service level option
-exports.addServiceLevelOption = async (req, res) => {
+export const addServiceLevelOption = async (req, res) => {
   const { option } = req.body;
   const config = await ServiceTypeConfig.findOne();
   if (!config) return res.status(404).json({ message: "Config not found" });
@@ -73,7 +73,7 @@ exports.addServiceLevelOption = async (req, res) => {
 };
 
 // Delete service level option
-exports.deleteServiceLevelOption = async (req, res) => {
+export const deleteServiceLevelOption = async (req, res) => {
   const { option } = req.params;
   const config = await ServiceTypeConfig.findOne();
   if (!config) return res.status(404).json({ message: "Config not found" });
@@ -85,7 +85,7 @@ exports.deleteServiceLevelOption = async (req, res) => {
 };
 
 // Save pricing config
-exports.savePricingConfig = async (req, res) => {
+export const savePricingConfig = async (req, res) => {
   const { basePrice, hardIncrease, heavyIncrease } = req.body;
   const config = await ServiceTypeConfig.findOne();
   if (!config) return res.status(404).json({ message: "Config not found" });
@@ -99,7 +99,7 @@ exports.savePricingConfig = async (req, res) => {
 };
 
 // Get pricing config (optional)
-exports.getPricingConfig = async (req, res) => {
+export const getPricingConfig = async (req, res) => {
   const config = await ServiceTypeConfig.findOne();
   if (!config) return res.status(404).json({ message: "Config not found" });
   res.json(config.pricingConfig || {});

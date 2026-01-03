@@ -1,10 +1,10 @@
 // ...existing code...
-const express = require("express");
+import express from "express";
 const router = express.Router();
-const controller = require("../controllers/deductionsController");
+import * as controller from "../controllers/deductionsController.js";
 
 // If you have auth middleware, add it where required, e.g. requireAuth
-// const requireAuth = require('../middlewares/auth');
+// import requireAuth from '../middlewares/auth.js';
 
 // Public: list
 router.get("/", /*requireAuth,*/ controller.getDeductions);
@@ -15,4 +15,4 @@ router.post("/", /*requireAuth,*/ controller.createDeduction);
 // Delete
 router.delete("/:id", /*requireAuth,*/ controller.deleteDeduction);
 
-module.exports = router;
+export default router;

@@ -1,4 +1,4 @@
-const mongoose = require("mongoose");
+import mongoose from "mongoose";
 
 const customerSchema = new mongoose.Schema({
   name: { type: String, required: true },
@@ -10,4 +10,4 @@ const customerSchema = new mongoose.Schema({
   status: { type: String, enum: ["active", "inactive"], default: "active" },
 });
 
-module.exports = mongoose.model("Customer", customerSchema);
+export default mongoose.model("Customer", customerSchema);

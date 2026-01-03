@@ -1,6 +1,6 @@
-const express = require("express");
+import express from "express";
 const router = express.Router();
-const ctrl = require("../controllers/serviceTypeController");
+import * as ctrl from "../controllers/serviceTypeController.js";
 
 router.get("/", ctrl.getConfig);
 
@@ -17,4 +17,4 @@ router.delete("/service-level-option/:option", ctrl.deleteServiceLevelOption);
 router.post("/pricing", ctrl.savePricingConfig);
 router.get("/pricing", ctrl.getPricingConfig);
 
-module.exports = router;
+export default router;

@@ -1,8 +1,8 @@
-const dotenv = require("dotenv");
+import dotenv from "dotenv";
 dotenv.config();
 
-const app = require("../app.js");
-const serverless = require("serverless-http");
+import app from "../app.js";
+import serverless from "serverless-http";
 
 // Add basic logging for debugging
 console.log("API handler initialized");
@@ -45,4 +45,4 @@ const wrappedHandler = async (event, context) => {
   }
 };
 
-module.exports = wrappedHandler;
+export default wrappedHandler;

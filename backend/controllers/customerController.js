@@ -1,7 +1,7 @@
-const Customer = require("../models/customerModel");
+import Customer from "../models/customerModel.js";
 
 // Add new customer
-exports.addCustomer = async (req, res, next) => {
+export const addCustomer = async (req, res, next) => {
   try {
     const customer = await Customer.create(req.body);
     res.status(201).json({ success: true, customer });
@@ -11,7 +11,7 @@ exports.addCustomer = async (req, res, next) => {
 };
 
 // Get all customers
-exports.getCustomers = async (req, res, next) => {
+export const getCustomers = async (req, res, next) => {
   try {
     // Query params-ல் page, limit எடுத்துக்கொள்
     const page = parseInt(req.query.page) || 1;
@@ -34,7 +34,7 @@ exports.getCustomers = async (req, res, next) => {
 };
 
 // Update customer
-exports.updateCustomer = async (req, res, next) => {
+export const updateCustomer = async (req, res, next) => {
   try {
     const customer = await Customer.findByIdAndUpdate(req.params.id, req.body, {
       new: true,
@@ -52,7 +52,7 @@ exports.updateCustomer = async (req, res, next) => {
 };
 
 // Delete customer
-exports.deleteCustomer = async (req, res, next) => {
+export const deleteCustomer = async (req, res, next) => {
   try {
     const customer = await Customer.findByIdAndDelete(req.params.id);
     if (!customer) {

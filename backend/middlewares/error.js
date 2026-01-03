@@ -1,4 +1,4 @@
-module.exports = (err, req, res, next) => {
+export default (err, req, res, next) => {
   err.statusCode = err.statusCode || 500; // 500 is the default status code for server error
 
   if (process.env.NODE_ENV === "development") {

@@ -1,8 +1,8 @@
-const Inventory = require("../models/inventoryModel");
-const bwipjs = require("bwip-js");
+import Inventory from "../models/inventoryModel.js";
+import bwipjs from "bwip-js";
 
 // Add new inventory item
-exports.addItem = async (req, res, next) => {
+export const addItem = async (req, res, next) => {
   try {
     const item = await Inventory.create(req.body);
     res.status(201).json({ success: true, item });
@@ -12,7 +12,7 @@ exports.addItem = async (req, res, next) => {
 };
 
 // Get all inventory items
-exports.getItems = async (req, res, next) => {
+export const getItems = async (req, res, next) => {
   try {
     const items = await Inventory.find();
     res.json({ success: true, items });
@@ -22,7 +22,7 @@ exports.getItems = async (req, res, next) => {
 };
 
 // Search inventory by name or barcode
-exports.searchInventory = async (req, res, next) => {
+export const searchInventory = async (req, res, next) => {
   try {
     const { query } = req.query;
     if (!query) {
@@ -44,7 +44,7 @@ exports.searchInventory = async (req, res, next) => {
 };
 
 // Generate barcode image (PNG) for an inventory item
-exports.generateBarcode = async (req, res, next) => {
+export const generateBarcode = async (req, res, next) => {
   try {
     const { id } = req.params;
     const item = await Inventory.findOne({ id });

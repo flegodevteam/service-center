@@ -1,8 +1,8 @@
-const JobCard = require("../models/jobCardModel");
-const PDFDocument = require("pdfkit");
+import JobCard from "../models/jobCardModel.js";
+import PDFDocument from "pdfkit";
 
 // Add new job card
-exports.addJobCard = async (req, res, next) => {
+export const addJobCard = async (req, res, next) => {
   try {
     // services string-aa irundha split panni array-aa convert pannuvom
     let services = req.body.services;
@@ -21,7 +21,7 @@ exports.addJobCard = async (req, res, next) => {
 };
 
 // Get all job cards (with customer & vehicle details)
-exports.getJobCards = async (req, res, next) => {
+export const getJobCards = async (req, res, next) => {
   try {
     const page = parseInt(req.query.page) || 1;
     const limit = parseInt(req.query.limit) || 5;
@@ -47,7 +47,7 @@ exports.getJobCards = async (req, res, next) => {
 };
 
 // Download job card as PDF
-exports.downloadJobCardPDF = async (req, res, next) => {
+export const downloadJobCardPDF = async (req, res, next) => {
   try {
     const jobCard = await JobCard.findById(req.params.id)
       .populate("customer", "name email phone")
@@ -95,7 +95,7 @@ exports.downloadJobCardPDF = async (req, res, next) => {
 };
 
 // Mark job card as complete
-exports.markJobCardComplete = async (req, res, next) => {
+export const markJobCardComplete = async (req, res, next) => {
   try {
     const jobCard = await JobCard.findById(req.params.id);
     if (!jobCard) {
@@ -113,7 +113,7 @@ exports.markJobCardComplete = async (req, res, next) => {
 };
 
 // Get job cards by date and/or vehicle for billing
-exports.getJobCardsForBilling = async (req, res, next) => {
+export const getJobCardsForBilling = async (req, res, next) => {
   try {
     const { date, vehicle } = req.query;
     console.log("getJobCardsForBilling called with:", { date, vehicle });

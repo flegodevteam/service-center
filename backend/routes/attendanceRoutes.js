@@ -1,9 +1,9 @@
-const express = require("express");
+import express from "express";
 const router = express.Router();
-const attendanceCtrl = require("../controllers/attendanceController");
+import * as attendanceCtrl from "../controllers/attendanceController.js";
 
 router.get("/", attendanceCtrl.getAttendance);
 router.post("/", attendanceCtrl.addAttendance);
 router.post("/bulk", attendanceCtrl.addAttendanceBulk);
 
-module.exports = router;
+export default router;

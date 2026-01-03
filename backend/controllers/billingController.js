@@ -1,14 +1,14 @@
-const PDFDocument = require("pdfkit");
-const Invoice = require("../models/billingModel");
+import PDFDocument from "pdfkit";
+import Invoice from "../models/billingModel.js";
+import JobCard from "../models/jobCardModel.js";
 
 // Add new invoice
-exports.addInvoice = async (req, res, next) => {
+export const addInvoice = async (req, res, next) => {
   try {
     let totalAmount = 0;
     
     // Calculate total from job card if provided
     if (req.body.jobCard) {
-      const JobCard = require("../models/jobCardModel");
       const jobCard = await JobCard.findById(req.body.jobCard);
       if (jobCard) {
         totalAmount += jobCard.totalAmount || 0;
@@ -48,7 +48,7 @@ exports.addInvoice = async (req, res, next) => {
 };
 
 // Get all invoices (with customer, vehicle)
-exports.getInvoices = async (req, res, next) => {
+export const getInvoices = async (req, res, next) => {
   try {
     const page = parseInt(req.query.page) || 1;
     const limit = parseInt(req.query.limit) || 5;
@@ -76,8 +76,7 @@ exports.getInvoices = async (req, res, next) => {
 };
 
 // Download invoice as PDF
-
-exports.downloadInvoicePDF = async (req, res, next) => {
+export const downloadInvoicePDF = async (req, res, next) => {
   try {
     const invoice = await Invoice.findById(req.params.id)
       .populate("customer", "name email phone")
@@ -161,7 +160,7 @@ exports.downloadInvoicePDF = async (req, res, next) => {
 
 
 // Process payment for an invoice
-exports.processPayment = async (req, res, next) => {
+export const processPayment = async (req, res, next) => {
   try {
     const invoice = await Invoice.findById(req.params.id);
     if (!invoice) {

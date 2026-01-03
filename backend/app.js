@@ -1,7 +1,7 @@
-const express = require("express");
-const cors = require("cors");
-const errorHandler = require("./middlewares/error");
-// const connectDB = require("./config/db");
+import express from "express";
+import cors from "cors";
+import errorHandler from "./middlewares/error.js";
+// import connectDB from "./config/db.js";
 
 const app = express();
 
@@ -74,25 +74,42 @@ app.get("/api/test", (req, res) => {
 });
 
 // Routes
-app.use("/api/auth", require("./routes/authRoutes"));
-app.use("/api/customers", require("./routes/customerRoutes"));
-app.use("/api/vehicles", require("./routes/vehicleRoutes"));
-app.use("/api/appointments", require("./routes/appointmentRoutes"));
-app.use("/api/jobcards", require("./routes/jobCardRoutes"));
-app.use("/api/inventory", require("./routes/inventoryRoutes"));
-app.use("/api/invoices", require("./routes/billingRoutes"));
-app.use("/api/service-config", require("./routes/serviceTypeRoutes"));
-app.use("/api/reports", require("./routes/reportsRoutes"));
-app.use("/api/users", require("./routes/userRoutes"));
-app.use("/api/test", require("./routes/testRoutes"));
-app.use("/api/employees", require("./routes/employeeRoutes"));
-app.use("/api/leaves", require("./routes/leaveRoutes"));
-app.use("/api/payrolls", require("./routes/payrollRoutes"));
-app.use("/api/deductions", require("./routes/deductionsRoutes"));
-app.use("/api/attendance", require("./routes/attendanceRoutes"));
+import authRoutes from "./routes/authRoutes.js";
+import customerRoutes from "./routes/customerRoutes.js";
+import vehicleRoutes from "./routes/vehicleRoutes.js";
+import appointmentRoutes from "./routes/appointmentRoutes.js";
+import jobCardRoutes from "./routes/jobCardRoutes.js";
+import inventoryRoutes from "./routes/inventoryRoutes.js";
+import billingRoutes from "./routes/billingRoutes.js";
+import serviceTypeRoutes from "./routes/serviceTypeRoutes.js";
+import reportsRoutes from "./routes/reportsRoutes.js";
+import userRoutes from "./routes/userRoutes.js";
+import testRoutes from "./routes/testRoutes.js";
+import employeeRoutes from "./routes/employeeRoutes.js";
+import leaveRoutes from "./routes/leaveRoutes.js";
+import payrollRoutes from "./routes/payrollRoutes.js";
+import deductionsRoutes from "./routes/deductionsRoutes.js";
+import attendanceRoutes from "./routes/attendanceRoutes.js";
+
+app.use("/api/auth", authRoutes);
+app.use("/api/customers", customerRoutes);
+app.use("/api/vehicles", vehicleRoutes);
+app.use("/api/appointments", appointmentRoutes);
+app.use("/api/jobcards", jobCardRoutes);
+app.use("/api/inventory", inventoryRoutes);
+app.use("/api/invoices", billingRoutes);
+app.use("/api/service-config", serviceTypeRoutes);
+app.use("/api/reports", reportsRoutes);
+app.use("/api/users", userRoutes);
+app.use("/api/test", testRoutes);
+app.use("/api/employees", employeeRoutes);
+app.use("/api/leaves", leaveRoutes);
+app.use("/api/payrolls", payrollRoutes);
+app.use("/api/deductions", deductionsRoutes);
+app.use("/api/attendance", attendanceRoutes);
 
 
 // Error Handler
 app.use(errorHandler);
 
-module.exports = app;
+export default app;

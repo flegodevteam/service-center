@@ -1,7 +1,7 @@
-const jwt = require("jsonwebtoken");
-const User = require("../models/userModel");
+import jwt from "jsonwebtoken";
+import User from "../models/userModel.js";
 
-module.exports = async (req, res, next) => {
+const auth = async (req, res, next) => {
   const authHeader = req.headers.authorization;
   if (!authHeader || !authHeader.startsWith("Bearer ")) {
     return res.status(401).json({ message: "No token, authorization denied" });
@@ -17,7 +17,7 @@ module.exports = async (req, res, next) => {
   }
 };
 
-exports.authorizeRoles = (...roles) => {
+export const authorizeRoles = (...roles) => {
   return (req, res, next) => {
     if (!roles.includes(req.user.role)) {
       return res
@@ -27,3 +27,5 @@ exports.authorizeRoles = (...roles) => {
     next();
   };
 };
+
+export default auth;

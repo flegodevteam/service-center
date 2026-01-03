@@ -1,6 +1,6 @@
-const User = require("../models/userModel");
+import User from "../models/userModel.js";
 
-exports.getAllUsers = async (req, res, next) => {
+export const getAllUsers = async (req, res, next) => {
   try {
     const users = await User.find().select("-password");
     res.json({ success: true, users });
@@ -9,7 +9,7 @@ exports.getAllUsers = async (req, res, next) => {
   }
 };
 
-exports.updateUser = async (req, res, next) => {
+export const updateUser = async (req, res, next) => {
   try {
     const user = await User.findByIdAndUpdate(req.params.id, req.body, {
       new: true,
@@ -22,7 +22,7 @@ exports.updateUser = async (req, res, next) => {
   }
 };
 
-exports.deleteUser = async (req, res, next) => {
+export const deleteUser = async (req, res, next) => {
   try {
     const user = await User.findByIdAndDelete(req.params.id);
     if (!user) return res.status(404).json({ message: "User not found" });

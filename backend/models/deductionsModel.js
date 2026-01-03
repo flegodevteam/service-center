@@ -1,4 +1,4 @@
-const mongoose = require("mongoose");
+import mongoose from "mongoose";
 
 const DeductionSchema = new mongoose.Schema(
   {
@@ -35,4 +35,4 @@ const DeductionSchema = new mongoose.Schema(
   }
 );
 
-module.exports = mongoose.model("Deduction", DeductionSchema);
+export default mongoose.model("Deduction", DeductionSchema);

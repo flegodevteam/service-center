@@ -1,7 +1,7 @@
-const Vehicle = require("../models/vehicleModel");
+import Vehicle from "../models/vehicleModel.js";
 
 // Add new vehicle
-exports.addVehicle = async (req, res, next) => {
+export const addVehicle = async (req, res, next) => {
   try {
     const vehicle = await Vehicle.create(req.body);
     // Populate pannuvom add pannina appo
@@ -16,7 +16,7 @@ exports.addVehicle = async (req, res, next) => {
 };
 
 // Get all vehicles (with owner details)
-exports.getVehicles = async (req, res, next) => {
+export const getVehicles = async (req, res, next) => {
   try {
     const page = parseInt(req.query.page) || 1;
     const limit = parseInt(req.query.limit) || 5;
@@ -41,7 +41,7 @@ exports.getVehicles = async (req, res, next) => {
 };
 
 // Edit vehicle
-exports.updateVehicle = async (req, res, next) => {
+export const updateVehicle = async (req, res, next) => {
   try {
     const vehicle = await Vehicle.findByIdAndUpdate(req.params.id, req.body, {
       new: true,
@@ -59,7 +59,7 @@ exports.updateVehicle = async (req, res, next) => {
 };
 
 // Delete vehicle
-exports.deleteVehicle = async (req, res, next) => {
+export const deleteVehicle = async (req, res, next) => {
   try {
     const vehicle = await Vehicle.findByIdAndDelete(req.params.id);
     if (!vehicle) {

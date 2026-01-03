@@ -1,17 +1,15 @@
-const express = require("express");
-const {
+import express from "express";
+import {
   addInvoice,
   getInvoices,
   downloadInvoicePDF,
-} = require("../controllers/billingController");
+  processPayment,
+} from "../controllers/billingController.js";
 const router = express.Router();
 
 router.post("/", addInvoice); // Add invoice
 router.get("/", getInvoices); // Get all invoices
 router.get("/:id/pdf", downloadInvoicePDF); // Download invoice as PDF
-router.put(
-  "/:id/pay",
-  require("../controllers/billingController").processPayment
-);
+router.put("/:id/pay", processPayment);
 
-module.exports = router;
+export default router;

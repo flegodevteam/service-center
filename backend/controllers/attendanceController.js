@@ -1,7 +1,7 @@
-const Attendance = require("../models/attendanceModal");
+import Attendance from "../models/attendanceModal.js";
 
 // GET /api/attendance
-exports.getAttendance = async (req, res, next) => {
+export const getAttendance = async (req, res, next) => {
   try {
     const { page = 1, limit = 1000, date } = req.query;
     const query = date ? { date } : {};
@@ -19,7 +19,7 @@ exports.getAttendance = async (req, res, next) => {
 };
 
 // POST /api/attendance  (single)
-exports.addAttendance = async (req, res, next) => {
+export const addAttendance = async (req, res, next) => {
   try {
     const { employeeId, date, status } = req.body;
     if (!employeeId || !date)
@@ -37,7 +37,7 @@ exports.addAttendance = async (req, res, next) => {
 };
 
 // POST /api/attendance/bulk  (bulk upsert)
-exports.addAttendanceBulk = async (req, res, next) => {
+export const addAttendanceBulk = async (req, res, next) => {
   try {
     const { entries } = req.body; // entries: [{ employeeId, date, status }, ...]
     if (!Array.isArray(entries) || entries.length === 0)

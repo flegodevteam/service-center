@@ -1,7 +1,7 @@
-const Leave = require("../models/leaveModal");
+import Leave from "../models/leaveModal.js";
 
 // Add new leave
-exports.createLeave = async (req, res) => {
+export const createLeave = async (req, res) => {
   try {
     const leave = await Leave.create(req.body);
     res.status(201).json(leave);
@@ -11,7 +11,7 @@ exports.createLeave = async (req, res) => {
 };
 
 // Get all leaves
-exports.getLeaves = async (req, res) => {
+export const getLeaves = async (req, res) => {
   try {
     const leaves = await Leave.find().populate("employeeId");
     res.json(leaves);
@@ -21,7 +21,7 @@ exports.getLeaves = async (req, res) => {
 };
 
 // Approve leave
-exports.approveLeave = async (req, res) => {
+export const approveLeave = async (req, res) => {
   try {
     const leave = await Leave.findByIdAndUpdate(
       req.params.id,
@@ -36,7 +36,7 @@ exports.approveLeave = async (req, res) => {
 };
 
 // Reject leave
-exports.rejectLeave = async (req, res) => {
+export const rejectLeave = async (req, res) => {
   try {
     const leave = await Leave.findByIdAndUpdate(
       req.params.id,

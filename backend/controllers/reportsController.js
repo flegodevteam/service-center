@@ -1,7 +1,7 @@
-const Billing = require("../models/billingModel");
-const JobCard = require("../models/jobCardModel");
+import Billing from "../models/billingModel.js";
+import JobCard from "../models/jobCardModel.js";
 
-exports.getMonthlyRevenue = async (req, res, next) => {
+export const getMonthlyRevenue = async (req, res, next) => {
   try {
     // Last 6 months revenue
     const pipeline = [
@@ -20,7 +20,7 @@ exports.getMonthlyRevenue = async (req, res, next) => {
   }
 };
 
-exports.getServiceStats = async (req, res, next) => {
+export const getServiceStats = async (req, res, next) => {
   try {
     // Count jobs & revenue per service
     const pipeline = [

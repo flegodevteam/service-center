@@ -1,11 +1,11 @@
-const express = require("express");
-const {
+import express from "express";
+import {
   addJobCard,
   getJobCards,
   downloadJobCardPDF,
   markJobCardComplete,
   getJobCardsForBilling,
-} = require("../controllers/jobCardController");
+} from "../controllers/jobCardController.js";
 const router = express.Router();
 
 router.post("/", addJobCard); // Add job card
@@ -14,4 +14,4 @@ router.get("/billing", getJobCardsForBilling); // Get job cards for billing (by 
 router.get("/:id/pdf", downloadJobCardPDF);
 router.put("/:id/complete", markJobCardComplete);
 
-module.exports = router;
+export default router;

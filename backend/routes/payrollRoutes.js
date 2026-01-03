@@ -1,6 +1,6 @@
-const express = require("express");
+import express from "express";
 const router = express.Router();
-const payrollCtrl = require("../controllers/payrollController");
+import * as payrollCtrl from "../controllers/payrollController.js";
 
 // GET    /api/payrolls         -> list
 router.get("/", payrollCtrl.getPayrolls);
@@ -20,4 +20,4 @@ router.put("/:id/pay", payrollCtrl.markAsPaid);
 // GET    /api/payrolls/:id/export -> download CSV payslip
 router.get("/:id/export", payrollCtrl.exportPayslipCSV);
 
-module.exports = router;
+export default router;

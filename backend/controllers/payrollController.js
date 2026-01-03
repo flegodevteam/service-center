@@ -1,5 +1,5 @@
-const Payroll = require("../models/payrollModel");
-const Employee = require("../models/employeeModel"); // assume exists
+import Payroll from "../models/payrollModel.js";
+import Employee from "../models/employeeModel.js"; // assume exists
 
 // helper to compute
 function computeFromEmployee(emp, body) {
@@ -42,7 +42,7 @@ function computeFromEmployee(emp, body) {
   };
 }
 
-exports.createPayroll = async (req, res) => {
+export const createPayroll = async (req, res) => {
   try {
     const { employeeId } = req.body;
     if (!employeeId)
@@ -69,7 +69,7 @@ exports.createPayroll = async (req, res) => {
   }
 };
 
-exports.getPayrolls = async (req, res) => {
+export const getPayrolls = async (req, res) => {
   try {
     const payrolls = await Payroll.find()
       .sort({ createdAt: -1 })
@@ -81,7 +81,7 @@ exports.getPayrolls = async (req, res) => {
   }
 };
 
-exports.deletePayroll = async (req, res) => {
+export const deletePayroll = async (req, res) => {
   try {
     const payroll = await Payroll.findByIdAndDelete(req.params.id);
     if (!payroll) return res.status(404).json({ message: "Payroll not found" });
@@ -92,7 +92,7 @@ exports.deletePayroll = async (req, res) => {
   }
 };
 
-exports.processPayroll = async (req, res) => {
+export const processPayroll = async (req, res) => {
   try {
     const payroll = await Payroll.findById(req.params.id);
     if (!payroll) return res.status(404).json({ message: "Payroll not found" });
@@ -105,7 +105,7 @@ exports.processPayroll = async (req, res) => {
   }
 };
 
-exports.markAsPaid = async (req, res) => {
+export const markAsPaid = async (req, res) => {
   try {
     const payroll = await Payroll.findById(req.params.id);
     if (!payroll) return res.status(404).json({ message: "Payroll not found" });
@@ -120,7 +120,7 @@ exports.markAsPaid = async (req, res) => {
 };
 
 // simple CSV export for one payslip
-exports.exportPayslipCSV = async (req, res) => {
+export const exportPayslipCSV = async (req, res) => {
   try {
     const payroll = await Payroll.findById(req.params.id);
     if (!payroll) return res.status(404).json({ message: "Payroll not found" });

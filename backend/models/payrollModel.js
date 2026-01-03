@@ -1,4 +1,4 @@
-const mongoose = require("mongoose");
+import mongoose from "mongoose";
 
 const PayrollSchema = new mongoose.Schema(
   {
@@ -27,4 +27,4 @@ const PayrollSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
-module.exports = mongoose.model("Payroll", PayrollSchema);
+export default mongoose.model("Payroll", PayrollSchema);

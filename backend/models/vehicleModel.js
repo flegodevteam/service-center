@@ -1,4 +1,4 @@
-const mongoose = require("mongoose");
+import mongoose from "mongoose";
 
 const vehicleSchema = new mongoose.Schema({
   make: { type: String, required: true },
@@ -17,4 +17,4 @@ const vehicleSchema = new mongoose.Schema({
   notes: { type: String },
 });
 
-module.exports = mongoose.model("Vehicle", vehicleSchema);
+export default mongoose.model("Vehicle", vehicleSchema);

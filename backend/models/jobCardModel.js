@@ -1,4 +1,4 @@
-const mongoose = require("mongoose");
+import mongoose from "mongoose";
 
 const jobCardSchema = new mongoose.Schema({
   customer: {
@@ -26,4 +26,4 @@ const jobCardSchema = new mongoose.Schema({
   totalAmount: { type: Number, required: true },
 });
 
-module.exports = mongoose.model("JobCard", jobCardSchema);
+export default mongoose.model("JobCard", jobCardSchema);
