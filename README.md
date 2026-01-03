@@ -13,5 +13,3 @@
 
 # Email Address - testuser@example.com
 # Password - 123
-
-
